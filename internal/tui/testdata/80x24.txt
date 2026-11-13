@@ -1,0 +1,24 @@
+ TideContacts / People  |  local · phase 3                                      
+> Workspaces                People                    Context                   
+> 1 People                                                                 *    
+  2 Organizations                                                               
+  3 Relationships                                                               
+  4 Activities                                                                  
+  5 Tasks                                                                       
+  6 Projects                                                                    
+  7 Pipelines                                                                   
+  8 Insights                                                                    
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+ NORMAL / navigation                             esc back  tab pane  : commands 

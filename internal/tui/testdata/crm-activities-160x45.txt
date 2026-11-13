@@ -1,0 +1,45 @@
+ TideContacts / Activities  |  local · phase 3                                                                                                                  
+┌──────────────────────────────────────────────────────────────┐┌──────────────────────────────────────────────────────────┐┌──────────────────────────────────┐
+│  Activities · All 3/40                                       ││> Activity 02                                             ││  Context                         │
+│/                                                             ││meeting · Thu 2026-11-12 22:00 UTC                        ││Views  [ / ]                      │
+│─ Fri 2026-11-13 · today ───────────────────────────────────  ││Recorded here · private                                   ││> All                             │
+│  12:00 mail Activity 00 · Alex Rivera, Sam Lee               ││─ Notes ────────────────────────────────────────────────  ││  Meetings                        │
+│  05:00 call Activity 01 · Alex Rivera, Sam Lee               ││body text body text                                       ││  Calls                           │
+│─ Thu 2026-11-12 · yesterday ───────────────────────────────  ││─ People and organizations ─────────────────────────────  ││  Notes                           │
+│> 22:00 mtg Activity 02 · Alex Rivera, Sam Lee                ││> who Alex Rivera                                         ││  Emails                          │
+│  15:00 conv Activity 03 · Alex Rivera, Sam Lee               ││  who Sam Lee                                             ││  Messages                        │
+│  08:00 msg Activity 04 · Alex Rivera, Sam Lee                ││─ Projects ─────────────────────────────────────────────  ││  Conversations                   │
+│  01:00 note Activity 05 · Alex Rivera, Sam Lee               ││  proj Harbor 界 redesign with a very long name that mus  ││  Events                          │
+│─ Wed 2026-11-11 ───────────────────────────────────────────  ││                                                          ││                                  │
+│  18:00 evnt Activity 06 · Alex Rivera, Sam Lee               ││Created 2026-11-13 12:00 UTC · updated 2026-11-13 12:00   ││n/A log · e edit                  │
+│  11:00 mail Activity 07 · Alex Rivera, Sam Lee               ││UTC                                                       ││t make task · L link              │
+│  04:00 call Activity 08 · Alex Rivera, Sam Lee               ││                                                          ││o open link · D delete            │
+│─ Tue 2026-11-10 ───────────────────────────────────────────  ││                                                          ││Enter follow links                │
+│  21:00 mtg Activity 09 · Alex Rivera, Sam Lee                ││                                                          ││                                  │
+│  14:00 conv Activity 10 · Alex Rivera, Sam Lee               ││                                                          ││                                  │
+│  07:00 msg Activity 11 · Alex Rivera, Sam Lee                ││                                                          ││                                  │
+│  00:00 note Activity 12 · Alex Rivera, Sam Lee               ││                                                          ││                                  │
+│─ Mon 2026-11-09 ───────────────────────────────────────────  ││                                                          ││                                  │
+│  17:00 evnt Activity 13 · Alex Rivera, Sam Lee               ││                                                          ││                                  │
+│  10:00 mail Activity 14 · Alex Rivera, Sam Lee               ││                                                          ││                                  │
+│  03:00 call Activity 15 · Alex Rivera, Sam Lee               ││                                                          ││                                  │
+│─ Sun 2026-11-08 ───────────────────────────────────────────  ││                                                          ││                                  │
+│  20:00 mtg Activity 16 · Alex Rivera, Sam Lee                ││                                                          ││                                  │
+│  13:00 conv Activity 17 · Alex Rivera, Sam Lee               ││                                                          ││                                  │
+│  06:00 msg Activity 18 · Alex Rivera, Sam Lee                ││                                                          ││                                  │
+│─ Sat 2026-11-07 ───────────────────────────────────────────  ││                                                          ││                                  │
+│  23:00 note Activity 19 · Alex Rivera, Sam Lee               ││                                                          ││                                  │
+│  16:00 evnt Activity 20 · Alex Rivera, Sam Lee               ││                                                          ││                                  │
+│  09:00 mail Activity 21 · Alex Rivera, Sam Lee               ││                                                          ││                                  │
+│  02:00 call Activity 22 · Alex Rivera, Sam Lee               ││                                                          ││                                  │
+│─ Fri 2026-11-06 ───────────────────────────────────────────  ││                                                          ││                                  │
+│  19:00 mtg Activity 23 · Alex Rivera, Sam Lee                ││                                                          ││                                  │
+│  12:00 conv Activity 24 · Alex Rivera, Sam Lee               ││                                                          ││                                  │
+│  05:00 msg Activity 25 · Alex Rivera, Sam Lee                ││                                                          ││                                  │
+│─ Thu 2026-11-05 ───────────────────────────────────────────  ││                                                          ││                                  │
+│  22:00 note Activity 26 · Alex Rivera, Sam Lee               ││                                                          ││                                  │
+│  15:00 evnt Activity 27 · Alex Rivera, Sam Lee               ││                                                          ││                                  │
+│  08:00 mail Activity 28 · Alex Rivera, Sam Lee               ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+└──────────────────────────────────────────────────────────────┘└──────────────────────────────────────────────────────────┘└──────────────────────────────────┘
+ ACTIVITIES / All                                                                                                           n new  / filter  : commands  ? help 

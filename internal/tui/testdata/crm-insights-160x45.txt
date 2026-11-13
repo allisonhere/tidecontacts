@@ -1,0 +1,45 @@
+ TideContacts / Insights  |  local · phase 3                                                                                                                    
+┌──────────────────────────────────────────────────────────────┐┌──────────────────────────────────────────────────────────┐┌──────────────────────────────────┐
+│  Insights · Inbox 3/22                                       ││> Task 02 👩‍💻 xxxxxx                                       ││  Context                         │
+│/                                                             ││Overdue commitment                                        ││Views  [ / ]                      │
+│─ Overdue ──────────────────────────────────────────────────  ││─ Why this is here ─────────────────────────────────────  ││> Inbox                           │
+│  late Task 00 👩‍💻                         Overdue commitment  ││Due 2026-11-03, 10 days overdue; involves Alex Rivera     ││  Radar                           │
+│  late Task 01 👩‍💻 xxx                     Overdue commitment  ││Date: 2026-11-03 (10d overdue)                            ││  Collections                     │
+│> late Task 02 👩‍💻 xxxxxx                  Overdue commitment  ││─ Source ───────────────────────────────────────────────  ││  Reminders                       │
+│  late Task 03 👩‍💻 xxxxxxxxx               Overdue commitment  ││> task Task 02 👩‍💻 xxxxxx                                  ││  Follow-ups                      │
+│  late Task 04 👩‍💻 xxxxxxxxxxxx            Overdue commitment  ││  who Alex Rivera                                         ││                                  │
+│  late Task 05 👩‍💻 xxxxxxxxxxxxxxx         Overdue commitment  ││                                                          ││Enter open source                 │
+│  late Task 06 👩‍💻 xxxxxxxxxxxxxxxxxx      Overdue commitment  ││In inbox since 2026-11-13 12:00 UTC · open                ││c complete · t task               │
+│  late Task 07 👩‍💻 xxxxxxxxxxxxxxxxxxxxx   Overdue commitment  ││─ Actions ──────────────────────────────────────────────  ││z snooze · x dismiss              │
+│  late Task 08 👩‍💻 xxxxxxxxxxxxxxxxxxxxxxx Overdue commitment  ││Enter open source   c complete   t create/open task       ││v reviewed · S schedule           │
+│  late Task 09 👩‍💻 xxxxxxxxxxxxxxxxxxxxxxx Overdue commitment  ││z snooze   x dismiss   v mark reviewed   S change         ││n new · f pin · e edit            │
+│  late Task 10 👩‍💻 xxxxxxxxxxxxxxxxxxxxxxx Overdue commitment  ││schedule                                                  ││                                  │
+│  late Task 11 👩‍💻 xxxxxxxxxxxxxxxxxxxxxxx Overdue commitment  ││                                                          ││                                  │
+│─ Due now ──────────────────────────────────────────────────  ││                                                          ││                                  │
+│  f/up Sam Lee                                 Follow-up due  ││                                                          ││                                  │
+│  bell Ping                                     Reminder due  ││                                                          ││                                  │
+│─ Upcoming and unprocessed ─────────────────────────────────  ││                                                          ││                                  │
+│  new Task 12 👩‍💻 xxxxxxxxxxxxxxxxxxxxxxxxxx Unprocessed task  ││                                                          ││                                  │
+│  new Task 16 👩‍💻 xxxxxxxxxxxxxxxxxxxxxxxxxx Unprocessed task  ││                                                          ││                                  │
+│  date Alex Rivera                            Important date  ││                                                          ││                                  │
+│  new Task 20 👩‍💻 xxxxxxxxxxxxxxxxxxxxxxxxxx Unprocessed task  ││                                                          ││                                  │
+│  new Task 24 👩‍💻 xxxxxxxxxxxxxxxxxxxxxxxxxx Unprocessed task  ││                                                          ││                                  │
+│  new Task 28 👩‍💻 xxxxxxxxxxxxxxxxxxxxxxxxxx Unprocessed task  ││                                                          ││                                  │
+│  new Task 32 👩‍💻 xxxxxxxxxxxxxxxxxxxxxxxxxx Unprocessed task  ││                                                          ││                                  │
+│  new Task 36 👩‍💻 xxxxxxxxxxxxxxxxxxxxxxxxxx Unprocessed task  ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+└──────────────────────────────────────────────────────────────┘└──────────────────────────────────────────────────────────┘└──────────────────────────────────┘
+ INSIGHTS / Inbox                                                                                                           n new  / filter  : commands  ? help 

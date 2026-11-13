@@ -1,0 +1,45 @@
+ TideContacts / People  |  local · phase 3                                                                                                                      
+┌───────────────────────────────────┐┌────────────────────────────────────────────────────────────────────────────────┐┌───────────────────────────────────────┐
+│  People 1/1                       ││> Overview                                                                      ││  Context                              │
+│/                                  ││Renée Rivera                                                                    ││Profile views                          │
+│> Renée Rivera                     ││                                                                                ││> Overview                             │
+│                                   ││email /                                                                         ││  Contact methods                      │
+│                                   ││renee@example.com                                                               ││  Organizations                        │
+│                                   ││                                                                                ││  Notes                                │
+│                                   ││Private notes                                                                   ││  Relationships                        │
+│                                   ││Second line                                                                     ││  Custom fields                        │
+│                                   ││                                                                                ││  History                              │
+│                                   ││0 relationships · 0 custom fields                                               ││  Dossier                              │
+│                                   ││Source: manual                                                                  ││  Timeline                             │
+│                                   ││Updated: 2000-01-01T00:00:00Z                                                   ││                                       │
+│                                   ││UUID: 00000000-0000-0000-0000-000000000000                                      ││[ / ] change view                      │
+│                                   ││                                                                                ││n new  e edit                          │
+│                                   ││                                                                                ││f favorite  a archive                  │
+│                                   ││                                                                                ││D delete  u undo                       │
+│                                   ││                                                                                ││I import  E export                     │
+│                                   ││                                                                                ││T task  A log activity                 │
+│                                   ││                                                                                ││F follow-up  d date  ! flag            │
+│                                   ││                                                                                ││                                       │
+│                                   ││                                                                                ││Sort: name                             │
+│                                   ││                                                                                ││                                       │
+│                                   ││                                                                                ││                                       │
+│                                   ││                                                                                ││                                       │
+│                                   ││                                                                                ││                                       │
+│                                   ││                                                                                ││                                       │
+│                                   ││                                                                                ││                                       │
+│                                   ││                                                                                ││                                       │
+│                                   ││                                                                                ││                                       │
+│                                   ││                                                                                ││                                       │
+│                                   ││                                                                                ││                                       │
+│                                   ││                                                                                ││                                       │
+│                                   ││                                                                                ││                                       │
+│                                   ││                                                                                ││                                       │
+│                                   ││                                                                                ││                                       │
+│                                   ││                                                                                ││                                       │
+│                                   ││                                                                                ││                                       │
+│                                   ││                                                                                ││                                       │
+│                                   ││                                                                                ││                                       │
+│                                   ││                                                                                ││                                       │
+│                                   ││                                                                                ││                                       │
+└───────────────────────────────────┘└────────────────────────────────────────────────────────────────────────────────┘└───────────────────────────────────────┘
+ CONTACTS / Overview                                                                                                        n new  e edit  / search  : commands 

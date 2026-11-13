@@ -1,0 +1,32 @@
+ TideContacts / People  |  local · phase 3                                                                    
+┌───────────────────────┐┌───────────────────────────────────────────────────────────────────────────────────┐
+│> Workspaces           ││  People                                                                           │
+│> 1 People          *  ││Search:                                                                            │
+│  2 Organizations      ││                                                                                   │
+│  3 Relationships      ││No people yet.                                                                     │
+│  4 Activities         ││                                                                                   │
+│  5 Tasks              ││Contact profiles, methods, notes and each person's CRM dossier.                    │
+│  6 Projects           ││                                                                                   │
+│  7 Pipelines          ││Local storage is not connected in this session.                                    │
+│  8 Insights           ││                                                                                   │
+│                       ││                                                                                   │
+│                       ││                                                                                   │
+│                       ││                                                                                   │
+│                       ││                                                                                   │
+│                       ││                                                                                   │
+│                       ││                                                                                   │
+│                       ││                                                                                   │
+│                       ││                                                                                   │
+│                       ││                                                                                   │
+│                       ││                                                                                   │
+│                       ││                                                                                   │
+│                       ││                                                                                   │
+│                       ││                                                                                   │
+│                       ││                                                                                   │
+│                       ││                                                                                   │
+│                       ││                                                                                   │
+│                       ││                                                                                   │
+│                       ││                                                                                   │
+│                       ││                                                                                   │
+└───────────────────────┘└───────────────────────────────────────────────────────────────────────────────────┘
+ NORMAL / navigation                                                             / search  : commands  ? help 

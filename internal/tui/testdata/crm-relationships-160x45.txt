@@ -1,0 +1,45 @@
+ TideContacts / Relationships  |  local · phase 3                                                                                                               
+┌──────────────────────────────────────────────────────────────┐┌──────────────────────────────────────────────────────────┐┌──────────────────────────────────┐
+│  Relationships 2/3                                           ││> Tree · Sam Lee                                          ││  Context                         │
+│/                                                             ││Sam Lee                                                   ││Views  [ / ]                      │
+│  who Alex Rivera                           Riverside Studio  ││> └─ mentor → Alex Rivera                                 ││> Tree                            │
+│> who Sam Lee                                                 ││                                                          ││  People                          │
+│  org Riverside Studio                                        ││                                                          ││  Organizations                   │
+│                                                              ││                                                          ││  Projects                        │
+│                                                              ││                                                          ││  Profile                         │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││Enter explore · e profile         │
+│                                                              ││                                                          ││r relate · x remove               │
+│                                                              ││                                                          ││F follow-up · d date              │
+│                                                              ││                                                          ││! flag · A log · T task           │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+│                                                              ││                                                          ││                                  │
+└──────────────────────────────────────────────────────────────┘└──────────────────────────────────────────────────────────┘└──────────────────────────────────┘
+ RELATIONSHIPS / Tree                                                                                                       n new  / filter  : commands  ? help 

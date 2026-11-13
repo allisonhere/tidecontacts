@@ -1,0 +1,45 @@
+ TideContacts / Pipelines  |  local · phase 3                                                                                                                   
+┌──────────────────────────┐┌─────────────────────────────────────────────────────────────────────────────────────────┐┌───────────────────────────────────────┐
+│  Pipelines 1/1           ││> Partnerships                                                                           ││  Item 06 with a long title to clip    │
+│/                         ││▸ Idea              3   Talking           3   Drafting          2   Signed            2  ││Partnerships › Idea                    │
+│> Partnerships            ││───────────────────── ───────────────────── ───────────────────── ─────────────────────  ││In this stage since 2026-11-13 (0      │
+│                          ││  Item 00 with a l 0d   Item 01 with a l 0d   Item 02 with a l 0d   Item 03 with a l 0d  ││days)                                  │
+│                          ││> Item 06 with a l 0d   Item 07 with a l 0d   Item 08 with a l 0d   Item 09 with a l 0d  ││─ People and organizations ─────────   │
+│                          ││  Item 12 with a l 0d   Item 13 with a l 0d                                              ││> who Sam Lee                          │
+│                          ││stages 1–4 of 6 · ←/→ for more                                                           ││─ Stage history ────────────────────   │
+│                          ││                                                                                         ││2026-11-13 created → Idea              │
+│                          ││                                                                                         ││                                       │
+│                          ││                                                                                         ││                                       │
+│                          ││                                                                                         ││                                       │
+│                          ││                                                                                         ││                                       │
+│                          ││                                                                                         ││                                       │
+│                          ││                                                                                         ││                                       │
+│                          ││                                                                                         ││                                       │
+│                          ││                                                                                         ││                                       │
+│                          ││                                                                                         ││                                       │
+│                          ││                                                                                         ││                                       │
+│                          ││                                                                                         ││                                       │
+│                          ││                                                                                         ││                                       │
+│                          ││                                                                                         ││                                       │
+│                          ││                                                                                         ││                                       │
+│                          ││                                                                                         ││                                       │
+│                          ││                                                                                         ││                                       │
+│                          ││                                                                                         ││                                       │
+│                          ││                                                                                         ││                                       │
+│                          ││                                                                                         ││                                       │
+│                          ││                                                                                         ││                                       │
+│                          ││                                                                                         ││                                       │
+│                          ││                                                                                         ││                                       │
+│                          ││                                                                                         ││                                       │
+│                          ││                                                                                         ││                                       │
+│                          ││                                                                                         ││                                       │
+│                          ││                                                                                         ││                                       │
+│                          ││                                                                                         ││                                       │
+│                          ││                                                                                         ││                                       │
+│                          ││                                                                                         ││                                       │
+│                          ││                                                                                         ││                                       │
+│                          ││                                                                                         ││                                       │
+│                          ││                                                                                         ││                                       │
+│                          ││                                                                                         ││                                       │
+└──────────────────────────┘└─────────────────────────────────────────────────────────────────────────────────────────┘└───────────────────────────────────────┘
+ PIPELINES / Partnerships                                                                                                   n new  / filter  : commands  ? help 

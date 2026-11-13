@@ -1,0 +1,32 @@
+ TideContacts / Relationships  |  local · phase 3                                                             
+┌──────────────────────────────────────────┐┌────────────────────────────────────────────────────────────────┐
+│  Relationships 2/3                       ││> Tree · Sam Lee                                                │
+│/                                         ││Sam Lee                                                         │
+│  who Alex Rivera       Riverside Studio  ││> └─ mentor → Alex Rivera                                       │
+│> who Sam Lee                             ││                                                                │
+│  org Riverside Studio                    ││                                                                │
+│                                          ││                                                                │
+│                                          ││                                                                │
+│                                          ││                                                                │
+│                                          ││                                                                │
+│                                          ││                                                                │
+│                                          ││                                                                │
+│                                          ││                                                                │
+│                                          ││                                                                │
+│                                          ││                                                                │
+│                                          ││                                                                │
+│                                          ││                                                                │
+│                                          ││                                                                │
+│                                          ││                                                                │
+│                                          ││                                                                │
+│                                          ││                                                                │
+│                                          ││                                                                │
+│                                          ││                                                                │
+│                                          ││                                                                │
+│                                          ││                                                                │
+│                                          ││                                                                │
+│                                          ││                                                                │
+│                                          ││                                                                │
+│                                          ││                                                                │
+└──────────────────────────────────────────┘└────────────────────────────────────────────────────────────────┘
+ RELATIONSHIPS / Tree                                                     n new  / filter  : commands  ? help 

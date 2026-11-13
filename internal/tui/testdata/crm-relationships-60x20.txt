@@ -1,0 +1,20 @@
+ TideContacts / Relationships  |  local · phase 3           
+  Relationships 2/3 > Tree · Sam Lee      Context           
+Sam Lee                                                     
+> └─ mentor → Alex Rivera                                   
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+ RELATIONSHIPS / Tree   n new  / filter  : commands  ? help 

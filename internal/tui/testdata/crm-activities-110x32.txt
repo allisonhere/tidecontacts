@@ -1,0 +1,32 @@
+ TideContacts / Activities  |  local · phase 3                                                                
+┌──────────────────────────────────────────┐┌────────────────────────────────────────────────────────────────┐
+│  Activities · All 4/40                   ││> Activity 03                                                   │
+│/                                         ││conversation · Thu 2026-11-12 15:00 UTC                         │
+│─ Fri 2026-11-13 · today ───────────────  ││Recorded here · private                                         │
+│  12:00 mail Activity 00 · Alex Rivera,   ││─ Notes ──────────────────────────────────────────────────────  │
+│  05:00 call Activity 01 · Alex Rivera,   ││body text body text body text                                   │
+│─ Thu 2026-11-12 · yesterday ───────────  ││─ People and organizations ───────────────────────────────────  │
+│  22:00 mtg Activity 02 · Alex Rivera, S  ││  who Alex Rivera                                               │
+│> 15:00 conv Activity 03 · Alex Rivera,   ││> who Sam Lee                                                   │
+│  08:00 msg Activity 04 · Alex Rivera, S  ││─ Projects ───────────────────────────────────────────────────  │
+│  01:00 note Activity 05 · Alex Rivera,   ││  proj Harbor 界 redesign with a very long name that must be c  │
+│─ Wed 2026-11-11 ───────────────────────  ││                                                                │
+│  18:00 evnt Activity 06 · Alex Rivera,   ││Created 2026-11-13 12:00 UTC · updated 2026-11-13 12:00 UTC     │
+│  11:00 mail Activity 07 · Alex Rivera,   ││                                                                │
+│  04:00 call Activity 08 · Alex Rivera,   ││                                                                │
+│─ Tue 2026-11-10 ───────────────────────  ││                                                                │
+│  21:00 mtg Activity 09 · Alex Rivera, S  ││                                                                │
+│  14:00 conv Activity 10 · Alex Rivera,   ││                                                                │
+│  07:00 msg Activity 11 · Alex Rivera, S  ││                                                                │
+│  00:00 note Activity 12 · Alex Rivera,   ││                                                                │
+│─ Mon 2026-11-09 ───────────────────────  ││                                                                │
+│  17:00 evnt Activity 13 · Alex Rivera,   ││                                                                │
+│  10:00 mail Activity 14 · Alex Rivera,   ││                                                                │
+│  03:00 call Activity 15 · Alex Rivera,   ││                                                                │
+│─ Sun 2026-11-08 ───────────────────────  ││                                                                │
+│  20:00 mtg Activity 16 · Alex Rivera, S  ││                                                                │
+│  13:00 conv Activity 17 · Alex Rivera,   ││                                                                │
+│  06:00 msg Activity 18 · Alex Rivera, S  ││                                                                │
+│                                          ││                                                                │
+└──────────────────────────────────────────┘└────────────────────────────────────────────────────────────────┘
+ ACTIVITIES / All                                                         n new  / filter  : commands  ? help 

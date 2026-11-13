@@ -1,0 +1,32 @@
+ TideContacts / Tasks  |  local · phase 3                                                                     
+┌──────────────────────────────────────────┐┌────────────────────────────────────────────────────────────────┐
+│  Tasks · Today 4/13                      ││> Task 03 👩‍💻 xxxxxxxxx                                          │
+│/                                         ││[w] waiting · priority high                                     │
+│─ Overdue ──────────────────────────────  ││Due 2026-11-04  (9d overdue)                                    │
+│  [?] Task 00 👩‍💻 · Alex Rive 12d overdue  ││─ People and organizations ───────────────────────────────────  │
+│  [ ] Task 01 👩‍💻 xxx · Ale ! 11d overdue  ││> who Alex Rivera                                               │
+│  [>] Task 02 👩‍💻 xxxxxx · !! 10d overdue  ││─ Projects ───────────────────────────────────────────────────  │
+│> [w] Task 03 👩‍💻 xxxxxxxx !!! 9d overdue  ││  proj Harbor 界 redesign with a very long name that must be c  │
+│  [?] Task 04 👩‍💻 xxxxxxxxxxxx 8d overdue  ││                                                                │
+│  [ ] Task 05 👩‍💻 xxxxxxxxxx ! 7d overdue  ││Created 2026-11-13 12:00 UTC · updated 2026-11-13 12:00 UTC     │
+│  [>] Task 06 👩‍💻 xxxxxxxxx !! 6d overdue  ││                                                                │
+│  [w] Task 07 👩‍💻 xxxxxxxx !!! 5d overdue  ││                                                                │
+│  [?] Task 08 👩‍💻 xxxxxxxxxxxx 4d overdue  ││                                                                │
+│  [ ] Task 09 👩‍💻 xxxxxxxxxx ! 3d overdue  ││                                                                │
+│  [>] Task 10 👩‍💻 xxxxxxxxx !! 2d overdue  ││                                                                │
+│  [w] Task 11 👩‍💻 xxxxxxxxx !!! yesterday  ││                                                                │
+│─ Today ────────────────────────────────  ││                                                                │
+│  [?] Task 12 👩‍💻 xxxxxxxxxxxxxxxxx today  ││                                                                │
+│                                          ││                                                                │
+│                                          ││                                                                │
+│                                          ││                                                                │
+│                                          ││                                                                │
+│                                          ││                                                                │
+│                                          ││                                                                │
+│                                          ││                                                                │
+│                                          ││                                                                │
+│                                          ││                                                                │
+│                                          ││                                                                │
+│                                          ││                                                                │
+└──────────────────────────────────────────┘└────────────────────────────────────────────────────────────────┘
+ TASKS / Today                                                            n new  / filter  : commands  ? help 

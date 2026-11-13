@@ -1,0 +1,24 @@
+ TideContacts / Insights  |  local · phase 3                                    
+  Insights · Inbox 6/22   > Task 05 👩‍💻 xxxxxxxxxxxxx  Context                   
+Overdue commitment                                                              
+─ Why this is here ─────────────────────────────────────────────────────────    
+Due 2026-11-06, 7 days overdue; involves Alex Rivera                            
+Date: 2026-11-06 (7d overdue)                                                   
+─ Source ───────────────────────────────────────────────────────────────────    
+> task Task 05 👩‍💻 xxxxxxxxxxxxxxx                                               
+  who Alex Rivera                                                               
+                                                                                
+In inbox since 2026-11-13 12:00 UTC · open                                      
+─ Actions ──────────────────────────────────────────────────────────────────    
+Enter open source   c complete   t create/open task                             
+z snooze   x dismiss   v mark reviewed   S change schedule                      
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+ INSIGHTS / Inbox                           n new  / filter  : commands  ? help 

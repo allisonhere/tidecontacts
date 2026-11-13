@@ -1,0 +1,32 @@
+ TideContacts / Insights  |  local · phase 3                                                                  
+┌──────────────────────────────────────────┐┌────────────────────────────────────────────────────────────────┐
+│  Insights · Inbox 4/22                   ││> Task 03 👩‍💻 xxxxxxxxx                                          │
+│/                                         ││Overdue commitment                                              │
+│─ Overdue ──────────────────────────────  ││─ Why this is here ───────────────────────────────────────────  │
+│  late Task 00 👩‍💻     Overdue commitment  ││Due 2026-11-04, 9 days overdue; waiting on Alex Rivera          │
+│  late Task 01 👩‍💻 xxx Overdue commitment  ││Date: 2026-11-04 (9d overdue)                                   │
+│  late Task 02 👩‍💻 xxx Overdue commitment  ││─ Source ─────────────────────────────────────────────────────  │
+│> late Task 03 👩‍💻 xxx Overdue commitment  ││> task Task 03 👩‍💻 xxxxxxxxx                                     │
+│  late Task 04 👩‍💻 xxx Overdue commitment  ││  who Alex Rivera                                               │
+│  late Task 05 👩‍💻 xxx Overdue commitment  ││                                                                │
+│  late Task 06 👩‍💻 xxx Overdue commitment  ││In inbox since 2026-11-13 12:00 UTC · open                      │
+│  late Task 07 👩‍💻 xxx Overdue commitment  ││─ Actions ────────────────────────────────────────────────────  │
+│  late Task 08 👩‍💻 xxx Overdue commitment  ││Enter open source   c complete   t create/open task             │
+│  late Task 09 👩‍💻 xxx Overdue commitment  ││z snooze   x dismiss   v mark reviewed   S change schedule      │
+│  late Task 10 👩‍💻 xxx Overdue commitment  ││                                                                │
+│  late Task 11 👩‍💻 xxx Overdue commitment  ││                                                                │
+│─ Due now ──────────────────────────────  ││                                                                │
+│  f/up Sam Lee             Follow-up due  ││                                                                │
+│  bell Ping                 Reminder due  ││                                                                │
+│─ Upcoming and unprocessed ─────────────  ││                                                                │
+│  new Task 12 👩‍💻 xxxxxx Unprocessed task  ││                                                                │
+│  new Task 16 👩‍💻 xxxxxx Unprocessed task  ││                                                                │
+│  date Alex Rivera        Important date  ││                                                                │
+│  new Task 20 👩‍💻 xxxxxx Unprocessed task  ││                                                                │
+│  new Task 24 👩‍💻 xxxxxx Unprocessed task  ││                                                                │
+│  new Task 28 👩‍💻 xxxxxx Unprocessed task  ││                                                                │
+│  new Task 32 👩‍💻 xxxxxx Unprocessed task  ││                                                                │
+│  new Task 36 👩‍💻 xxxxxx Unprocessed task  ││                                                                │
+│                                          ││                                                                │
+└──────────────────────────────────────────┘└────────────────────────────────────────────────────────────────┘
+ INSIGHTS / Inbox                                                         n new  / filter  : commands  ? help 

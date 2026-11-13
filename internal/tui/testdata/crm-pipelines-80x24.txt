@@ -1,0 +1,24 @@
+ TideContacts / Pipelines  |  local · phase 3                                   
+  Pipelines 1/1           > Partnerships              Item 06 with a long title 
+▸ Idea                 3   Talking              3   Drafting             2      
+──────────────────────── ──────────────────────── ────────────────────────      
+  Item 00 with a long 0d   Item 01 with a long 0d   Item 02 with a long 0d      
+> Item 06 with a long 0d   Item 07 with a long 0d   Item 08 with a long 0d      
+  Item 12 with a long 0d   Item 13 with a long 0d                               
+stages 1–3 of 6 · ←/→ for more                                                  
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+ PIPELINES / Partnerships                   n new  / filter  : commands  ? help 
