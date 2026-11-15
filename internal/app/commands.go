@@ -17,6 +17,9 @@ type Command struct {
 
 // phase3 commands were added after users may already have customized keys.
 var phase3 = []Command{
+	{ID: "themes", Label: "Choose theme", Soft: true},
+	{ID: "tidemail-sync", Label: "Sync TideMail", Soft: true},
+	{ID: "tidemail-status", Label: "Show TideMail sync status", Soft: true},
 	// Phase 3: contextual keys act on the selected record of the active workspace.
 	{ID: "task-new", Label: "New task (quick capture)", Keys: []string{"T"}, Soft: true}, {ID: "activity-log", Label: "Log activity (quick capture)", Keys: []string{"A"}, Soft: true},
 	{ID: "complete", Label: "Complete task, milestone or inbox entry", Keys: []string{"c"}, Soft: true}, {ID: "reopen", Label: "Reopen task", Keys: []string{"R"}, Soft: true},

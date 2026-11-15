@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/allisonhere/tidecontacts/internal/connector/tidemail"
 	"github.com/allisonhere/tidecontacts/internal/domain"
 	"github.com/allisonhere/tidecontacts/internal/transfer"
 	"github.com/allisonhere/tideui"
@@ -192,6 +193,65 @@ func (m Model) crmGlobal(id string) (Model, tea.Cmd, bool) {
 		return ref, ok
 	}
 	switch id {
+	case "tidemail-sync", "tidemail-status":
+		if m.cfg.Demo {
+			m.feedback = "Live TideMail sync is disabled in DEMO"
+			return m, nil, true
+		}
+		if c.busy {
+			m.feedback = "Wait for the current operation to finish"
+			return m, nil, true
+		}
+		repo, ok := c.repo.(interface {
+			tidemail.Sink
+			Get(context.Context, string) (string, error)
+		})
+		if !ok {
+			m.feedback = "TideMail connector unavailable"
+			return m, nil, true
+		}
+		if id == "tidemail-status" {
+			c.busy = true
+			ctx := m.contacts.ctx
+			return m, func() tea.Msg {
+				last, err := repo.Get(ctx, "tidemail-last-synced")
+				if last == "" {
+					last = "never"
+				}
+				return crmDoneMsg{note: "TideMail last synced: " + last, err: err}
+			}, true
+		}
+		defaultPath, err := tidemail.DefaultPath()
+		if err != nil {
+			m.feedback = "Could not locate TideMail: " + err.Error()
+			return m, nil, true
+		}
+		submit := func(m *Model, path string) (tea.Cmd, error) {
+			path = expandHome(path)
+			if !filepath.IsAbs(path) {
+				return nil, fmt.Errorf("enter an absolute TideMail database path")
+			}
+			if m.crm.busy {
+				return nil, fmt.Errorf("wait for the current operation to finish")
+			}
+			m.crm.busy, m.crm.err = true, ""
+			m.feedback = "Syncing TideMail…"
+			ctx := m.contacts.ctx
+			return func() tea.Msg {
+				ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+				defer cancel()
+				result, err := tidemail.Sync(ctx, path, repo)
+				return crmDoneMsg{note: fmt.Sprintf("TideMail: %d imported/updated, %d skipped; synced %s", result.Imported, result.Skipped, result.LastSynced), err: err}
+			}, nil
+		}
+		if info, err := os.Stat(defaultPath); err == nil && info.Mode().IsRegular() {
+			cmd, err := submit(&m, defaultPath)
+			if err != nil {
+				m.feedback = err.Error()
+			}
+			return m, cmd, true
+		}
+		return m, m.openPrompt("Find TideMail", "No TideMail cache found at the usual location. Open TideMail first, or enter a custom cache path.", defaultPath, submit), true
 	case "task-new":
 		return m, m.quickTask("", link, nil), true
 	case "activity-log":

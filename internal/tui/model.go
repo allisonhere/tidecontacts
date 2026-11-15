@@ -28,8 +28,14 @@ const (
 	help
 )
 
-type Preferences struct{ Left, Right float64 }
+type Preferences struct {
+	Left, Right float64
+	Theme       string
+}
 type Model struct {
+	helpBrowser                                                 tideui.HelpBrowser
+	menuOpen                                                    bool
+	menuSelected                                                int
 	crm                                                         crmState
 	contacts                                                    contactsState
 	cfg                                                         config.Config
@@ -69,8 +75,15 @@ func NewReady(c config.Config) Model {
 }
 func (m Model) IsReady() bool { return m.ready }
 
-func (m Model) Preferences() Preferences { return Preferences{m.left.Value(), m.right.Value()} }
-func (m Model) Init() tea.Cmd            { return tea.Batch(m.load, tickReminders()) }
+func (m Model) Preferences() Preferences {
+	theme := m.cfg.Theme
+	if p := m.crm.picker; p != nil && p.originalTheme != "" {
+		theme = p.originalTheme
+	}
+	return Preferences{Left: m.left.Value(), Right: m.right.Value(), Theme: theme}
+}
+
+func (m Model) Init() tea.Cmd { return tea.Batch(m.load, tickReminders()) }
 func (m Model) mode() tideui.LayoutMode {
 	if m.width < m.cfg.Layout.Narrow {
 		return tideui.Tabbed
@@ -87,6 +100,33 @@ func (m Model) focusCount() int {
 	return 3
 }
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if k, ok := msg.(tea.KeyMsg); ok && m.ready && m.overlay == none && !m.editing && m.contacts.editor == nil && m.crm.form == nil && m.crm.prompt == nil && m.crm.picker == nil && m.crm.confirm == nil {
+		if k.String() == "ctrl+g" {
+			m.menuOpen = !m.menuOpen
+			return m, nil
+		}
+		if m.menuOpen {
+			switch k.String() {
+			case "ctrl+c":
+				return m, tea.Quit
+			case "esc", "tab":
+				m.menuOpen = false
+			case "j", "down":
+				m.menuSelected = min(m.menuSelected+1, len(m.menuCommands())-1)
+			case "k", "up":
+				m.menuSelected = max(0, m.menuSelected-1)
+			case "enter":
+				c := m.menuCommands()[min(m.menuSelected, len(m.menuCommands())-1)]
+				m.menuOpen = false
+				return m.dispatch(c.ID)
+			}
+			return m, nil
+		}
+		if k.String() == "shift+tab" && m.focus == 0 {
+			m.menuOpen = true
+			return m, nil
+		}
+	}
 	if next, cmd, handled := m.updateCRM(msg); handled {
 		return next, cmd
 	}
@@ -170,16 +210,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		}
 		if m.overlay == help {
-			switch key {
-			case "esc", "?":
+			var cmd tea.Cmd
+			var close bool
+			m.helpBrowser.Width, m.helpBrowser.Height = m.width, m.height-1
+			m.helpBrowser, cmd, close = m.helpBrowser.Update(v)
+			if close {
 				m.overlay = none
-			case "down", "j":
-				m.helpOffset = min(m.helpOffset+1, len(m.registry.Commands())+4)
-			case "up", "k":
-				m.helpOffset = max(0, m.helpOffset-1)
 			}
-			return m, nil
+			return m, cmd
 		}
+
 		if m.editing {
 			switch key {
 			case "esc":
@@ -219,11 +259,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			left, right := m.ratios()
 			if m.mode() == tideui.ThreeColumn {
 				if v.X < int(float64(m.width)*left) {
-					m.focus = 0
-				} else if v.X >= int(float64(m.width)*(1-right)) {
-					m.focus = 2
-				} else {
+					m.menuOpen = true
+				} else if v.X >= int(float64(m.width)*(left+right)) {
 					m.focus = 1
+					m.menuOpen = false
+				} else {
+					m.focus = 0
+					m.menuOpen = false
 				}
 			} else if m.mode() == tideui.SidebarOnly {
 				if v.X < int(float64(m.width)*left) {
@@ -248,6 +290,14 @@ func (m Model) dispatch(id string) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 	m.feedback = ""
+	if id == "next" && m.focus == 1 && m.state.Active != wsPipelines && (m.isContacts() || m.isCRM()) {
+		m.menuOpen = true
+		return m, nil
+	}
+	if id == "previous" && m.focus == 0 {
+		m.menuOpen = true
+		return m, nil
+	}
 	if next, cmd, handled := m.crmGlobal(id); handled {
 		return next, cmd
 	}
@@ -325,15 +375,13 @@ func (m Model) dispatch(id string) (tea.Model, tea.Cmd) {
 		m.paletteSelected = 0
 		return m, m.prompt.Focus()
 	case "help":
+		m.helpBrowser = tideui.NewHelpBrowser(m.helpSections())
 		m.overlay = help
 		m.helpOffset = 0
 	case "context":
-		if m.mode() == tideui.SidebarOnly {
-			m.overlay = help
-			m.helpOffset = 0
-		} else {
-			m.focus = 2
-		}
+		m.helpBrowser = tideui.NewHelpBrowser(m.helpSections())
+		m.overlay = help
+
 	case "left-grow":
 		m.left.Grow()
 		m.feedback = "Layout changed; saved on exit"
@@ -346,9 +394,38 @@ func (m Model) dispatch(id string) (tea.Model, tea.Cmd) {
 	case "right-shrink":
 		m.right.Shrink()
 		m.feedback = "Layout changed; saved on exit"
+	case "themes":
+		options := []domain.Ref{}
+		if m.cfg.TideMailThemeName != "" {
+			options = append(options, domain.Ref{ID: "match-tidemail", Name: "Match TideMail · " + m.cfg.TideMailThemeName})
+		}
+		for _, t := range tideui.BuiltinThemes {
+			options = append(options, domain.Ref{ID: t.Name, Name: t.Name})
+		}
+		options = append(options, domain.Ref{ID: "contrast", Name: "High contrast"})
+		original := m.cfg.Theme
+		cmd := m.openPicker("Themes", "↑↓ live preview · enter keep · esc restore", "", options, func(m *Model, r domain.Ref) tea.Cmd { m.cfg.Theme = r.ID; m.feedback = "Theme: " + r.Name; return nil })
+		p := m.crm.picker
+		p.originalTheme = original
+		current := original
+		if original == "dark" {
+			current = "catppuccin-mocha"
+		}
+		if original == "light" {
+			current = "catppuccin-latte"
+		}
+		for i, o := range p.options {
+			if o.ID == current {
+				p.selected = i
+				break
+			}
+		}
+		p.preview = func(m *Model, r domain.Ref) { m.cfg.Theme = r.ID }
+		p.cancel = func(m *Model) { m.cfg.Theme = original }
+		return m, cmd
 	case "theme-dark", "theme-light", "theme-contrast":
 		m.cfg.Theme = strings.TrimPrefix(id, "theme-")
-		m.feedback = "Theme: " + m.cfg.Theme + " (this session)"
+		m.feedback = "Theme: " + m.cfg.Theme
 	}
 	return m, nil
 }
@@ -370,13 +447,14 @@ func (m Model) View() string {
 	if !m.ready {
 		return ansi.Truncate("TideContacts | Loading local workspace...", m.width, "")
 	}
-	r := tideui.NewRenderer(resolveTheme(m.cfg.Theme), tideui.StyleOptions{Density: tideui.Compact})
+	r := tideui.NewRenderer(m.theme(), tideui.StyleOptions{Density: tideui.Compact})
 	w := domain.Workspaces()[m.state.Active]
-	header := r.Styles.DetailTitle.Render(ansi.Truncate("TideContacts / "+w.Name+"  |  local · phase 3", m.width, ""))
+	header := r.Styles.DetailTitle.Render(ansi.Truncate("TideContacts / "+w.Name+"  |  local", m.width, ""))
 	header = ansi.Truncate(header, m.width, "")
 	if m.height == 1 {
 		return header
 	}
+	headerLines := 1
 	navWidth := max(1, int(float64(m.width)*m.left.Value())-4)
 	if m.mode() == tideui.Tabbed {
 		navWidth = max(1, m.width-4)
@@ -485,11 +563,33 @@ func (m Model) View() string {
 	}
 	if m.overlay == help {
 		status = "HELP"
-		hints = "j/k scroll  esc close"
+		hints = "/ search  arrows choose/scroll  esc close"
 	}
+	if m.mode() == tideui.ThreeColumn && (m.isContacts() || m.isCRM()) {
+		detail := panes[1]
+		if m.state.Active == wsPipelines && m.focus == 2 {
+			detail = panes[2]
+		}
+		panes = [3]tideui.Pane{m.menuPane(), panes[0], detail}
+		if m.menuOpen {
+			panes[1].Focused = false
+			panes[2].Focused = false
+		}
+	}
+	hints = hints + "  ctrl+g Menu"
 	leftRatio, rightRatio := m.ratios()
-	layout := tideui.Layout{Width: m.width, Height: m.height - 1, Mode: m.mode(), Panes: panes, SidebarRatio: leftRatio, ColumnRatios: [3]float64{leftRatio, 1 - leftRatio - rightRatio, rightRatio}, Status: &tideui.StatusBar{Left: status, Right: hints}}
-	if m.overlay != none {
+	if m.cfg.Demo {
+		status = "DEMO · " + status
+	}
+	layout := tideui.Layout{Width: m.width, Height: m.height - headerLines, Mode: m.mode(), Panes: panes, SidebarRatio: leftRatio, ColumnRatios: [3]float64{leftRatio, rightRatio, 1 - leftRatio - rightRatio}, Status: &tideui.StatusBar{Left: status, Right: hints}}
+	if m.menuOpen && m.mode() != tideui.ThreeColumn {
+		p := m.menuPane()
+		panel := r.SoftPanelOverlay(tideui.SoftPanel{Title: "Menu · enter select · esc close", Width: max(1, min(54, m.width-4)), Content: p.Content})
+		layout.Modal = &panel
+	} else if m.overlay == help {
+		panel := m.helpBrowser.Overlay(r, m.width, m.height-headerLines)
+		layout.Modal = &panel
+	} else if m.overlay != none {
 		width := max(1, min(68, m.width-4))
 		inner := max(1, width-4)
 		lines := []string{}

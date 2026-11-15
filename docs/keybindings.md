@@ -109,3 +109,7 @@ new-contact = ["N"]
 Phase 3 IDs: task-new, activity-log, complete, reopen, snooze, reschedule, priority, stage-next, stage-previous, link, convert-task, followup-schedule, flag, duplicate, dismiss, reviewed, open-external, milestone-add, collection-save, date-add, relationship-add, reminder-add, meeting-log, call-log, note-add, project-new, project-open, item-new, pipeline-new, pipeline-edit, pipeline-archive, pipeline-move, pipeline-up, pipeline-down, stage-add, stage-rename, stage-remove, stage-left, stage-right, relationship-open, relationship-notes, inbox-review, radar-open, radar-settings, collections-open, reminders-open, followups-open, merge-contacts, crm-export, crm-export-calendar, crm-import. `restore` now also restores deleted CRM records.
 
 Phase 3 default keys are soft: if your existing `[keybindings]` already gives one of them to another command (for example `quit = ["x"]`), your binding wins, the Phase 3 command keeps working from the palette, and you can give it a different key. Two explicit bindings for the same key are still an error.
+
+TideMail: open `:` / Ctrl+K and select **Sync TideMail** to sync the automatically detected cache,
+or **Show TideMail sync status** to see the last successful run. Esc cancels the
+fallback path prompt; Enter starts the background import.

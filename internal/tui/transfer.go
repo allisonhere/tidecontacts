@@ -322,7 +322,7 @@ func (m Model) transferView() string {
 		return ""
 	}
 	t := m.contacts.transfer
-	r := tideui.NewRenderer(resolveTheme(m.cfg.Theme), tideui.StyleOptions{Density: tideui.Compact})
+	r := tideui.NewRenderer(m.theme(), tideui.StyleOptions{Density: tideui.Compact})
 	lines := []string{r.Styles.DetailTitle.Render("TideContacts / " + t.action + " / " + t.stage), ""}
 	w := max(1, m.width-4)
 	switch t.stage {

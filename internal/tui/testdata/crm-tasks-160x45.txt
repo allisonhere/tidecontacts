@@ -1,45 +1,45 @@
- TideContacts / Tasks  |  local · phase 3                                                                                                                       
-┌──────────────────────────────────────────────────────────────┐┌──────────────────────────────────────────────────────────┐┌──────────────────────────────────┐
-│  Tasks · Today 3/13                                          ││> Task 02 👩‍💻 xxxxxx                                       ││  Context                         │
-│/                                                             ││[>] scheduled · priority medium                           ││Views  [ / ]                      │
-│─ Overdue ──────────────────────────────────────────────────  ││Due 2026-11-03  (10d overdue)                             ││  Inbox                           │
-│  [?] Task 00 👩‍💻 · Alex Rivera                   12d overdue  ││─ People and organizations ─────────────────────────────  ││> Today                           │
-│  [ ] Task 01 👩‍💻 xxx · Alex Rivera             ! 11d overdue  ││> who Alex Rivera                                         ││  Upcoming                        │
-│> [>] Task 02 👩‍💻 xxxxxx · Alex Rivera         !! 10d overdue  ││─ Projects ─────────────────────────────────────────────  ││  Waiting                         │
-│  [w] Task 03 👩‍💻 xxxxxxxxx · Alex Rivera      !!! 9d overdue  ││  proj Harbor 界 redesign with a very long name that mus  ││  All                             │
-│  [?] Task 04 👩‍💻 xxxxxxxxxxxx · Alex Rivera       8d overdue  ││                                                          ││  By person                       │
-│  [ ] Task 05 👩‍💻 xxxxxxxxxxxxxxx · Alex Rivera  ! 7d overdue  ││Created 2026-11-13 12:00 UTC · updated 2026-11-13 12:00   ││  By project                      │
-│  [>] Task 06 👩‍💻 xxxxxxxxxxxxxxxxxx · Alex Riv !! 6d overdue  ││UTC                                                       ││  Open Harbor                     │
-│  [w] Task 07 👩‍💻 xxxxxxxxxxxxxxxxxxxxx · Alex !!! 5d overdue  ││                                                          ││                                  │
-│  [?] Task 08 👩‍💻 xxxxxxxxxxxxxxxxxxxxxxxx · Alex  4d overdue  ││                                                          ││n/T capture · e edit              │
-│  [ ] Task 09 👩‍💻 xxxxxxxxxxxxxxxxxxxxxxxxxxx ·  ! 3d overdue  ││                                                          ││c complete · R reopen             │
-│  [>] Task 10 👩‍💻 xxxxxxxxxxxxxxxxxxxxxxxxxxxxx !! 2d overdue  ││                                                          ││z snooze · S reschedule           │
-│  [w] Task 11 👩‍💻 xxxxxxxxxxxxxxxxxxxxxxxxxxxxx !!! yesterday  ││                                                          ││p priority · </> status           │
-│─ Today ────────────────────────────────────────────────────  ││                                                          ││L link · y duplicate              │
-│  [?] Task 12 👩‍💻 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx  today  ││                                                          ││a archive · D delete              │
-│                                                              ││                                                          ││s sort                            │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││Sort: due                         │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-└──────────────────────────────────────────────────────────────┘└──────────────────────────────────────────────────────────┘└──────────────────────────────────┘
- TASKS / Today                                                                                                              n new  / filter  : commands  ? help 
+ TideContacts / Tasks  |  local                                                                                                                                 
+┌───────────────────────────────────┐┌──────────────────────────────────────────────┐┌─────────────────────────────────────────────────────────────────────────┐
+│  Menu                             ││  Tasks · Today 3/13                          ││> Task 02 👩‍💻 xxxxxx                                                      │
+│  People                       1   ││/                                             ││[>] scheduled · priority medium                                          │
+│  Organizations                2   ││─ Overdue ──────────────────────────────────  ││Due 2026-11-03  (10d overdue)                                            │
+│  Relationships                3   ││  [?] Task 00 👩‍💻 · Alex Rivera   12d overdue  ││─ People and organizations ────────────────────────────────────────────  │
+│  Activities                   4   ││  [ ] Task 01 👩‍💻 xxx · Alex Ri ! 11d overdue  ││> who Alex Rivera                                                        │
+│> Tasks                        5   ││> [>] Task 02 👩‍💻 xxxxxx · Ale !! 10d overdue  ││─ Projects ────────────────────────────────────────────────────────────  │
+│  Projects                     6   ││  [w] Task 03 👩‍💻 xxxxxxxxx ·  !!! 9d overdue  ││  proj Harbor 界 redesign with a very long name that must be clipped     │
+│  Pipelines                    7   ││  [?] Task 04 👩‍💻 xxxxxxxxxxxx · A 8d overdue  ││                                                                         │
+│  Insights                     8   ││  [ ] Task 05 👩‍💻 xxxxxxxxxxxxxx ! 7d overdue  ││Created 2026-11-13 12:00 UTC · updated 2026-11-13 12:00 UTC              │
+│                                   ││  [>] Task 06 👩‍💻 xxxxxxxxxxxxx !! 6d overdue  ││                                                                         │
+│Actions                            ││  [w] Task 07 👩‍💻 xxxxxxxxxxxx !!! 5d overdue  ││                                                                         │
+│  New task (quick capture)     T   ││  [?] Task 08 👩‍💻 xxxxxxxxxxxxxxxx 4d overdue  ││                                                                         │
+│  Complete task, milestone or  c   ││  [ ] Task 09 👩‍💻 xxxxxxxxxxxxxx ! 3d overdue  ││                                                                         │
+│  Themes                           ││  [>] Task 10 👩‍💻 xxxxxxxxxxxxx !! 2d overdue  ││                                                                         │
+│  All actions                  :   ││  [w] Task 11 👩‍💻 xxxxxxxxxxxxx !!! yesterday  ││                                                                         │
+│  Help                         ?   ││─ Today ────────────────────────────────────  ││                                                                         │
+│                                   ││  [?] Task 12 👩‍💻 xxxxxxxxxxxxxxxxxxxxx today  ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+└───────────────────────────────────┘└──────────────────────────────────────────────┘└─────────────────────────────────────────────────────────────────────────┘
+ TASKS / Today                                                                                                 n new  / filter  : commands  ? help  ctrl+g Menu 

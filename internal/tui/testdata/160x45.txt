@@ -1,45 +1,45 @@
- TideContacts / People  |  local · phase 3                                                                                                                      
-┌───────────────────────────────────┐┌────────────────────────────────────────────────────────────────────────────────┐┌───────────────────────────────────────┐
-│> Workspaces                       ││  People                                                                        ││  Context                              │
-│> 1 People                     *   ││Search:                                                                         ││People                                 │
-│  2 Organizations                  ││                                                                                ││                                       │
-│  3 Relationships                  ││No people yet.                                                                  ││Contact profiles, methods, notes and   │
-│  4 Activities                     ││                                                                                ││each person's CRM dossier.             │
-│  5 Tasks                          ││Contact profiles, methods, notes and each person's CRM dossier.                 ││                                       │
-│  6 Projects                       ││                                                                                ││? contextual help                      │
-│  7 Pipelines                      ││Local storage is not connected in this session.                                 ││esc back to navigation                 │
-│  8 Insights                       ││                                                                                ││                                       │
-│                                   ││                                                                                ││                                       │
-│                                   ││                                                                                ││                                       │
-│                                   ││                                                                                ││                                       │
-│                                   ││                                                                                ││                                       │
-│                                   ││                                                                                ││                                       │
-│                                   ││                                                                                ││                                       │
-│                                   ││                                                                                ││                                       │
-│                                   ││                                                                                ││                                       │
-│                                   ││                                                                                ││                                       │
-│                                   ││                                                                                ││                                       │
-│                                   ││                                                                                ││                                       │
-│                                   ││                                                                                ││                                       │
-│                                   ││                                                                                ││                                       │
-│                                   ││                                                                                ││                                       │
-│                                   ││                                                                                ││                                       │
-│                                   ││                                                                                ││                                       │
-│                                   ││                                                                                ││                                       │
-│                                   ││                                                                                ││                                       │
-│                                   ││                                                                                ││                                       │
-│                                   ││                                                                                ││                                       │
-│                                   ││                                                                                ││                                       │
-│                                   ││                                                                                ││                                       │
-│                                   ││                                                                                ││                                       │
-│                                   ││                                                                                ││                                       │
-│                                   ││                                                                                ││                                       │
-│                                   ││                                                                                ││                                       │
-│                                   ││                                                                                ││                                       │
-│                                   ││                                                                                ││                                       │
-│                                   ││                                                                                ││                                       │
-│                                   ││                                                                                ││                                       │
-│                                   ││                                                                                ││                                       │
-│                                   ││                                                                                ││                                       │
-└───────────────────────────────────┘└────────────────────────────────────────────────────────────────────────────────┘└───────────────────────────────────────┘
- NORMAL / navigation                                                                                                               / search  : commands  ? help 
+ TideContacts / People  |  local                                                                                                                                
+┌───────────────────────────────────┐┌──────────────────────────────────────────────┐┌─────────────────────────────────────────────────────────────────────────┐
+│> Workspaces                       ││  People                                      ││  Context                                                                │
+│> 1 People                     *   ││Search:                                       ││People                                                                   │
+│  2 Organizations                  ││                                              ││                                                                         │
+│  3 Relationships                  ││No people yet.                                ││Contact profiles, methods, notes and each person's CRM dossier.          │
+│  4 Activities                     ││                                              ││                                                                         │
+│  5 Tasks                          ││Contact profiles, methods, notes and each     ││? contextual help                                                        │
+│  6 Projects                       ││person's CRM dossier.                         ││esc back to navigation                                                   │
+│  7 Pipelines                      ││                                              ││                                                                         │
+│  8 Insights                       ││Local storage is not connected in this        ││                                                                         │
+│                                   ││session.                                      ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+└───────────────────────────────────┘└──────────────────────────────────────────────┘└─────────────────────────────────────────────────────────────────────────┘
+ NORMAL / navigation                                                                                                  / search  : commands  ? help  ctrl+g Menu 

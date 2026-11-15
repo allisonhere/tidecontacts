@@ -1,4 +1,4 @@
- TideContacts / Activities  |  local · phase 3                                  
+ TideContacts / Activities  |  local                                            
   Activities · All 6/40   > Activity 05               Context                   
 note · Thu 2026-11-12 01:00 UTC                                                 
 Recorded here · private                                                         
@@ -21,4 +21,4 @@ Created 2026-11-13 12:00 UTC · updated 2026-11-13 12:00 UTC
                                                                                 
                                                                                 
                                                                                 
- ACTIVITIES / All                           n new  / filter  : commands  ? help 
+ ACTIVITIES / All              n new  / filter  : commands  ? help  ctrl+g Menu 

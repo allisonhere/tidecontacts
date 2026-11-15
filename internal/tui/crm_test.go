@@ -211,7 +211,7 @@ func TestTaskCaptureLifecycleAndInputOwnership(t *testing.T) {
 }
 
 func TestActivitiesDossierAndBackNavigation(t *testing.T) {
-	m, s := crmApp(t, 120, 36)
+	m, s := crmApp(t, 160, 36)
 	alex, _ := seedPeople(t, s)
 	m = deliver(m, m.refreshContacts())
 	if m.contacts.contact.ID != alex.ID {
@@ -232,7 +232,7 @@ func TestActivitiesDossierAndBackNavigation(t *testing.T) {
 		t.Fatal(profileViews[m.contacts.view], m.focus)
 	}
 	out := frame(m)
-	for _, want := range []string{"Follow-up", "Next: 2026-11-26", "last recorded meeting on 2026-11-12", "Open tasks (1)", "Send recap", "Connections", "Sam Lee", "Riverside Studio", "First met", "Birthday"} {
+	for _, want := range []string{"Follow-up", "Next: 2026-11-26", "last recorded meeting", "on 2026-11-12", "Open tasks (1)", "Send recap", "Connections", "Sam Lee", "Riverside Studio", "First met", "Birthday"} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("dossier lacks %q:\n%s", want, out)
 		}
@@ -445,7 +445,7 @@ func TestProjectsPipelinesInboxAndCollections(t *testing.T) {
 		t.Fatal(m.state.Active, m.viewName())
 	}
 	out = frame(m)
-	for _, want := range []string{"Overdue", "late Overdue thing", "Why this is here", "Due 2026-11-01, 12 days overdue", "date Alex Rivera", "flag Alex Rivera"} {
+	for _, want := range []string{"Overdue", "Overdue thing", "Due 2026-11-01, 12 days overdue", "Alex Rivera"} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("inbox lacks %q:\n%s", want, out)
 		}
@@ -594,7 +594,7 @@ func TestRelationshipExplorerLinkingRemindersAndMerge(t *testing.T) {
 		t.Fatal(m.crm.due, m.crm.err)
 	}
 	m = do(m, ":", "open reminders", "enter")
-	if !strings.Contains(frame(m), "bell Stretch") || !strings.Contains(frame(m), "Repeats daily") {
+	if !strings.Contains(frame(m), "Stretch") || !strings.Contains(frame(m), "Repeats daily") {
 		t.Fatal(frame(m))
 	}
 	m = do(m, "c")

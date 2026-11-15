@@ -1,4 +1,4 @@
- TideContacts / Pipelines  |  local · phase 3                                                                 
+ TideContacts / Pipelines  |  local                                                                           
 ┌────────────────┐┌──────────────────────────────────────────────────────────────────────────────────────────┐
 │  Pipelines 1/1 ││> Partnerships                                                                            │
 │/               ││▸ Idea              3   Talking           3   Drafting          2   Signed            2   │
@@ -29,4 +29,4 @@
 │                ││                                                                                          │
 │                ││                                                                                          │
 └────────────────┘└──────────────────────────────────────────────────────────────────────────────────────────┘
- PIPELINES / Partnerships                                                 n new  / filter  : commands  ? help 
+ PIPELINES / Partnerships                                    n new  / filter  : commands  ? help  ctrl+g Menu 

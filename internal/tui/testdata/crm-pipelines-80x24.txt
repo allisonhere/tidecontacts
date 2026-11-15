@@ -1,4 +1,4 @@
- TideContacts / Pipelines  |  local · phase 3                                   
+ TideContacts / Pipelines  |  local                                             
   Pipelines 1/1           > Partnerships              Item 06 with a long title 
 ▸ Idea                 3   Talking              3   Drafting             2      
 ──────────────────────── ──────────────────────── ────────────────────────      
@@ -21,4 +21,4 @@ stages 1–3 of 6 · ←/→ for more
                                                                                 
                                                                                 
                                                                                 
- PIPELINES / Partnerships                   n new  / filter  : commands  ? help 
+ PIPELINES / Partnerships      n new  / filter  : commands  ? help  ctrl+g Menu 

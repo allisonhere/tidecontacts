@@ -1,4 +1,4 @@
- TideContacts / People  |  local · phase 3                                      
+ TideContacts / People  |  local                                                
 > Workspaces                People                    Context                   
 > 1 People                                                                 *    
   2 Organizations                                                               
@@ -21,4 +21,4 @@
                                                                                 
                                                                                 
                                                                                 
- NORMAL / navigation                             esc back  tab pane  : commands 
+ NORMAL / navigation                esc back  tab pane  : commands  ctrl+g Menu 

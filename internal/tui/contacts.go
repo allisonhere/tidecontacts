@@ -393,6 +393,11 @@ func (m Model) contactPanes(r tideui.Renderer) [3]tideui.Pane {
 		navWidth = max(1, m.width-4)
 		detailWidth = navWidth
 	}
+	if m.mode() == tideui.ThreeColumn {
+		left, right := m.ratios()
+		navWidth = max(1, int(float64(m.width)*right)-4)
+		detailWidth = max(1, int(float64(m.width)*(1-left-right))-4)
+	}
 	rows := []string{}
 	input := m.search
 	input.Width = max(1, navWidth-3)
@@ -437,7 +442,7 @@ func (m Model) contactPanes(r tideui.Renderer) [3]tideui.Pane {
 	if c.loading {
 		rows = append(rows, "Searching...")
 	} else if len(c.rows) == 0 {
-		rows = append(rows, "No matching contacts.", "n create  I import")
+		rows = append(rows, "No contacts match this view.", "Add your first contact: "+m.hint("new-contact"), "Import an address book: "+m.hint("import-contacts"), "Search contacts: "+m.hint("search"))
 	}
 	if c.err != "" {
 		rows = append(rows, r.Styles.DetailBody.Foreground(r.Styles.Theme.Error).Render("! "+clip(domain.SafeText(c.err), navWidth)))

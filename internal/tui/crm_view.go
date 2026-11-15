@@ -66,6 +66,9 @@ func window(lines []string, at, height int) []string {
 // list of names; the pipeline list is only a switcher, so the board gets the space.
 func (m Model) ratios() (float64, float64) {
 	left, right := m.left.Value(), m.right.Value()
+	if m.mode() == tideui.ThreeColumn {
+		return min(left, .23), max(right, .30)
+	}
 	if m.isCRM() {
 		if m.state.Active == wsPipelines {
 			left *= 0.75
@@ -83,6 +86,8 @@ func (m Model) paneWidths() (int, int, int) {
 	detail := max(1, int(float64(m.width)*(1-left-right))-4)
 	side := max(1, int(float64(m.width)*right)-4)
 	switch m.mode() {
+	case tideui.ThreeColumn:
+		nav = side
 	case tideui.SidebarOnly:
 		detail = max(1, m.width-int(float64(m.width)*left)-4)
 	case tideui.Tabbed:

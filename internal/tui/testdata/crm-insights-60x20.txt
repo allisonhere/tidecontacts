@@ -1,4 +1,4 @@
- TideContacts / Insights  |  local · phase 3                
+ TideContacts / Insights  |  local                          
   Insights · Inbox 8> Task 07 👩‍💻 xxxxxxx  Context           
 Overdue commitment                                          
 ─ Why this is here ─────────────────────────────────────    
@@ -17,4 +17,4 @@ schedule
                                                             
                                                             
                                                             
- INSIGHTS / Inbox       n new  / filter  : commands  ? help 
+ INSIGHTS / Inbox  n new  / filter  : commands  ? help  ctr 

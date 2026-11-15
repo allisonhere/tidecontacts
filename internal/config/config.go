@@ -13,13 +13,15 @@ import (
 )
 
 type Config struct {
-	Density          string              `toml:"density"`
-	Theme            string              `toml:"theme"`
-	DefaultWorkspace string              `toml:"default_workspace"`
-	LogLevel         string              `toml:"log_level"`
-	Mouse            bool                `toml:"mouse"`
-	Layout           Layout              `toml:"layout"`
-	Keybindings      map[string][]string `toml:"keybindings"`
+	TideMailThemeName string              `toml:"-"`
+	Demo              bool                `toml:"-"`
+	Density           string              `toml:"density"`
+	Theme             string              `toml:"theme"`
+	DefaultWorkspace  string              `toml:"default_workspace"`
+	LogLevel          string              `toml:"log_level"`
+	Mouse             bool                `toml:"mouse"`
+	Layout            Layout              `toml:"layout"`
+	Keybindings       map[string][]string `toml:"keybindings"`
 }
 type Layout struct {
 	Narrow int     `toml:"narrow"`
@@ -29,14 +31,14 @@ type Layout struct {
 }
 
 func Defaults() Config {
-	return Config{Density: "compact", Theme: "dark", DefaultWorkspace: "people", LogLevel: "info", Layout: Layout{90, 140, .23, .25}, Keybindings: map[string][]string{}}
+	return Config{Density: "compact", Theme: "dark", DefaultWorkspace: "people", LogLevel: "info", Layout: Layout{90, 120, .23, .30}, Keybindings: map[string][]string{}}
 }
 func (c Config) Validate() error {
 	if c.Density != "compact" && c.Density != "comfortable" {
 		return fmt.Errorf("density must be compact or comfortable")
 	}
-	if c.Theme != "dark" && c.Theme != "light" && c.Theme != "contrast" {
-		return fmt.Errorf("theme must be dark, light or contrast")
+	if !ValidTheme(c.Theme) {
+		return fmt.Errorf("unknown theme")
 	}
 	if domain.WorkspaceIndex(c.DefaultWorkspace) < 0 {
 		return fmt.Errorf("unknown default_workspace %q", c.DefaultWorkspace)
@@ -129,6 +131,7 @@ func Load(path string) (Config, error) {
 	c := Defaults()
 	data, err := os.ReadFile(path)
 	if os.IsNotExist(err) {
+		c.TideMailThemeName, _ = TideMailTheme()
 		return c, nil
 	}
 	if err != nil {
@@ -139,6 +142,7 @@ func Load(path string) (Config, error) {
 		err = fmt.Errorf("unknown setting %s", meta.Undecoded()[0])
 	}
 	if err == nil {
+		c.TideMailThemeName, _ = TideMailTheme()
 		err = c.Validate()
 	}
 	if err != nil {

@@ -1,3 +1,9 @@
+> Phase 4 update (2026-11-14): The opt-in TideMail connector is implemented.
+> Use `--sync-tidemail /absolute/cache/path` and `--tidemail-status`; see README.
+> Git exists; earlier statements below about absent version control are historical.
+> The connector reads source metadata only, never writes the source, and retains
+> local activity tombstones on resync. Durable CRM undo and calendar import remain deferred.
+
 # Handoff
 
 > Generated: 2026-11-14

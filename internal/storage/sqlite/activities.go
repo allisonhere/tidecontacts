@@ -257,7 +257,7 @@ func (s *Store) UpsertExternalActivity(ctx context.Context, a domain.Activity, e
 			return fmt.Errorf("external activities need a source application and reference")
 		}
 		existing := false
-		err := tx.QueryRowContext(ctx, "SELECT id,revision FROM activities WHERE source_app=? AND external_ref=?", a.SourceApp, a.ExternalRef).Scan(&a.ID, &a.Revision)
+		err := tx.QueryRowContext(ctx, "SELECT id,revision,deleted FROM activities WHERE source_app=? AND external_ref=?", a.SourceApp, a.ExternalRef).Scan(&a.ID, &a.Revision, &a.Deleted)
 		if err == nil {
 			existing = true
 		} else if err != sql.ErrNoRows {

@@ -1,45 +1,45 @@
- TideContacts / Projects  |  local · phase 3                                                                                                                    
-┌──────────────────────────────────────────────────────────────┐┌──────────────────────────────────────────────────────────┐┌──────────────────────────────────┐
-│  Projects 1/1                                                ││> Overview · Harbor 界 redesign with a very long name that││  Context                         │
-│/                                                             ││active · priority none                                    ││Views  [ / ]                      │
-│─ Active ───────────────────────────────────────────────────  ││Start — · target 2026-11-01 (12d overdue)                 ││> Overview                        │
-│> Harbor 界 redesign with a very long  40 open · 12d overdue  ││Tasks      ░░░░░░░░░░░░░░░░ 0/40                          ││  People                          │
-│                                                              ││Milestones ░░░░░░░░░░░░░░░░ 0/1                           ││  Tasks                           │
-│                                                              ││─ People and organizations ─────────────────────────────  ││  Timeline                        │
-│                                                              ││  who Alex Rivera                                         ││  Milestones                      │
-│                                                              ││─ Latest activity ──────────────────────────────────────  ││  Notes                           │
-│                                                              ││> 11-13 mail Activity 00                                  ││                                  │
-│                                                              ││  11-13 call Activity 01                                  ││n new · e edit                    │
-│                                                              ││  11-12 mtg Activity 02                                   ││T task · A log · M milestone      │
-│                                                              ││                                                          ││L link people · x unlink          │
-│                                                              ││Created 2026-11-13 12:00 UTC · updated 2026-11-13 12:00   ││</> status · a archive            │
-│                                                              ││UTC                                                       ││s status filter                   │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││Showing: current                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-│                                                              ││                                                          ││                                  │
-└──────────────────────────────────────────────────────────────┘└──────────────────────────────────────────────────────────┘└──────────────────────────────────┘
- PROJECTS / Overview                                                                                                        n new  / filter  : commands  ? help 
+ TideContacts / Projects  |  local                                                                                                                              
+┌───────────────────────────────────┐┌──────────────────────────────────────────────┐┌─────────────────────────────────────────────────────────────────────────┐
+│  Menu                             ││  Projects 1/1                                ││> Overview · Harbor 界 redesign with a very long name that must be clippe│
+│  People                       1   ││/                                             ││active · priority none                                                   │
+│  Organizations                2   ││─ Active ───────────────────────────────────  ││Start — · target 2026-11-01 (12d overdue)                                │
+│  Relationships                3   ││> Harbor 界 redesign w 40 open · 12d overdue  ││Tasks      ░░░░░░░░░░░░░░░░ 0/40                                         │
+│  Activities                   4   ││                                              ││Milestones ░░░░░░░░░░░░░░░░ 0/1                                          │
+│  Tasks                        5   ││                                              ││─ People and organizations ────────────────────────────────────────────  │
+│> Projects                     6   ││                                              ││  who Alex Rivera                                                        │
+│  Pipelines                    7   ││                                              ││─ Latest activity ─────────────────────────────────────────────────────  │
+│  Insights                     8   ││                                              ││> 11-13 mail Activity 00                                                 │
+│                                   ││                                              ││  11-13 call Activity 01                                                 │
+│Actions                            ││                                              ││  11-12 mtg Activity 02                                                  │
+│  New project                      ││                                              ││                                                                         │
+│  Themes                           ││                                              ││Created 2026-11-13 12:00 UTC · updated 2026-11-13 12:00 UTC              │
+│  All actions                  :   ││                                              ││                                                                         │
+│  Help                         ?   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+│                                   ││                                              ││                                                                         │
+└───────────────────────────────────┘└──────────────────────────────────────────────┘└─────────────────────────────────────────────────────────────────────────┘
+ PROJECTS / Overview                                                                                           n new  / filter  : commands  ? help  ctrl+g Menu 

@@ -1,4 +1,4 @@
- TideContacts / Projects  |  local · phase 3                                                                  
+ TideContacts / Projects  |  local                                                                            
 ┌──────────────────────────────────────────┐┌────────────────────────────────────────────────────────────────┐
 │  Projects 1/1                            ││> Overview · Harbor 界 redesign with a very long name that must │
 │/                                         ││active · priority none                                          │
@@ -29,4 +29,4 @@
 │                                          ││                                                                │
 │                                          ││                                                                │
 └──────────────────────────────────────────┘└────────────────────────────────────────────────────────────────┘
- PROJECTS / Overview                                                      n new  / filter  : commands  ? help 
+ PROJECTS / Overview                                         n new  / filter  : commands  ? help  ctrl+g Menu 

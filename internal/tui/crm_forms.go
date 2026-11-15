@@ -26,14 +26,17 @@ type crmPrompt struct {
 
 // crmPicker is a filterable list overlay for choosing a record or an option.
 type crmPicker struct {
-	title, hint string
-	input       textinput.Model
-	source      string       // entity, project, or empty for the static options
-	static      []domain.Ref // options when source is empty
-	options     []domain.Ref
-	selected    int
-	seq         uint64
-	choose      func(m *Model, ref domain.Ref) tea.Cmd
+	preview       func(*Model, domain.Ref)
+	cancel        func(*Model)
+	originalTheme string
+	title, hint   string
+	input         textinput.Model
+	source        string       // entity, project, or empty for the static options
+	static        []domain.Ref // options when source is empty
+	options       []domain.Ref
+	selected      int
+	seq           uint64
+	choose        func(m *Model, ref domain.Ref) tea.Cmd
 }
 
 type crmConfirm struct {
@@ -80,6 +83,9 @@ func (m *Model) pickerSearch() tea.Cmd {
 			}
 		}
 		p.selected = min(p.selected, max(0, len(p.options)-1))
+		if p.preview != nil && len(p.options) > 0 {
+			p.preview(m, p.options[p.selected])
+		}
 		return nil
 	}
 	return func() tea.Msg {
@@ -148,13 +154,22 @@ func (m Model) updateOverlay(k tea.KeyMsg) (Model, tea.Cmd) {
 		p := c.picker
 		switch key {
 		case "esc":
+			if p.cancel != nil {
+				p.cancel(&m)
+			}
 			c.picker = nil
 			return m, nil
 		case "down", "ctrl+n":
 			p.selected = min(p.selected+1, max(0, len(p.options)-1))
+			if p.preview != nil && len(p.options) > 0 {
+				p.preview(&m, p.options[p.selected])
+			}
 			return m, nil
 		case "up", "ctrl+p":
 			p.selected = max(0, p.selected-1)
+			if p.preview != nil && len(p.options) > 0 {
+				p.preview(&m, p.options[p.selected])
+			}
 			return m, nil
 		case "enter":
 			if len(p.options) == 0 {

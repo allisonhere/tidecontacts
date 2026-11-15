@@ -7,6 +7,8 @@ import (
 	"flag"
 	"fmt"
 	"github.com/allisonhere/tidecontacts/internal/config"
+	"github.com/allisonhere/tidecontacts/internal/connector/tidemail"
+	"github.com/allisonhere/tidecontacts/internal/demo"
 	"github.com/allisonhere/tidecontacts/internal/diagnostics"
 	"github.com/allisonhere/tidecontacts/internal/domain"
 	"github.com/allisonhere/tidecontacts/internal/storage/sqlite"
@@ -33,13 +35,17 @@ func main() {
 	}
 }
 func run() (result error) {
+	demoMode := flag.Bool("demo", false, "open isolated fictional demo data")
+	demoReset := flag.Bool("demo-reset", false, "reset and open the demo profile")
+	syncMail := flag.String("sync-tidemail", "", "import email activity from an absolute TideMail cache path (read-only)")
+	mailStatus := flag.Bool("tidemail-status", false, "show the last successful TideMail sync")
 	check := flag.Bool("check", false, "initialize and check configuration/database without a terminal")
 	version := flag.Bool("version", false, "show version")
 	due := flag.Bool("due", false, "print reminders, follow-ups and commitments that are due, then exit (status 3 when something is due)")
 	notify := flag.Bool("notify", false, "send each newly due reminder to the desktop notification service once, then exit")
 	flag.Parse()
 	if *version {
-		fmt.Println("tidecontacts phase3")
+		fmt.Println("tidecontacts phase4")
 		return nil
 	}
 	if flag.NArg() > 0 {
@@ -48,6 +54,43 @@ func run() (result error) {
 	paths, err := config.Resolve()
 	if err != nil {
 		return err
+	}
+	if *demoMode || *demoReset {
+		if *syncMail != "" || *notify {
+			return fmt.Errorf("live sync and notifications are disabled in demo mode")
+		}
+		if *demoReset {
+			if err := demo.Reset(paths); err != nil {
+				return err
+			}
+		}
+		paths = demo.Paths(paths)
+	}
+	if *syncMail != "" || *mailStatus {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		defer cancel()
+		store, e := sqlite.Open(ctx, paths.Database)
+		if e != nil {
+			return e
+		}
+		defer store.Close()
+		if *syncMail != "" {
+			result, e := tidemail.Sync(ctx, *syncMail, store)
+			if e != nil {
+				return e
+			}
+			fmt.Printf("TideMail: imported/updated %d, skipped %d; last synced %s\n", result.Imported, result.Skipped, result.LastSynced)
+			return nil
+		}
+		last, e := store.Get(ctx, "tidemail-last-synced")
+		if e != nil {
+			return e
+		}
+		if last == "" {
+			last = "never"
+		}
+		fmt.Println("TideMail last synced:", last)
+		return nil
 	}
 	interactive := term.IsTerminal(int(os.Stdin.Fd())) && term.IsTerminal(int(os.Stdout.Fd())) && os.Getenv("TERM") != "dumb" && os.Getenv("TERM") != ""
 	if *due || *notify {
@@ -72,6 +115,7 @@ func run() (result error) {
 		if e != nil {
 			return tui.Ready{Err: e}
 		}
+		c.Demo = *demoMode || *demoReset
 		logger, logFile, e = diagnostics.Open(paths.Log, c.LogLevel)
 		if e != nil {
 			return tui.Ready{Err: e}
@@ -80,6 +124,11 @@ func run() (result error) {
 		store, e = sqlite.Open(ctx, paths.Database)
 		if e != nil {
 			return tui.Ready{Err: e}
+		}
+		if c.Demo {
+			if e := demo.Seed(ctx, store); e != nil {
+				return tui.Ready{Err: e}
+			}
 		}
 		raw, e := store.Get(ctx, "pane-widths")
 		if e != nil {
@@ -91,6 +140,9 @@ func run() (result error) {
 				return tui.Ready{Err: fmt.Errorf("invalid saved layout: %w", e)}
 			}
 			c.Layout.Left, c.Layout.Right = p.Left, p.Right
+			if p.Theme != "" && config.ValidTheme(p.Theme) {
+				c.Theme = p.Theme
+			}
 			if e = c.Validate(); e != nil {
 				return tui.Ready{Err: e}
 			}

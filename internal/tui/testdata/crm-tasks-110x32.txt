@@ -1,4 +1,4 @@
- TideContacts / Tasks  |  local · phase 3                                                                     
+ TideContacts / Tasks  |  local                                                                               
 ┌──────────────────────────────────────────┐┌────────────────────────────────────────────────────────────────┐
 │  Tasks · Today 4/13                      ││> Task 03 👩‍💻 xxxxxxxxx                                          │
 │/                                         ││[w] waiting · priority high                                     │
@@ -29,4 +29,4 @@
 │                                          ││                                                                │
 │                                          ││                                                                │
 └──────────────────────────────────────────┘└────────────────────────────────────────────────────────────────┘
- TASKS / Today                                                            n new  / filter  : commands  ? help 
+ TASKS / Today                                               n new  / filter  : commands  ? help  ctrl+g Menu 

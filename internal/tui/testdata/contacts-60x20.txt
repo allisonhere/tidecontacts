@@ -1,4 +1,4 @@
- TideContacts / People  |  local · phase 3                  
+ TideContacts / People  |  local                            
   People 1/1        > Overview            Context           
 Renée Rivera                                                
                                                             
@@ -17,4 +17,4 @@ UUID: 00000000-0000-0000-0000-000000000000
                                                             
                                                             
                                                             
- CONTACTS / Overview    n new  e edit  / search  : commands 
+ CONTACTS / Overview  n new  e edit  / search  : commands   

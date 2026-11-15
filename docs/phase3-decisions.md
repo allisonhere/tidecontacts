@@ -75,7 +75,7 @@ These are single measurements on one machine, not guarantees. The test fails if 
 
 ## Known limitations
 
-- **No connector ships.** The import interface for external activities exists and is tested, but nothing calls it from TideMail or anywhere else, and there is no file import for activities or tasks.
+- **Historical Phase 3 limitation:** no connector shipped then. Phase 4 adds a read-only TideMail cache connector; see the README.
 - **Export/import of CRM records was added after Phase 3 was first reported** (see `export-import.md`). iCalendar is export-only, and an import timestamps created/updated with the import time.
 - **Restore** works for tasks, activities, projects and pipeline items via `is:deleted`; session undo (`u`) still covers contacts only, and reminders dismissed by a task deletion are not revived.
 - **Reminders while closed** depend entirely on a scheduler you set up. `--notify` supports Linux (`notify-send`) and macOS (`osascript`); it was checked by hand on Linux with a stand-in `notify-send` (one notification across two runs), the macOS path is untested, and only `--due` is covered by an automated smoke test. Windows has `--due` only.

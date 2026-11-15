@@ -1,4 +1,4 @@
- TideContacts / Activities  |  local · phase 3                                                                
+ TideContacts / Activities  |  local                                                                          
 ┌──────────────────────────────────────────┐┌────────────────────────────────────────────────────────────────┐
 │  Activities · All 4/40                   ││> Activity 03                                                   │
 │/                                         ││conversation · Thu 2026-11-12 15:00 UTC                         │
@@ -29,4 +29,4 @@
 │  06:00 msg Activity 18 · Alex Rivera, S  ││                                                                │
 │                                          ││                                                                │
 └──────────────────────────────────────────┘└────────────────────────────────────────────────────────────────┘
- ACTIVITIES / All                                                         n new  / filter  : commands  ? help 
+ ACTIVITIES / All                                            n new  / filter  : commands  ? help  ctrl+g Menu 

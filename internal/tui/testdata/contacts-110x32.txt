@@ -1,4 +1,4 @@
- TideContacts / People  |  local · phase 3                                                                    
+ TideContacts / People  |  local                                                                              
 ┌───────────────────────┐┌───────────────────────────────────────────────────────────────────────────────────┐
 │  People 1/1           ││> Overview                                                                         │
 │/                      ││Renée Rivera                                                                       │
@@ -29,4 +29,4 @@
 │                       ││                                                                                   │
 │                       ││                                                                                   │
 └───────────────────────┘└───────────────────────────────────────────────────────────────────────────────────┘
- CONTACTS / Overview                                                      n new  e edit  / search  : commands 
+ CONTACTS / Overview                                         n new  e edit  / search  : commands  ctrl+g Menu 

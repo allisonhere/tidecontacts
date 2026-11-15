@@ -1,4 +1,4 @@
- TideContacts / Insights  |  local · phase 3                                                                  
+ TideContacts / Insights  |  local                                                                            
 ┌──────────────────────────────────────────┐┌────────────────────────────────────────────────────────────────┐
 │  Insights · Inbox 4/22                   ││> Task 03 👩‍💻 xxxxxxxxx                                          │
 │/                                         ││Overdue commitment                                              │
@@ -29,4 +29,4 @@
 │  new Task 36 👩‍💻 xxxxxx Unprocessed task  ││                                                                │
 │                                          ││                                                                │
 └──────────────────────────────────────────┘└────────────────────────────────────────────────────────────────┘
- INSIGHTS / Inbox                                                         n new  / filter  : commands  ? help 
+ INSIGHTS / Inbox                                            n new  / filter  : commands  ? help  ctrl+g Menu 

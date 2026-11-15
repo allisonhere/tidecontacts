@@ -1,4 +1,4 @@
- TideContacts / Tasks  |  local · phase 3                   
+ TideContacts / Tasks  |  local                             
   Tasks · Today 8/13> Task 07 👩‍💻 xxxxxxx  Context           
 [w] waiting · priority high                                 
 Due 2026-11-08  (5d overdue)                                
@@ -17,4 +17,4 @@ UTC
                                                             
                                                             
                                                             
- TASKS / Today          n new  / filter  : commands  ? help 
+ TASKS / Today  n new  / filter  : commands  ? help  ctrl+g 

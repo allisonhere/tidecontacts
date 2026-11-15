@@ -1,4 +1,4 @@
- TideContacts / Activities  |  local · phase 3              
+ TideContacts / Activities  |  local                        
   Activities · All 8> Activity 07         Context           
 email · Wed 2026-11-11 11:00 UTC                            
 Recorded here · private                                     
@@ -17,4 +17,4 @@ UTC
                                                             
                                                             
                                                             
- ACTIVITIES / All       n new  / filter  : commands  ? help 
+ ACTIVITIES / All  n new  / filter  : commands  ? help  ctr 

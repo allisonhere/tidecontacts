@@ -3,7 +3,7 @@ package tui
 import "github.com/allisonhere/tideui"
 
 func resolveTheme(name string) tideui.Theme {
-	t, _ := tideui.ThemeByName("catppuccin-mocha")
+	t, _ := tideui.ThemeByName(name)
 	if name == "light" {
 		t, _ = tideui.ThemeByName("catppuccin-latte")
 	}
@@ -11,4 +11,12 @@ func resolveTheme(name string) tideui.Theme {
 		t = tideui.Theme{Name: "contrast", Bg: "#000000", Fg: "#ffffff", Border: "#aaaaaa", BorderFocus: "#ffff00", Selected: "#555555", Unread: "#ffffff", Dimmed: "#cccccc", StatusBar: "#000000", StatusFg: "#ffffff", Error: "#ff7777", Overlay: "#000000", OverlayBorder: "#ffff00", Warning: "#ffff00", Success: "#88ff88"}
 	}
 	return t
+}
+
+func (m Model) theme() tideui.Theme {
+	name := m.cfg.Theme
+	if name == "match-tidemail" {
+		name = m.cfg.TideMailThemeName
+	}
+	return resolveTheme(name)
 }
