@@ -58,7 +58,11 @@ func attachActivityLinks(ctx context.Context, q querier, list []domain.Activity,
 // Activities returns one bounded page; callers page with Before rather than loading a history.
 func (s *Store) Activities(ctx context.Context, f ActivityFilter) ([]domain.Activity, error) {
 	w := where{}
-	w.add("a.deleted=0")
+	deleted := false
+	for _, flt := range f.Query.Filters {
+		deleted = deleted || flt.Key == "is" && strings.EqualFold(flt.Value, "deleted")
+	}
+	w.add("a.deleted=?", deleted)
 	today := s.today()
 	loc := s.now().Location()
 	dayStart := func(word string, plus int) (string, error) {
@@ -306,5 +310,29 @@ func (s *Store) DeleteActivity(ctx context.Context, id string) error {
 			return e
 		}
 		return reindexRecord(ctx, tx, "activity", id)
+	})
+}
+
+// Restore brings a tombstoned task, activity, project or pipeline item back. It is
+// idempotent. Reminders that were dismissed when a task was deleted stay dismissed,
+// and a pipeline item can only return to a stage that still exists.
+func (s *Store) Restore(ctx context.Context, kind, id string) error {
+	table := map[string]string{"task": "tasks", "activity": "activities", "project": "projects", "item": "pipeline_items"}[kind]
+	if table == "" {
+		return fmt.Errorf("only tasks, activities, projects and pipeline items can be restored")
+	}
+	return s.write(ctx, func(tx *sql.Tx) error {
+		r, e := tx.ExecContext(ctx, "UPDATE "+table+" SET deleted=0,updated_at=?,revision=revision+1 WHERE id=? AND deleted=1", stamp(s.now()), id)
+		if e != nil {
+			return e
+		}
+		if n, _ := r.RowsAffected(); n == 0 {
+			var exists int
+			if e = tx.QueryRowContext(ctx, "SELECT count(*) FROM "+table+" WHERE id=?", id).Scan(&exists); e != nil || exists == 0 {
+				return fmt.Errorf("that %s no longer exists", kind)
+			}
+			return nil // already restored
+		}
+		return reindexRecord(ctx, tx, kind, id)
 	})
 }

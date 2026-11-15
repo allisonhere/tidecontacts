@@ -66,7 +66,7 @@ var Scopes = map[string]map[string]func(string) error{
 	"task": {
 		"tag": anyText, "org": anyText, "project": anyText, "with": anyText,
 		"status": oneOf(domain.TaskStatuses...),
-		"is":     oneOf("open", "done", "overdue", "today", "recurring", "waiting", "archived", "snoozed", "unlinked"),
+		"is":     oneOf("open", "done", "overdue", "today", "recurring", "waiting", "archived", "snoozed", "unlinked", "deleted"),
 		"due":    dateWord("overdue", "none", "any"),
 		"pri":    oneOf(domain.Priorities...),
 	},
@@ -74,16 +74,17 @@ var Scopes = map[string]map[string]func(string) error{
 		"tag": anyText, "org": anyText, "project": anyText, "with": anyText, "type": anyText, "app": anyText,
 		"after": dateWord(), "before": dateWord(), "on": dateWord(),
 		"source": oneOf(domain.Local, domain.Imported, domain.External),
+		"is":     oneOf("deleted"),
 	},
 	"project": {
 		"tag": anyText, "org": anyText, "with": anyText,
 		"status": oneOf(domain.ProjectStatuses...),
-		"is":     oneOf("open", "overdue", "waiting", "archived"),
+		"is":     oneOf("open", "overdue", "waiting", "archived", "deleted"),
 		"pri":    oneOf(domain.Priorities...),
 	},
 	"item": {
 		"tag": anyText, "org": anyText, "project": anyText, "with": anyText, "pipeline": anyText, "stage": anyText,
-		"is": oneOf("archived", "open"),
+		"is": oneOf("archived", "open", "deleted"),
 	},
 }
 

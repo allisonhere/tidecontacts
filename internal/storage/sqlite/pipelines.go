@@ -178,7 +178,11 @@ func attachItemLinks(ctx context.Context, q querier, list []domain.PipelineItem,
 // Items lists pipeline items oldest-in-stage first. pipelineID may be empty to search every pipeline.
 func (s *Store) Items(ctx context.Context, pipelineID string, q search.Query) ([]domain.PipelineItem, error) {
 	w := where{}
-	w.add("i.deleted=0")
+	deleted := false
+	for _, f := range q.Filters {
+		deleted = deleted || f.Key == "is" && strings.EqualFold(f.Value, "deleted")
+	}
+	w.add("i.deleted=?", deleted)
 	if pipelineID != "" {
 		w.add("i.pipeline_id=?", pipelineID)
 	}
@@ -190,12 +194,12 @@ func (s *Store) Items(ctx context.Context, pipelineID string, q search.Query) ([
 		case "stage":
 			w.add("instr(lower(g.name),lower(?))>0", f.Value)
 		case "is":
-			archived = strings.EqualFold(f.Value, "archived")
+			archived = archived || strings.EqualFold(f.Value, "archived")
 		}
 	}
 	if archived {
 		w.add("i.archived=1")
-	} else {
+	} else if !deleted {
 		w.add("i.archived=0")
 	}
 	w.linked(q, "item", "i")

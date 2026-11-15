@@ -57,7 +57,8 @@ Derived views are computed, not stored: follow-up due dates, the People Inbox, R
 | `crm.go` | CRM state, async list/detail loading with sequence numbers, back-navigation stack, message handling |
 | `crm_actions.go` | Contextual commands dispatched from the shared registry |
 | `crm_records.go` | Record forms and quick-capture prompts |
-| `crm_forms.go` | Prompt, picker, confirmation and full-screen form components |
+| `crm_forms.go` | Prompt, picker, confirmation and record-form modals |
+| `softform.go` | Shared modal renderer (rail, label column, filled fields, ‹› choices, status line, hints) used by every modal, including the contact editor |
 | `crm_rows.go` | Pure builders from domain values to list and detail rows |
 | `crm_view.go` | Pane rendering, virtualized windows, the pipeline board |
 | `multiline.go` | The single adapter around Ripple, used by the contact editor and every CRM form |

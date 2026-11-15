@@ -361,12 +361,6 @@ func (m Model) hint(id string) string {
 	return ": commands"
 }
 func (m Model) View() string {
-	if m.contacts.editor != nil {
-		return m.editorView()
-	}
-	if m.crm.form != nil {
-		return m.formView()
-	}
 	if m.contacts.transfer != nil {
 		return m.transferView()
 	}
@@ -478,6 +472,9 @@ func (m Model) View() string {
 	}
 	if m.crm.due > 0 && m.crm.err == "" {
 		hints = fmt.Sprintf("%d reminder(s) due  ", m.crm.due) + hints
+	}
+	if m.contacts.editor != nil || m.crm.form != nil {
+		status, hints = "EDITING", ""
 	}
 	if m.crm.prompt != nil || m.crm.picker != nil || m.crm.confirm != nil {
 		status, hints = "INPUT", "enter accept  esc cancel"

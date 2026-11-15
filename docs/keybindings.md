@@ -62,7 +62,7 @@ The palette also exposes restore, export-all, export-marked/selected, density an
 
 Pipelines board: ←/→ or h/l change stage, ↑/↓ or j/k change item, `>`/`<` move the item, Enter opens it. See [projects and pipelines](projects-pipelines.md).
 
-Palette-only commands: Log meeting, Log call, Add note, New project, Open project…, New pipeline, New pipeline item, Rename pipeline / edit stages, Archive or unarchive pipeline, Move pipeline up/down, Move item to stage…, Add / Rename / Remove / Reorder pipeline stage, Explore relationships of selected contact, Edit relationship notes, Review People Inbox, Open Relationship Radar, Relationship Radar settings, Open smart collections, Open reminders, Open follow-up schedules, Merge marked contact into selected contact.
+Palette-only commands: Log meeting, Log call, Add note, New project, Open project…, New pipeline, New pipeline item, Rename pipeline / edit stages, Archive or unarchive pipeline, Move pipeline up/down, Move item to stage…, Add / Rename / Remove / Reorder pipeline stage, Explore relationships of selected contact, Edit relationship notes, Review People Inbox, Open Relationship Radar, Relationship Radar settings, Open smart collections, Open reminders, Open follow-up schedules, Merge marked contact into selected contact, Export CRM records (JSON), Export tasks and reminders (iCalendar), Import CRM records (JSON), Restore archived/deleted contact (also restores deleted tasks, activities, projects and pipeline items shown by `is:deleted`).
 
 ### Prompts, pickers and forms
 
@@ -71,17 +71,17 @@ Palette-only commands: Log meeting, Log call, Add note, New project, Open projec
 | Quick-capture prompt | Type, Enter accepts, Esc cancels. Errors keep the prompt open |
 | Picker | Type to search, Up/Down (or Ctrl+P/Ctrl+N) select, Enter chooses, Esc cancels |
 | Confirmation | y confirms, n or Esc cancels |
-| Record form | Tab/Shift+Tab or Up/Down move between fields, Left/Right/Space change a choice, F2 or Ctrl+S saves, Esc cancels (asks before discarding changes) |
+| Record form (modal) | Tab/Shift+Tab or Up/Down move between fields, Left/Right/Space change a choice, Enter, F2 or Ctrl+S saves (Ctrl+S in a multi-line field, where Enter is a newline), Esc cancels (asks before discarding changes) |
 | Multi-line field in a form | Same editor as contact notes; Tab leaves it |
 
-## Full-screen editor
+## Contact editor (modal)
 
 | Keys | Action |
 |---|---|
 | F5 / F6 | Previous/next section |
 | Tab / Shift+Tab | Previous/next field; switch Notes/Biography when editing multiline text |
 | Ctrl+N / Ctrl+D | Add/remove a method, membership, custom field or relationship |
-| F2 / Ctrl+S | Validate and atomically save |
+| Enter / F2 / Ctrl+S | Validate and atomically save (in Notes and Biography, Enter is a newline: use Ctrl+S) |
 | Esc | Cancel; confirm discard if modified |
 | Ctrl+C | Exit; confirm discard if modified |
 
@@ -106,6 +106,6 @@ context = ["q"]
 new-contact = ["N"]
 ```
 
-Phase 3 IDs: task-new, activity-log, complete, reopen, snooze, reschedule, priority, stage-next, stage-previous, link, convert-task, followup-schedule, flag, duplicate, dismiss, reviewed, open-external, milestone-add, collection-save, date-add, relationship-add, reminder-add, meeting-log, call-log, note-add, project-new, project-open, item-new, pipeline-new, pipeline-edit, pipeline-archive, pipeline-move, pipeline-up, pipeline-down, stage-add, stage-rename, stage-remove, stage-left, stage-right, relationship-open, relationship-notes, inbox-review, radar-open, radar-settings, collections-open, reminders-open, followups-open, merge-contacts.
+Phase 3 IDs: task-new, activity-log, complete, reopen, snooze, reschedule, priority, stage-next, stage-previous, link, convert-task, followup-schedule, flag, duplicate, dismiss, reviewed, open-external, milestone-add, collection-save, date-add, relationship-add, reminder-add, meeting-log, call-log, note-add, project-new, project-open, item-new, pipeline-new, pipeline-edit, pipeline-archive, pipeline-move, pipeline-up, pipeline-down, stage-add, stage-rename, stage-remove, stage-left, stage-right, relationship-open, relationship-notes, inbox-review, radar-open, radar-settings, collections-open, reminders-open, followups-open, merge-contacts, crm-export, crm-export-calendar, crm-import. `restore` now also restores deleted CRM records.
 
 Phase 3 default keys are soft: if your existing `[keybindings]` already gives one of them to another command (for example `quit = ["x"]`), your binding wins, the Phase 3 command keeps working from the palette, and you can give it a different key. Two explicit bindings for the same key are still an error.

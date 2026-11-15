@@ -769,3 +769,130 @@ func TestListQueriesStayFastAtScale(t *testing.T) {
 		t.Fatal("expected a large list", len(m.list().rows))
 	}
 }
+
+func dispatchID(m Model, id string) Model {
+	n, cmd := m.dispatch(id)
+	return deliver(n.(Model), cmd)
+}
+
+func TestRestoreDeletedRecordsFromTheTUI(t *testing.T) {
+	m, s := crmApp(t, 120, 36)
+	ctx := context.Background()
+	seedPeople(t, s)
+	m = do(m, "5", "n", "Plan offsite due:today", "enter")
+	task, ok := m.listRow()
+	if !ok || task.text != "Plan offsite" {
+		t.Fatal(m.crm.err)
+	}
+	m = do(m, "D")
+	if m.crm.confirm == nil || !strings.Contains(m.crm.confirm.text, "is:deleted") {
+		t.Fatal("delete confirmation should say how to get the record back")
+	}
+	m = do(m, "y")
+	if _, ok = m.listRow(); ok {
+		t.Fatal("deleted task still listed")
+	}
+	// Restore on a live record explains itself and changes nothing.
+	m = do(m, "]", "]", "]", "/", "is:deleted")
+	m, cmd := press(m, tea.KeyEnter)
+	m = deliver(m, cmd)
+	row, ok := m.listRow()
+	if !ok || row.id != task.id {
+		t.Fatal("deleted task not found with is:deleted", m.crm.err)
+	}
+	m = dispatchID(m, "restore")
+	if got, _ := s.Task(ctx, task.id); got.Deleted || !strings.Contains(m.feedback, "Restored") {
+		t.Fatalf("not restored: %+v %q", got, m.feedback)
+	}
+	// Restoring again (nothing selected now) is harmless: the task stays live.
+	m = dispatchID(m, "restore")
+	if got, _ := s.Task(ctx, task.id); got.Deleted || m.crm.err != "" {
+		t.Fatal("second restore changed state", m.crm.err)
+	}
+	m = do(m, "/")
+	for i := 0; i < 12; i++ {
+		m, cmd = press(m, tea.KeyBackspace)
+		m = deliver(m, cmd)
+	}
+	m, cmd = press(m, tea.KeyEnter)
+	m = deliver(m, cmd)
+	if row, ok = m.listRow(); !ok || row.text != "Plan offsite" {
+		t.Fatal("restored task not back in the normal list")
+	}
+}
+
+func TestCRMExportAndImportThroughTheTUI(t *testing.T) {
+	m, s := crmApp(t, 120, 36)
+	ctx := context.Background()
+	alex, _ := seedPeople(t, s)
+	m = do(m, "5", "n", `Send deck with:"Alex Rivera" due:fri every:week`, "enter")
+	m = do(m, "A", "Intro call type:call", "enter")
+	m = do(m, "b", "Stretch at:11:00", "enter")
+	dir := t.TempDir()
+	jsonPath, icsPath := filepath.Join(dir, "crm.json"), filepath.Join(dir, "tasks.ics")
+
+	m = do(m, ":", "export crm", "enter")
+	if m.crm.prompt == nil {
+		t.Fatal("no export prompt")
+	}
+	m = do(m, filepath.Join(dir, "crm.txt"), "enter")
+	if m.crm.prompt == nil || !strings.Contains(m.crm.prompt.err, ".json") {
+		t.Fatal("wrong extension accepted")
+	}
+	for i := 0; i < len(filepath.Join(dir, "crm.txt")); i++ {
+		m, _ = press(m, tea.KeyBackspace)
+	}
+	m = do(m, jsonPath, "enter")
+	data, e := os.ReadFile(jsonPath)
+	if e != nil || !strings.Contains(string(data), `"tidecontacts-crm"`) || !strings.Contains(string(data), "Send deck") || !strings.Contains(string(data), "Intro call") {
+		t.Fatalf("%q %v", m.crm.err, e)
+	}
+	// An existing file is never replaced.
+	m = do(m, ":", "export crm", "enter", jsonPath, "enter")
+	if m.crm.err == "" || !strings.Contains(m.crm.err, "must not exist") {
+		t.Fatal("overwrote or silently ignored an existing export", m.crm.err)
+	}
+	if again, _ := os.ReadFile(jsonPath); string(again) != string(data) {
+		t.Fatal("existing export was modified")
+	}
+	m.crm.err = ""
+	m = do(m, ":", "export tasks and reminders", "enter", icsPath, "enter")
+	ics, e := os.ReadFile(icsPath)
+	if e != nil || !strings.Contains(string(ics), "BEGIN:VTODO") || !strings.Contains(string(ics), "RRULE:FREQ=WEEKLY") || !strings.Contains(string(ics), "BEGIN:VALARM") {
+		t.Fatalf("%q %v", m.crm.err, e)
+	}
+
+	// Import into a different database that has the same contact.
+	n, s2 := crmApp(t, 120, 36)
+	c2 := alex
+	c2.Revision, c2.Memberships, c2.Relationships = 0, nil, nil
+	if _, e = s2.SaveContacts(ctx, []domain.Contact{c2}, "create"); e != nil {
+		t.Fatal(e)
+	}
+	n = do(n, "5", ":", "import crm", "enter", filepath.Join(dir, "missing.json"), "enter")
+	if n.crm.err == "" {
+		t.Fatal("missing file not reported")
+	}
+	n.crm.err = ""
+	n = do(n, ":", "import crm", "enter", jsonPath, "enter")
+	if n.crm.confirm == nil || !strings.Contains(n.crm.confirm.text, "1 activities, 1 tasks, 1 reminders") {
+		t.Fatalf("preview missing or wrong: %q %+v", n.crm.err, n.crm.confirm)
+	}
+	if got, _ := s2.Tasks(ctx, app.TaskFilter{}); len(got) != 0 {
+		t.Fatal("preview wrote records")
+	}
+	n = do(n, "n")
+	if got, _ := s2.Tasks(ctx, app.TaskFilter{}); len(got) != 0 || n.crm.confirm != nil {
+		t.Fatal("declined import wrote records")
+	}
+	n = do(n, ":", "import crm", "enter", jsonPath, "enter", "y")
+	got, _ := s2.Tasks(ctx, app.TaskFilter{})
+	if len(got) != 1 || got[0].Title != "Send deck" || len(got[0].Entities) != 1 || !strings.Contains(n.feedback, "Imported: ") {
+		t.Fatalf("%q %q %+v", n.crm.err, n.feedback, got)
+	}
+	// A second import skips everything.
+	n = do(n, ":", "import crm", "enter", jsonPath, "enter", "y")
+	if got, _ = s2.Tasks(ctx, app.TaskFilter{}); len(got) != 1 || !strings.Contains(n.feedback, "already present") {
+		t.Fatalf("%q %d", n.feedback, len(got))
+	}
+}

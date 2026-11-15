@@ -37,6 +37,10 @@ Ripple (already a Phase 2 dependency, same pinned revision) is used for every mu
 - **UI.** A single generic list/detail model serves six workspaces; rows are built off the UI loop and `View` only styles them. A navigation stack gives link following and Esc-back. CRM lists get a wider left pane than the contact list because their rows carry dates and people.
 - **Type and state indicators are text** (`[x]`, `mtg`, `late`, `!!!`), so they survive NO_COLOR and narrow fonts. Line-drawing characters are used for the relationship tree and the board rule.
 
+## Forms are modals
+
+Every editing surface is a soft-panel modal over the screen you were on, in TideMail's style: the contact editor, all record forms, quick-capture prompts, pickers and confirmations. One renderer (`internal/tui/softform.go`) draws a focus rail, a quiet label column, filled input cells, `‹›` choices, one status line and lowercase hints that drop their middle pairs when space runs out. Colours derive from the TideUI modal surface, so every theme works, and the rail marks focus without colour. Enter saves single-line fields, as in TideMail; F2 and Ctrl+S still work, and inside a multi-line field Enter is a newline, so use Ctrl+S there. The contact editor keeps its seven sections as a strip at the top of the modal. The multi-step import/export wizard is still full-screen. Bounds are tested in colour across themes and sizes, in addition to the plain-text bounds tests.
+
 ## Verification
 
 Run on the development machine (Go 1.27.4, Linux):
@@ -72,8 +76,8 @@ These are single measurements on one machine, not guarantees. The test fails if 
 ## Known limitations
 
 - **No connector ships.** The import interface for external activities exists and is tested, but nothing calls it from TideMail or anywhere else, and there is no file import for activities or tasks.
-- **CRM records are not exported.** CSV/vCard export still covers contacts only. The database file is the only complete backup.
-- **No in-app undelete** for tasks, activities, projects and pipeline items. Deletes are tombstones in the file, but only contacts have a restore command. Session undo (`u`) still covers contacts only.
+- **Export/import of CRM records was added after Phase 3 was first reported** (see `export-import.md`). iCalendar is export-only, and an import timestamps created/updated with the import time.
+- **Restore** works for tasks, activities, projects and pipeline items via `is:deleted`; session undo (`u`) still covers contacts only, and reminders dismissed by a task deletion are not revived.
 - **Reminders while closed** depend entirely on a scheduler you set up. `--notify` supports Linux (`notify-send`) and macOS (`osascript`); it was checked by hand on Linux with a stand-in `notify-send` (one notification across two runs), the macOS path is untested, and only `--due` is covered by an automated smoke test. Windows has `--due` only.
 - **Time zone** is the machine's local zone; there is no configuration setting to override it. A task can name its own zone for its due time. Reminder checks run once a minute while the app is open.
 - **Recurrence** covers daily, weekly (with weekdays), monthly (by day of month), yearly, intervals, `until`, a count, and after-completion. It does not cover "second Tuesday of the month", multiple times per day, or exceptions.
@@ -89,7 +93,8 @@ These are single measurements on one machine, not guarantees. The test fails if 
 
 ## Suggested starting point for Phase 4
 
+Export/import of CRM records and restore of deleted records are done (see `export-import.md`). What remains:
+
 1. **A TideMail connector** on top of `UpsertExternalActivity`: map Message-IDs to external references and addresses to contacts, read-only, opt-in, with a visible "last synced" state. The interface and its idempotency tests are already in place.
-2. **Export and import of CRM records** (JSON for a full round trip, iCalendar for tasks and reminders), which also gives `visibility` a purpose.
-3. **Undelete and durable undo** for CRM records, using the existing tombstones.
-4. Then smaller items: an ASCII glyph mode, a time-zone setting, richer recurrence, per-edge relationship dates.
+2. **Durable undo for CRM records**, and iCalendar import if you want two-way calendar use.
+3. Then smaller items: an ASCII glyph mode, a time-zone setting, richer recurrence, per-edge relationship dates.

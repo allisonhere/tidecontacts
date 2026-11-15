@@ -8,4 +8,6 @@ Verified by unit, integration and race tests (domain, storage, TUI workflows), g
 
 Carried over from Phase 2: normalized UUID people/organizations, methods, memberships, relationships, tags and custom fields, revisions, history, tombstones, undo, FTS5/fuzzy search, CSV/vCard import and export.
 
-Deferred: sync, a TideMail connector, plugins, AI, export of CRM records, in-app undelete for CRM records, ASCII-only glyph mode. Mouse support focuses panes only; theme/density changes are session-only; logs do not rotate.
+Also: JSON export/import and iCalendar export of CRM records, and restore of deleted tasks, activities, projects and pipeline items.
+
+Deferred: sync, a TideMail connector, plugins, AI, iCalendar import, ASCII-only glyph mode. Mouse support focuses panes only; theme/density changes are session-only; logs do not rotate.

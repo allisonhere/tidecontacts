@@ -90,7 +90,11 @@ func attachTaskLinks(ctx context.Context, q querier, list []domain.Task, full bo
 func (s *Store) taskWhere(f TaskFilter) (where, error) {
 	w := where{}
 	today := s.today()
-	w.add("t.deleted=0")
+	deleted := false
+	for _, flt := range f.Query.Filters {
+		deleted = deleted || flt.Key == "is" && strings.EqualFold(flt.Value, "deleted")
+	}
+	w.add("t.deleted=?", deleted)
 	open := "t.status NOT IN ('completed','canceled')"
 	awake := "(t.snoozed_until='' OR t.snoozed_until<=?)"
 	archived := false

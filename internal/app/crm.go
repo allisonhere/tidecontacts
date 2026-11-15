@@ -39,6 +39,8 @@ type CRM interface {
 	SaveActivity(context.Context, domain.Activity) (domain.Activity, error)
 	UpsertExternalActivity(ctx context.Context, a domain.Activity, emails []string) (domain.Activity, error)
 	DeleteActivity(context.Context, string) error
+	// Restore returns a deleted task, activity, project or pipeline item (kind: task, activity, project, item).
+	Restore(ctx context.Context, kind, id string) error
 
 	Tasks(context.Context, TaskFilter) ([]domain.Task, error)
 	Task(context.Context, string) (domain.Task, error)
@@ -84,6 +86,11 @@ type CRM interface {
 	Radar(context.Context, domain.RadarConfig) ([]domain.Signal, error)
 	RadarConfig(context.Context) (domain.RadarConfig, error)
 	SaveRadarConfig(context.Context, domain.RadarConfig) error
+
+	// ExportCRM snapshots every live non-contact CRM record; ImportCRM adds an archive
+	// without overwriting anything that already exists.
+	ExportCRM(context.Context) (domain.Archive, error)
+	ImportCRM(context.Context, domain.Archive) (domain.ImportReport, error)
 
 	Collections(context.Context) ([]domain.Collection, error)
 	SaveCollection(context.Context, domain.Collection) (domain.Collection, error)

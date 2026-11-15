@@ -19,9 +19,9 @@ go install ./cmd/tidecontacts
 
 ## First contact
 
-Start in People, press `n`, and enter a display name. Names are optional: a nickname, contact method or organization can supply the display identity. Press F2 to save.
+Start in People, press `n`, and enter a display name. Names are optional: a nickname, contact method or organization can supply the display identity. Press Enter (or F2) to save. The editor opens as a modal over the screen you were on.
 
-Use F5/F6 to move between editor sections: Identity, Methods, Organizations, Tags & fields, Relationships, Notes and Biography. Tab/Shift+Tab moves fields. Ctrl+N adds a repeated entry; Ctrl+D removes the current entry. F2/Ctrl+S saves the entire record atomically; Esc cancels and asks before discarding changes.
+Use F5/F6 to move between editor sections: Identity, Methods, Organizations, Tags & fields, Relationships, Notes and Biography. Tab/Shift+Tab moves fields. Ctrl+N adds a repeated entry; Ctrl+D removes the current entry. Enter, F2 or Ctrl+S saves the entire record atomically (in Notes and Biography Enter is a newline, so use Ctrl+S); Esc cancels and asks before discarding changes.
 
 In Methods, choose `email`, `phone`, `website`, `social`, `messaging` or `address`. Changing the kind to address exposes its postal components. Use `true`/`false` for flags. There can be one preferred method of each kind. In Organizations, an existing name/UUID selects an organization; a new name creates it in the same save transaction. Relationship targets must already exist or be included in the same import.
 
@@ -60,6 +60,10 @@ Everything here is local and works offline. Start with the [personal CRM guide](
 - **Relationships (3).** A text tree of who connects to whom through relationships, organizations and projects, with follow-up cadences, important dates and relationship notes.
 - **Insights (8).** The [People Inbox](docs/inbox.md) lists what needs attention and why, and dismissals stick until something changes. [Relationship Radar](docs/radar.md) shows deterministic, explainable signals — no scores, no AI. [Smart collections](docs/collections.md) are saved live filters.
 - **Contact dossier.** `[` from a profile's Overview shows follow-up, open tasks, commitments, projects, connections and dates; Enter follows any of them and Esc comes back to the same place.
+
+## Export, import and restore for CRM records
+
+`:` → **Export CRM records (JSON)** writes activities, tasks, reminders, projects, pipelines with items and history, follow-up schedules, dates, relationship notes and collections to a versioned file; **Export tasks and reminders (iCalendar)** writes `.ics` for other calendars; **Import CRM records (JSON)** previews the file, asks for confirmation and adds what is missing without overwriting anything. Files never replace an existing destination. Deleted tasks, activities, projects and pipeline items can be brought back: filter with `is:deleted` and run Restore. See [export and import](docs/export-import.md).
 
 ## Import and export
 
@@ -113,4 +117,4 @@ UPDATE_GOLDEN=1 go test ./internal/tui # intentionally regenerate reviewed frame
 
 See [architecture](docs/architecture.md), [keys](docs/keybindings.md), [search grammar](docs/search.md), the [CRM guide](docs/crm-guide.md) and [Phase 3 decisions](docs/phase3-decisions.md).
 
-Deferred: network sync, a TideMail connector (the idempotent import interface exists; no connector ships), executable plugins, AI, and file export of CRM records. See [Phase 3 decisions](docs/phase3-decisions.md) for known limitations.
+Deferred: network sync, a TideMail connector (the idempotent import interface exists; no connector ships), executable plugins and AI. See [Phase 3 decisions](docs/phase3-decisions.md) for known limitations.

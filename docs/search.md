@@ -63,6 +63,10 @@ Phase 3 uses this same lexer and AND-only grammar everywhere: People, Organizati
 
 `with:` and `org:` match names by substring (or an exact ID); `org:` also matches people who are members of that organization. `tag:` is an exact, case-insensitive tag. Dates are evaluated in your local calendar. Free words use FTS5 prefix matching over titles, text and linked names, plus a substring match on the title. Insights lists (Inbox, Radar, Collections, Reminders, Follow-ups) filter by plain words only.
 
+### Deleted records
+
+`is:deleted` lists tombstoned tasks, activities, projects and pipeline items (it replaces the normal live listing). Select one and run **Restore archived/deleted contact** from the palette. Deleted records are not searchable otherwise and are not exported.
+
 ### Quick capture
 
 Capture lines use the same tokens with assignment meaning: `with:` `org:` `project:` `tag:` `type:` `status:` `stage:` `pri:` `due:` `start:` `on:` `at:` `every:`. Unlike search, an unrecognized `word:` is kept as title text.

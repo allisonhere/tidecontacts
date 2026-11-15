@@ -9,6 +9,7 @@ import (
 	"github.com/atotto/clipboard"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
 	"reflect"
 	"strconv"
@@ -74,12 +75,9 @@ func (e *contactEditor) rebuild() {
 		identity = append(identity, "Website", "Industry")
 	}
 	for _, name := range identity {
-		label := name
-		if name == "Birthday" || name == "Anniversary" {
-			label += " (YYYY-MM-DD or --MM-DD)"
-		}
-		if name == "Aliases" {
-			label += " (comma-separated)"
+		label := map[string]string{"DisplayName": "Display name", "Given": "Given name", "Middle": "Middle name", "Family": "Family name", "Phonetic": "Pronunciation"}[name]
+		if label == "" {
+			label = name
 		}
 		e.add(0, -1, name, label)
 	}
@@ -89,23 +87,23 @@ func (e *contactEditor) rebuild() {
 			keys = append(keys, "Address.POBox", "Address.Extended", "Address.Street", "Address.City", "Address.Region", "Address.PostalCode", "Address.Country")
 		}
 		for _, name := range keys {
-			e.add(1, i, fmt.Sprintf("Methods.%d.%s", i, name), fmt.Sprintf("%d · %s", i+1, name))
+			e.add(1, i, fmt.Sprintf("Methods.%d.%s", i, name), entryLabel(i, name))
 		}
 	}
 	for i := range e.draft.Memberships {
 		for _, name := range []string{"Organization", "Title", "Department", "Start", "End", "Current"} {
-			e.add(2, i, fmt.Sprintf("Memberships.%d.%s", i, name), fmt.Sprintf("%d · %s", i+1, name))
+			e.add(2, i, fmt.Sprintf("Memberships.%d.%s", i, name), entryLabel(i, name))
 		}
 	}
 	e.add(3, -1, "Tags", "Tags (comma-separated)")
 	for i := range e.draft.Fields {
 		for _, name := range []string{"Name", "Type", "Value", "Options"} {
-			e.add(3, i, fmt.Sprintf("Fields.%d.%s", i, name), fmt.Sprintf("%d · %s", i+1, name))
+			e.add(3, i, fmt.Sprintf("Fields.%d.%s", i, name), entryLabel(i, name))
 		}
 	}
 	for i := range e.draft.Relationships {
 		for _, name := range []string{"TargetName", "Type", "Notes"} {
-			e.add(4, i, fmt.Sprintf("Relationships.%d.%s", i, name), fmt.Sprintf("%d · %s", i+1, name))
+			e.add(4, i, fmt.Sprintf("Relationships.%d.%s", i, name), entryLabel(i, name))
 		}
 	}
 	if e.section < 5 {
@@ -241,7 +239,7 @@ func (m Model) updateEditor(msg tea.Msg) (Model, tea.Cmd, bool) {
 		switch k.String() {
 		case "ctrl+c", "esc":
 			if e.dirty() {
-				e.confirm = "Discard unsaved changes? y discard / n continue"
+				e.confirm = "Discard unsaved changes?"
 				e.quit = k.String() == "ctrl+c"
 				return m, nil, true
 			}
@@ -250,6 +248,11 @@ func (m Model) updateEditor(msg tea.Msg) (Model, tea.Cmd, bool) {
 				return m, tea.Quit, true
 			}
 			return m, nil, true
+		case "enter":
+			if e.section >= 5 {
+				break // a newline in notes and biography
+			}
+			fallthrough
 		case "f2", "ctrl+s":
 			if err := e.flush(); err != nil {
 				e.err = err.Error()
@@ -391,72 +394,86 @@ func bounded(s string, width, height int) string {
 	}
 	return strings.Join(lines, "\n")
 }
-func (m Model) editorView() string {
-	if m.width <= 0 || m.height <= 0 {
-		return ""
-	}
+
+// editorPanel renders the contact editor as a modal: a section strip, the section's
+// fields as label/field rows, one status line and two quiet hint lines.
+func (m Model) editorPanel(u softUI) *tideui.Overlay {
 	e := m.contacts.editor
-	r := tideui.NewRenderer(resolveTheme(m.cfg.Theme), tideui.StyleOptions{Density: tideui.Compact})
-	width := max(1, m.width-4)
-	lines := []string{}
-	title := "New " + e.draft.Kind
+	title := "new " + e.draft.Kind
 	if e.original.Revision > 0 {
-		title = "Edit " + domain.SafeText(e.original.DisplayName)
+		title = "edit " + e.draft.Kind + " · " + domain.SafeText(e.original.DisplayName)
 	}
-	lines = append(lines, r.Styles.DetailTitle.Render(title+" / "+editorSections[e.section]), "F5/F6 sections · Tab fields · Ctrl+N add · Ctrl+D remove")
-	helpText := "Names are optional; provide any display identity."
+	helpText := "Names are optional. Aliases: comma-separated. Dates: YYYY-MM-DD or --MM-DD."
 	switch e.section {
 	case 1:
 		helpText = "Kinds: email, phone, website, social, messaging, address. Preferred: true/false."
 	case 2:
-		helpText = "Organization: existing name/UUID, or a new name to create on save."
+		helpText = "Organization: an existing name or UUID, or a new name to create on save."
 	case 3:
-		helpText = "Types: text, number, date, boolean, url, enum. Enum Options: comma-separated."
+		helpText = "Types: text, number, date, boolean, url, enum. Enum options: comma-separated."
 	case 4:
-		helpText = "Target: existing unique contact/organization name or UUID. Types may be custom."
+		helpText = "Target: an existing unique contact name or UUID. Types may be custom."
 	case 5, 6:
-		helpText = "Multiline: arrows, Shift+arrows selection, Ctrl+Z undo, Ctrl+Y redo; paste supported."
+		helpText = "Arrows move, Shift+arrows select, Ctrl+Z undo, Ctrl+Y redo; paste works."
 	}
-	lines = append(lines, clip(helpText, width), "")
+	labelW := 8
+	if e.section < 5 {
+		for _, f := range e.fields[e.section] {
+			labelW = max(labelW, lipgloss.Width(f.label)+2)
+		}
+	}
+	width, height := m.formSize(84)
+	labelW = min(labelW, max(8, width*2/5))
+	cw := u.controlWidth(width, labelW)
+	body := []string{u.tabs(editorSections, e.section, width), u.blank(width)}
+	budget := max(1, height-7)
 	if e.section >= 5 {
 		ed := e.notes
 		if e.section == 6 {
 			ed = e.biography
 		}
-		lines = append(lines, ed.Render(r, m.width-6, m.height-8))
+		for _, line := range strings.Split(ed.Render(u.r, max(1, width-4), max(1, min(14, budget))), "\n") {
+			body = append(body, u.line(u.style(u.base, u.text).Render("  ")+line, width))
+		}
 	} else {
 		fields := e.fields[e.section]
-		visible := max(1, (m.height-9)/2)
-		start := max(0, e.selected-visible+1)
-		for i := start; i < min(len(fields), start+visible); i++ {
-			f := fields[i]
-			prefix := "  "
-			if i == e.selected {
-				prefix = "> "
-			}
-			f.input.Width = max(1, width-2)
-			f.input.TextStyle = r.Styles.DetailBody
-			lines = append(lines, r.Styles.DetailMeta.Render(clip(prefix+f.label, width)), f.input.View())
+		rows := make([]string, len(fields))
+		for i, f := range fields {
+			rows[i] = u.row(f.label, i == e.selected, u.input(f.input, cw, i == e.selected), width, labelW)
 		}
-		if len(fields) == 0 {
-			lines = append(lines, "No entries. Ctrl+N adds one.")
+		if len(rows) == 0 {
+			rows = []string{u.note("No entries yet — ctrl+n adds one.", width, false)}
 		}
-		lines = append(lines, fmt.Sprintf("Field %d/%d", min(e.selected+1, len(fields)), len(fields)))
+		body = append(body, u.rows(rows, e.selected, width, budget)...)
 	}
-	footer := "F2 / Ctrl+S save   Esc cancel"
-	if e.err != "" {
-		footer = "! " + domain.SafeText(e.err)
+	body = append(body, u.blank(width))
+	switch {
+	case m.contacts.busy:
+		body = append(body, u.note("Saving…", width, false))
+	case e.confirm != "":
+		body = append(body, u.note(e.confirm, width, true))
+	case e.err != "":
+		body = append(body, u.note(domain.SafeText(e.err), width, true))
+	default:
+		body = append(body, u.note(helpText, width, false))
 	}
-	if e.confirm != "" {
-		footer = e.confirm
+	switch {
+	case e.confirm != "":
+		body = append(body, u.hints(width, "y", "discard", "n", "keep editing"))
+	case e.section >= 5:
+		body = append(body, u.hints(width, "ctrl+s", "save", "f5/f6", "section", "tab", "notes/biography", "esc", "cancel"))
+	default:
+		body = append(body, u.hints(width, "enter", "save", "tab", "next field", "f5/f6", "section"), u.hints(width, "ctrl+n", "add entry", "ctrl+d", "remove entry", "esc", "cancel"))
 	}
-	if m.contacts.busy {
-		footer = "Saving atomically..."
+	return u.panel(title, width, body)
+}
+
+// entryLabel names a field of a repeated entry: "1 kind", "2 postal code".
+func entryLabel(index int, field string) string {
+	field = strings.TrimPrefix(field, "Address.")
+	words := map[string]string{"POBox": "PO box", "PostalCode": "Postal code", "TargetName": "Target", "Extended": "Extended address"}
+	if w, ok := words[field]; ok {
+		field = w
 	}
-	body := bounded(strings.Join(lines, "\n"), m.width, max(0, m.height-1))
-	count := len(strings.Split(body, "\n"))
-	if count < m.height-1 {
-		body += strings.Repeat("\n", m.height-1-count)
-	}
-	return bounded(body+"\n"+r.Styles.DetailTitle.Render(clip(footer, width)), m.width, m.height)
+	return fmt.Sprintf("%d %s", index+1, strings.ToLower(field[:1])+field[1:])
 }

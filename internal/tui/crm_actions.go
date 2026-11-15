@@ -3,15 +3,36 @@ package tui
 import (
 	"context"
 	"fmt"
+	"io"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
 
 	"github.com/allisonhere/tidecontacts/internal/domain"
+	"github.com/allisonhere/tidecontacts/internal/transfer"
 	"github.com/allisonhere/tideui"
 	tea "github.com/charmbracelet/bubbletea"
 )
+
+// crmPreviewMsg carries a parsed import file back to the UI for confirmation.
+type crmPreviewMsg struct {
+	archive domain.Archive
+	path    string
+	err     error
+}
+
+func expandHome(p string) string {
+	p = strings.TrimSpace(p)
+	if p == "~" || strings.HasPrefix(p, "~/") {
+		if home, e := os.UserHomeDir(); e == nil {
+			return filepath.Join(home, strings.TrimPrefix(p, "~"))
+		}
+	}
+	return p
+}
 
 // editMsg carries a freshly loaded record to its form, so edits never start from a stale list row.
 type editMsg struct {
@@ -267,6 +288,47 @@ func (m Model) crmGlobal(id string) (Model, tea.Cmd, bool) {
 				return "", e
 			}), nil
 		}), true
+	case "crm-export", "crm-export-calendar":
+		calendar := id == "crm-export-calendar"
+		what, ext := "Export CRM records", ".json"
+		hint := "Destination path, e.g. ~/crm-backup.json. Includes private notes. Contacts are not included: use the contact export. An existing file is never replaced."
+		if calendar {
+			what, ext = "Export tasks and reminders", ".ics"
+			hint = "Destination path, e.g. ~/tasks.ics. Tasks become VTODO and reminders become events with alarms. An existing file is never replaced."
+		}
+		return m, m.openPrompt(what, hint, "", func(m *Model, path string) (tea.Cmd, error) {
+			path = expandHome(path)
+			if path == "" {
+				return nil, fmt.Errorf("enter a destination path")
+			}
+			if !strings.HasSuffix(strings.ToLower(path), ext) {
+				return nil, fmt.Errorf("the file name should end in %s", ext)
+			}
+			repo := m.crm.repo
+			return m.crmDo("Exported to "+path, func(ctx context.Context) (string, error) {
+				archive, e := repo.ExportCRM(ctx)
+				if e != nil {
+					return "", e
+				}
+				return "", transfer.PublishFile(path, func(w io.Writer) error {
+					if calendar {
+						return transfer.WriteICalendar(w, archive, clock())
+					}
+					return transfer.WriteArchive(w, archive)
+				})
+			}), nil
+		}), true
+	case "crm-import":
+		return m, m.openPrompt("Import CRM records", "Path to a TideContacts CRM export (.json). You will see what it contains before anything is written. Existing records are never overwritten.", "", func(m *Model, path string) (tea.Cmd, error) {
+			path = expandHome(path)
+			if path == "" {
+				return nil, fmt.Errorf("enter the path of an export file")
+			}
+			return func() tea.Msg {
+				archive, e := transfer.ReadArchiveFile(path)
+				return crmPreviewMsg{archive: archive, path: path, err: e}
+			}, nil
+		}), true
 	case "merge-contacts":
 		if !m.isContacts() || m.contacts.contact.ID == "" {
 			c.err = "Open People or Organizations, mark the duplicate with Space, select the record to keep, then run this command"
@@ -403,7 +465,7 @@ func (m Model) recordAction(id string, row crmRow) (Model, tea.Cmd, bool) {
 		case "edit-contact":
 			return m, m.fetchEdit(func(ctx context.Context) (any, error) { return repo.Task(ctx, t.ID) }), true
 		case "delete-contact":
-			m.confirmDo("Delete the task “"+t.Title+"”?\n\nIts reminders are dismissed. This cannot be undone from the interface.", "Task deleted", func(ctx context.Context) error { return repo.DeleteTask(ctx, t.ID) })
+			m.confirmDo("Delete the task “"+t.Title+"”?\n\nIts reminders are dismissed. Restore it later by filtering with is:deleted and running Restore.", "Task deleted", func(ctx context.Context) error { return repo.DeleteTask(ctx, t.ID) })
 			return m, nil, true
 		}
 	}
@@ -701,7 +763,7 @@ func (m Model) crmAction(id string) (Model, tea.Cmd, bool) {
 	if !ok {
 		switch id {
 		case "complete", "reopen", "snooze", "reschedule", "priority", "stage-next", "stage-previous", "link", "convert-task", "duplicate", "dismiss", "reviewed",
-			"open-external", "milestone-add", "edit-contact", "archive", "delete-contact", "favorite", "pipeline-move":
+			"open-external", "milestone-add", "edit-contact", "archive", "delete-contact", "favorite", "pipeline-move", "restore":
 			m.feedback = "Nothing selected"
 			return m, nil, true
 		}
@@ -719,6 +781,26 @@ func (m Model) crmAction(id string) (Model, tea.Cmd, bool) {
 		}
 	}
 	switch id {
+	case "restore":
+		deleted := false
+		switch d := row.data.(type) {
+		case domain.Task:
+			deleted = d.Deleted
+		case domain.Activity:
+			deleted = d.Deleted
+		case domain.Project:
+			deleted = d.Deleted
+		case domain.PipelineItem:
+			deleted = d.Deleted
+		default:
+			m.feedback = "Only tasks, activities, projects and pipeline items can be restored"
+			return m, nil, true
+		}
+		if !deleted {
+			m.feedback = "Not deleted — filter with is:deleted to find deleted records"
+			return m, nil, true
+		}
+		return m, m.crmDo("Restored: "+row.text, func(ctx context.Context) (string, error) { return row.id, repo.Restore(ctx, kind, row.id) }), true
 	case "edit-contact":
 		switch kind {
 		case "activity":
@@ -1057,11 +1139,11 @@ func (m Model) crmAction(id string) (Model, tea.Cmd, bool) {
 	case "delete-contact":
 		switch kind {
 		case "activity":
-			m.confirmDo("Delete the activity “"+row.text+"” from your timeline?\n\nRecords owned by another application are only hidden here; nothing is deleted there.", "Activity deleted", func(ctx context.Context) error { return repo.DeleteActivity(ctx, row.id) })
+			m.confirmDo("Delete the activity “"+row.text+"” from your timeline?\n\nRecords owned by another application are only hidden here; nothing is deleted there. Restore it later with is:deleted.", "Activity deleted", func(ctx context.Context) error { return repo.DeleteActivity(ctx, row.id) })
 		case "project":
-			m.confirmDo("Delete the project “"+row.text+"”?\n\nIts tasks and activities are kept but lose this project link.", "Project deleted", func(ctx context.Context) error { return repo.DeleteProject(ctx, row.id) })
+			m.confirmDo("Delete the project “"+row.text+"”?\n\nIts tasks and activities stay and keep their link. Restore it later with is:deleted.", "Project deleted", func(ctx context.Context) error { return repo.DeleteProject(ctx, row.id) })
 		case "item":
-			m.confirmDo("Delete the pipeline item “"+row.text+"”?", "Item deleted", func(ctx context.Context) error { return repo.DeleteItem(ctx, row.id) })
+			m.confirmDo("Delete the pipeline item “"+row.text+"”?\n\nRestore it later with is:deleted.", "Item deleted", func(ctx context.Context) error { return repo.DeleteItem(ctx, row.id) })
 		case "collection":
 			m.confirmDo("Delete the collection “"+row.text+"”?\n\nOnly the saved filter is removed, never the records it lists.", "Collection deleted", func(ctx context.Context) error { return repo.DeleteCollection(ctx, row.id) })
 		case "reminder":

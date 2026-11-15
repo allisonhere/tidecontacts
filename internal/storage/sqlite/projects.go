@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/allisonhere/tidecontacts/internal/domain"
 	"github.com/allisonhere/tidecontacts/internal/search"
@@ -63,9 +64,13 @@ func attachProjectLinks(ctx context.Context, q querier, list []domain.Project) e
 // Projects lists projects. An empty status shows everything except archived projects.
 func (s *Store) Projects(ctx context.Context, status string, q search.Query) ([]domain.Project, error) {
 	w := where{}
-	w.add("p.deleted=0")
+	deleted := false
+	for _, f := range q.Filters {
+		deleted = deleted || f.Key == "is" && strings.EqualFold(f.Value, "deleted")
+	}
+	w.add("p.deleted=?", deleted)
 	today := s.today()
-	explicit := status != ""
+	explicit := status != "" || deleted
 	if status != "" && status != "all" {
 		w.add("p.status=?", status)
 	}
@@ -131,60 +136,61 @@ func (s *Store) Project(ctx context.Context, id string) (domain.Project, error) 
 // SaveProject writes a project with its members, tags and milestones atomically.
 // A status change is recorded on the project timeline.
 func (s *Store) SaveProject(ctx context.Context, p domain.Project) (domain.Project, error) {
-	e := s.write(ctx, func(tx *sql.Tx) error {
-		p.Normalize()
-		if e := p.Validate(); e != nil {
-			return e
-		}
-		now := s.now()
-		var revision int
-		var created, oldStatus string
-		e := tx.QueryRowContext(ctx, "SELECT revision,created_at,status FROM projects WHERE id=?", p.ID).Scan(&revision, &created, &oldStatus)
-		if e != nil && e != sql.ErrNoRows {
-			return e
-		}
-		if e == nil && p.Revision != revision {
-			return fmt.Errorf("project changed since it was opened; reload before saving")
-		}
-		if e == sql.ErrNoRows {
-			created = stamp(now)
-		}
-		p.CreatedAt, p.UpdatedAt, p.Revision = created, stamp(now), revision+1
-		if _, e = tx.ExecContext(ctx, `INSERT INTO projects(id,name,description,notes,status,priority,start_date,target_date,deleted,created_at,updated_at,revision) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)
- ON CONFLICT(id) DO UPDATE SET name=excluded.name,description=excluded.description,notes=excluded.notes,status=excluded.status,priority=excluded.priority,
- start_date=excluded.start_date,target_date=excluded.target_date,deleted=excluded.deleted,updated_at=excluded.updated_at,revision=excluded.revision`,
-			p.ID, p.Name, p.Description, p.Notes, p.Status, p.Priority, p.Start, p.Target, p.Deleted, p.CreatedAt, p.UpdatedAt, p.Revision); e != nil {
-			return e
-		}
-		if e = setLinks(ctx, tx, "project", p.ID, "entity", p.Members); e != nil {
-			return e
-		}
-		if e = setTags(ctx, tx, "project", p.ID, p.Tags); e != nil {
-			return e
-		}
-		keep := []any{p.ID}
-		for i, m := range p.Milestones {
-			keep = append(keep, m.ID)
-			if _, e = tx.ExecContext(ctx, `INSERT INTO milestones(id,project_id,title,due_date,done_at,position) VALUES(?,?,?,?,?,?)
- ON CONFLICT(id) DO UPDATE SET title=excluded.title,due_date=excluded.due_date,done_at=excluded.done_at,position=excluded.position`, m.ID, p.ID, strings.TrimSpace(m.Title), m.Due, m.DoneAt, i); e != nil {
-				return e
-			}
-		}
-		if _, e = tx.ExecContext(ctx, "DELETE FROM milestones WHERE project_id=? AND id NOT IN (''"+strings.Repeat(",?", len(keep)-1)+")", keep...); e != nil {
-			return e
-		}
-		if oldStatus != "" && oldStatus != p.Status {
-			a := domain.Activity{ID: uuid.NewString(), Type: "project-update", Title: fmt.Sprintf("%s: %s → %s", p.Name, oldStatus, p.Status), OccurredAt: now, Projects: []domain.Ref{{ID: p.ID}}}
-			if e = saveActivity(ctx, tx, &a, now, true); e != nil {
-				return e
-			}
-		}
-		return reindexRecord(ctx, tx, "project", p.ID)
-	})
+	e := s.write(ctx, func(tx *sql.Tx) error { return saveProject(ctx, tx, &p, s.now()) })
 	if e != nil {
 		return p, e
 	}
 	return s.Project(ctx, p.ID)
+}
+
+func saveProject(ctx context.Context, tx *sql.Tx, p *domain.Project, now time.Time) error {
+	p.Normalize()
+	if e := p.Validate(); e != nil {
+		return e
+	}
+	var revision int
+	var created, oldStatus string
+	e := tx.QueryRowContext(ctx, "SELECT revision,created_at,status FROM projects WHERE id=?", p.ID).Scan(&revision, &created, &oldStatus)
+	if e != nil && e != sql.ErrNoRows {
+		return e
+	}
+	if e == nil && p.Revision != revision {
+		return fmt.Errorf("project changed since it was opened; reload before saving")
+	}
+	if e == sql.ErrNoRows {
+		created = stamp(now)
+	}
+	p.CreatedAt, p.UpdatedAt, p.Revision = created, stamp(now), revision+1
+	if _, e = tx.ExecContext(ctx, `INSERT INTO projects(id,name,description,notes,status,priority,start_date,target_date,deleted,created_at,updated_at,revision) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)
+ ON CONFLICT(id) DO UPDATE SET name=excluded.name,description=excluded.description,notes=excluded.notes,status=excluded.status,priority=excluded.priority,
+ start_date=excluded.start_date,target_date=excluded.target_date,deleted=excluded.deleted,updated_at=excluded.updated_at,revision=excluded.revision`,
+		p.ID, p.Name, p.Description, p.Notes, p.Status, p.Priority, p.Start, p.Target, p.Deleted, p.CreatedAt, p.UpdatedAt, p.Revision); e != nil {
+		return e
+	}
+	if e = setLinks(ctx, tx, "project", p.ID, "entity", p.Members); e != nil {
+		return e
+	}
+	if e = setTags(ctx, tx, "project", p.ID, p.Tags); e != nil {
+		return e
+	}
+	keep := []any{p.ID}
+	for i, m := range p.Milestones {
+		keep = append(keep, m.ID)
+		if _, e = tx.ExecContext(ctx, `INSERT INTO milestones(id,project_id,title,due_date,done_at,position) VALUES(?,?,?,?,?,?)
+ ON CONFLICT(id) DO UPDATE SET title=excluded.title,due_date=excluded.due_date,done_at=excluded.done_at,position=excluded.position`, m.ID, p.ID, strings.TrimSpace(m.Title), m.Due, m.DoneAt, i); e != nil {
+			return e
+		}
+	}
+	if _, e = tx.ExecContext(ctx, "DELETE FROM milestones WHERE project_id=? AND id NOT IN (''"+strings.Repeat(",?", len(keep)-1)+")", keep...); e != nil {
+		return e
+	}
+	if oldStatus != "" && oldStatus != p.Status {
+		a := domain.Activity{ID: uuid.NewString(), Type: "project-update", Title: fmt.Sprintf("%s: %s → %s", p.Name, oldStatus, p.Status), OccurredAt: now, Projects: []domain.Ref{{ID: p.ID}}}
+		if e = saveActivity(ctx, tx, &a, now, true); e != nil {
+			return e
+		}
+	}
+	return reindexRecord(ctx, tx, "project", p.ID)
 }
 
 // DeleteProject tombstones a project. Tasks and activities keep existing without it.

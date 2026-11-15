@@ -418,6 +418,13 @@ func (p Preview) Selected() []domain.Contact {
 	return out
 }
 func ExportFile(path, format string, contacts []domain.Contact) error {
+	return PublishFile(path, func(w io.Writer) error { return Write(w, format, contacts) })
+}
+
+// PublishFile writes through a temporary file in the destination directory, syncs it,
+// and publishes it with an atomic no-clobber hard link: the destination either appears
+// complete or does not appear, and an existing file is never replaced.
+func PublishFile(path string, write func(io.Writer) error) error {
 	dir := filepath.Dir(path)
 	f, e := os.CreateTemp(dir, ".tidecontacts-export-*")
 	if e != nil {
@@ -426,7 +433,7 @@ func ExportFile(path, format string, contacts []domain.Contact) error {
 	name := f.Name()
 	defer func() { _ = os.Remove(name) }()
 	defer func() { _ = f.Close() }()
-	if e = Write(f, format, contacts); e != nil {
+	if e = write(f); e != nil {
 		return e
 	}
 	if e = f.Sync(); e != nil {

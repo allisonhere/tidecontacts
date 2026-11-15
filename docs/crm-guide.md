@@ -42,7 +42,7 @@ Water plants due:tomorrow every:week
 | `every:` | A recurrence: `week`, `"2 weeks"`, `weekdays`, `"monthly on 31"` |
 | `type:` `status:` | Activity type; task status |
 
-Unknown `word:` pairs such as "Re:" stay in the title. A capture that cannot be understood stays in the prompt with the reason and writes nothing. Tasks captured without a date go to the task Inbox for later processing. Press `e` on any record for the full form (Tab between fields, ←/→ on choices, a multi-line editor for notes, F2 to save).
+Unknown `word:` pairs such as "Re:" stay in the title. A capture that cannot be understood stays in the prompt with the reason and writes nothing. Tasks captured without a date go to the task Inbox for later processing. Press `e` on any record for the full form, which opens as a modal over the current screen (Tab between fields, ←/→ on choices, a multi-line editor for notes, Enter or F2 to save, Ctrl+S inside a multi-line field).
 
 ## The contact dossier
 

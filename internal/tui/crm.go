@@ -9,6 +9,7 @@ import (
 	"github.com/allisonhere/tidecontacts/internal/app"
 	"github.com/allisonhere/tidecontacts/internal/domain"
 	"github.com/allisonhere/tidecontacts/internal/search"
+	"github.com/allisonhere/tidecontacts/internal/transfer"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -721,6 +722,30 @@ func (m Model) back() (Model, tea.Cmd, bool) {
 func (m Model) updateCRM(msg tea.Msg) (Model, tea.Cmd, bool) {
 	c := &m.crm
 	switch v := msg.(type) {
+	case crmPreviewMsg:
+		if v.err != nil {
+			c.err = v.err.Error()
+			return m, nil, true
+		}
+		c.err = ""
+		archive, repo := v.archive, c.repo
+		c.confirm = &crmConfirm{text: "Import from " + v.path + "?\n\nIt contains " + transfer.Counts(archive) + ".\n\nRecords that already exist here are skipped, never overwritten. Links to contacts missing from this database are dropped and reported. The import is all-or-nothing.", yes: func(m *Model) tea.Cmd {
+			c := &m.crm
+			if c.busy {
+				return nil
+			}
+			c.busy, c.err = true, ""
+			ctx := m.contacts.ctx
+			return func() tea.Msg {
+				report, e := repo.ImportCRM(ctx, archive)
+				note := "Imported: " + transfer.Summary(report)
+				if len(report.Warnings) > 0 {
+					note += fmt.Sprintf(" · %d warning(s): %s", len(report.Warnings), report.Warnings[0])
+				}
+				return crmDoneMsg{note: note, err: e}
+			}
+		}}
+		return m, nil, true
 	case reminderTick:
 		return m, tea.Batch(tickReminders(), m.loadDue()), true
 	case dueMsg:

@@ -12,6 +12,8 @@ import (
 	"github.com/allisonhere/tideui"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
 )
 
 // crmPrompt is a one-line overlay: quick capture, dates, names.
@@ -179,56 +181,68 @@ func (m Model) updateOverlay(k tea.KeyMsg) (Model, tea.Cmd) {
 	return m, nil
 }
 
+// wrapNote wraps explanatory text into quiet lines inside a modal.
+func (u softUI) wrapNote(text string, width, limit int, isErr bool) []string {
+	out := []string{}
+	for _, line := range strings.Split(ansi.Wrap(domain.SafeText(text), max(1, width-4), ""), "\n") {
+		if len(out) == limit {
+			break
+		}
+		fg := u.text
+		if isErr {
+			fg = u.danger
+		}
+		out = append(out, u.line(u.style(u.base, fg).Render("  "+line), width))
+	}
+	return out
+}
+
+// overlayPanel renders whichever modal is open: confirmation, prompt, picker,
+// record form or contact editor. All of them share one visual language.
 func (m Model) overlayPanel(r tideui.Renderer) *tideui.Overlay {
 	c := m.crm
-	width := max(1, min(72, m.width-4))
-	inner := max(1, width-4)
-	var title string
-	lines := []string{}
+	u := newSoftUI(r)
+	width, height := m.formSize(72)
 	switch {
 	case c.confirm != nil:
-		title = "Confirm"
-		lines = append(lines, r.RenderSoftBody(inner, domain.SafeText(c.confirm.text)), "", r.RenderSoftHints(inner, tideui.SoftHint{Key: "y", Label: "confirm"}, tideui.SoftHint{Key: "n/esc", Label: "cancel"}))
+		body := u.wrapNote(c.confirm.text, width, max(1, height-3), false)
+		body = append(body, u.blank(width), u.hints(width, "y", "confirm", "esc", "cancel"))
+		return u.panel("confirm", width, body)
 	case c.prompt != nil:
 		p := c.prompt
-		title = p.title
-		in := p.input
-		in.Width = max(1, inner-3)
-		in.TextStyle = r.Styles.DetailBody
-		lines = append(lines, in.View(), "")
+		body := []string{u.line(u.style(u.base, u.text).Render("  ")+u.input(p.input, max(4, width-4), true), width), u.blank(width)}
 		if p.err != "" {
-			lines = append(lines, r.RenderSoftBody(inner, "! "+domain.SafeText(p.err)))
+			body = append(body, u.wrapNote("! "+p.err, width, 3, true)...)
 		} else {
-			lines = append(lines, r.RenderSoftBody(inner, p.hint))
+			for _, line := range u.wrapNote(p.hint, width, 3, false) {
+				body = append(body, tideui.ContinuousBackground(u.style(u.base, u.muted).Render(ansi.Strip(line)), u.base))
+			}
 		}
+		body = append(body, u.blank(width), u.hints(width, "enter", "accept", "esc", "cancel"))
+		return u.panel(strings.ToLower(p.title), width, body)
 	case c.picker != nil:
 		p := c.picker
-		title = p.title
-		in := p.input
-		in.Width = max(1, inner-3)
-		in.TextStyle = r.Styles.DetailBody
-		lines = append(lines, in.View(), "")
-		visible := max(1, min(12, m.height-12))
-		start, end := tideui.VisibleRange(len(p.options), p.selected, visible)
+		body := []string{u.line(u.style(u.base, u.text).Render("  ")+u.input(p.input, max(4, width-4), true), width), u.blank(width)}
+		start, end := tideui.VisibleRange(len(p.options), p.selected, max(1, min(10, height-7)))
 		for i := start; i < end; i++ {
 			o := p.options[i]
-			prefix := "  "
-			if i == p.selected {
-				prefix = "> "
-			}
-			lines = append(lines, r.RenderSoftRow(tideui.SoftRow{Prefix: prefix, Text: domain.SafeText(o.Name), Suffix: domain.SafeText(o.Role), Selected: i == p.selected}, inner))
+			body = append(body, r.RenderSoftRow(tideui.SoftRow{Text: domain.SafeText(o.Name), Suffix: domain.SafeText(o.Role) + " ", Selected: i == p.selected}, width))
 		}
 		if len(p.options) == 0 {
-			lines = append(lines, r.RenderSoftBody(inner, "No matches"))
+			body = append(body, u.note("No matches", width, false))
 		}
+		body = append(body, u.blank(width))
 		if p.hint != "" {
-			lines = append(lines, "", r.RenderSoftBody(inner, p.hint))
+			body = append(body, u.note(p.hint, width, false))
 		}
-	default:
-		return nil
+		body = append(body, u.hints(width, "↑↓", "select", "enter", "choose", "esc", "cancel"))
+		return u.panel(strings.ToLower(p.title), width, body)
+	case m.contacts.editor != nil:
+		return m.editorPanel(u)
+	case c.form != nil:
+		return m.formPanel(u)
 	}
-	o := r.SoftPanelOverlay(tideui.SoftPanel{Prefix: "tidecontacts", Title: title, Width: width, Content: strings.Join(lines, "\n")})
-	return &o
+	return nil
 }
 
 // formField is one row of a full-screen record form. A field with options is a
@@ -341,7 +355,7 @@ func (m Model) updateForm(msg tea.Msg) (Model, tea.Cmd) {
 		switch key {
 		case "ctrl+c", "esc":
 			if f.dirty() {
-				f.confirm, f.quit = "Discard unsaved changes? y discard / n continue", key == "ctrl+c"
+				f.confirm, f.quit = "Discard unsaved changes?", key == "ctrl+c"
 				return m, nil
 			}
 			m.crm.form = nil
@@ -349,6 +363,11 @@ func (m Model) updateForm(msg tea.Msg) (Model, tea.Cmd) {
 				return m, tea.Quit
 			}
 			return m, nil
+		case "enter":
+			if fd.multiline {
+				break
+			}
+			fallthrough
 		case "f2", "ctrl+s":
 			cmd, err := f.save(&m, f.values())
 			if err != nil {
@@ -361,7 +380,7 @@ func (m Model) updateForm(msg tea.Msg) (Model, tea.Cmd) {
 			return move(1)
 		case "shift+tab":
 			return move(-1)
-		case "down", "enter":
+		case "down":
 			if !fd.multiline {
 				return move(1)
 			}
@@ -398,58 +417,69 @@ func (m Model) updateForm(msg tea.Msg) (Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m Model) formView() string {
-	if m.width <= 0 || m.height <= 0 {
-		return ""
-	}
+// formPanel renders a record form as a modal over the current screen.
+func (m Model) formPanel(u softUI) *tideui.Overlay {
 	f := m.crm.form
-	r := tideui.NewRenderer(resolveTheme(m.cfg.Theme), tideui.StyleOptions{Density: tideui.Compact})
-	width := max(1, m.width-4)
+	labelW := 8
+	for _, x := range f.fields {
+		labelW = max(labelW, lipgloss.Width(x.label)+2)
+	}
+	width, height := m.formSize(max(64, min(84, labelW+50)))
+	labelW = min(labelW, max(8, width*2/5))
+	cw := u.controlWidth(width, labelW)
 	fd := f.fields[f.selected]
-	lines := []string{r.Styles.DetailTitle.Render(clip(f.title, width)), clip("Tab/↑↓ fields · ←/→ change a choice · F2 save · Esc cancel", width), clip(fd.help, width), ""}
+	body := []string{}
+	budget := max(1, height-4)
 	if fd.multiline {
-		lines = append(lines, r.Styles.DetailMeta.Render(clip("> "+fd.label, width)), fd.editor.Render(r, m.width-6, m.height-8))
+		// A focused multi-line field takes the body; the other fields return on Tab.
+		body = append(body, u.row(fd.label, true, u.preview("multi-line · tab leaves", cw), width, labelW))
+		editor := fd.editor.Render(u.r, max(1, width-4), max(1, min(12, budget-2)))
+		for _, line := range strings.Split(editor, "\n") {
+			body = append(body, u.line(u.style(u.base, u.text).Render("  ")+line, width))
+		}
 	} else {
-		visible := max(1, (m.height-7)/2)
-		start, end := tideui.VisibleRange(len(f.fields), f.selected, visible)
-		for i := start; i < end; i++ {
-			x := f.fields[i]
-			prefix := "  "
-			if i == f.selected {
-				prefix = "> "
-			}
-			lines = append(lines, r.Styles.DetailMeta.Render(clip(prefix+x.label, width)))
+		rows := make([]string, len(f.fields))
+		for i, x := range f.fields {
+			focused := i == f.selected
+			var control string
 			switch {
 			case x.multiline:
 				first, _, more := strings.Cut(x.editor.Value(), "\n")
 				if more {
 					first += " …"
 				}
-				lines = append(lines, r.Styles.DetailBody.Render(clip("  "+domain.SafeText(first), width)))
+				control = u.preview(domain.SafeText(first), cw)
 			case len(x.options) > 0:
-				lines = append(lines, r.Styles.DetailBody.Render(clip("  ‹ "+x.input.Value()+" ›", width)))
+				control = u.choice(x.input.Value(), cw, focused)
 			default:
-				x.input.Width = max(1, width-4)
-				x.input.TextStyle = r.Styles.DetailBody
-				lines = append(lines, "  "+x.input.View())
+				control = u.input(x.input, cw, focused)
 			}
+			rows[i] = u.row(x.label, focused, control, width, labelW)
 		}
+		body = append(body, u.rows(rows, f.selected, width, budget)...)
 	}
-	footer := fmt.Sprintf("F2 / Ctrl+S save   Esc cancel   field %d/%d", f.selected+1, len(f.fields))
-	if f.err != "" {
-		footer = "! " + domain.SafeText(f.err)
+	body = append(body, u.blank(width))
+	switch {
+	case m.crm.busy:
+		body = append(body, u.note("Saving…", width, false))
+	case f.confirm != "":
+		body = append(body, u.note(f.confirm, width, true))
+	case f.err != "":
+		body = append(body, u.note(domain.SafeText(f.err), width, true))
+	default:
+		body = append(body, u.note(fd.help, width, false))
 	}
-	if f.confirm != "" {
-		footer = f.confirm
+	switch {
+	case f.confirm != "":
+		body = append(body, u.hints(width, "y", "discard", "n", "keep editing"))
+	case fd.multiline:
+		body = append(body, u.hints(width, "ctrl+s", "save", "tab", "next field", "esc", "cancel"))
+	case len(fd.options) > 0:
+		body = append(body, u.hints(width, "enter", "save", "←→", "change", "tab", "next field", "esc", "cancel"))
+	default:
+		body = append(body, u.hints(width, "enter", "save", "tab", "next field", "esc", "cancel"))
 	}
-	if m.crm.busy {
-		footer = "Saving…"
-	}
-	body := bounded(strings.Join(lines, "\n"), m.width, max(0, m.height-1))
-	if count := len(strings.Split(body, "\n")); count < m.height-1 {
-		body += strings.Repeat("\n", m.height-1-count)
-	}
-	return bounded(body+"\n"+r.Styles.DetailTitle.Render(clip(footer, width)), m.width, m.height)
+	return u.panel(strings.ToLower(f.title), width, body)
 }
 
 // refsFrom parses a comma-separated list of names ("Name" or "Name (role)"). Names

@@ -34,7 +34,7 @@ Either:
 
 Do not copy only the main file while the app is open: recent writes may still be in the WAL.
 
-Contact exports (`E`, CSV or vCard) are a portable copy of people and organizations only. They do not contain activities, tasks, projects, pipelines, reminders or collections. The database file is the complete backup.
+Contact exports (`E`, CSV or vCard) are a portable copy of people and organizations only. **Export CRM records (JSON)** in the palette covers everything else (see [export and import](export-import.md)). Together they are a portable copy; the database file remains the complete backup.
 
 ## Checking and restoring
 
@@ -48,6 +48,6 @@ To restore: quit TideContacts, move the current `tidecontacts.db`, `-wal` and `-
 ## Recovery inside the app
 
 - Contacts are never hard-deleted: search `is:deleted` and run **Restore archived/deleted contact**. `u` undoes the last contact change of the session.
-- Tasks, activities, projects and pipeline items are tombstoned on delete (kept in the file, hidden everywhere). There is no in-app undelete for them yet; they can be recovered with `UPDATE … SET deleted=0` in SQLite.
+- Tasks, activities, projects and pipeline items are tombstoned on delete (kept in the file, hidden everywhere). Filter with `is:deleted` in their workspace, select the record and run **Restore archived/deleted contact** (the same palette command as for contacts). Reminders dismissed when a task was deleted stay dismissed, and `u` undo still covers contacts only.
 - Every save is one transaction with a revision check. A record changed elsewhere since you opened it is refused with a message instead of being overwritten.
 - A merged contact becomes a tombstone naming its successor; its links are not moved back if you restore it.

@@ -38,6 +38,9 @@ var phase3 = []Command{
 	{ID: "inbox-review", Label: "Review People Inbox", Keys: nil, Soft: true}, {ID: "radar-open", Label: "Open Relationship Radar", Keys: nil, Soft: true}, {ID: "radar-settings", Label: "Relationship Radar settings", Keys: nil, Soft: true},
 	{ID: "collections-open", Label: "Open smart collections", Keys: nil, Soft: true}, {ID: "reminders-open", Label: "Open reminders", Keys: nil, Soft: true}, {ID: "followups-open", Label: "Open follow-up schedules", Keys: nil, Soft: true},
 	{ID: "merge-contacts", Label: "Merge marked contact into selected contact", Keys: nil, Soft: true},
+	{ID: "crm-export", Label: "Export CRM records (JSON)", Keys: nil, Soft: true},
+	{ID: "crm-export-calendar", Label: "Export tasks and reminders (iCalendar)", Keys: nil, Soft: true},
+	{ID: "crm-import", Label: "Import CRM records (JSON)", Keys: nil, Soft: true},
 }
 
 type Registry struct{ commands []Command }
