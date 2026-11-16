@@ -879,7 +879,7 @@ func TestMigrationFromPhaseTwoPreservesData(t *testing.T) {
 	}
 	var version int
 	_ = s.db.QueryRow("SELECT max(version) FROM schema_migrations").Scan(&version)
-	if version != 3 {
+	if version != len(migrations) {
 		t.Fatal(version)
 	}
 	// New features work against the upgraded data.

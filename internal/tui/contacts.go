@@ -300,6 +300,10 @@ func (m Model) contactAction(id string) (Model, tea.Cmd, bool) {
 		c.editor = &ed
 		return m, ed.focusCmd(), true
 	case "edit-contact":
+		if c.contact.DirectoryReadOnly() {
+			c.err = "Directory contact is read-only; edit the original vCard and refresh"
+			return m, nil, true
+		}
 		if c.contact.ID == "" {
 			c.err = "Select a record first"
 			return m, nil, true

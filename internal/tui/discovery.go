@@ -5,6 +5,7 @@ import (
 	"github.com/allisonhere/tidecontacts/internal/app"
 	"github.com/allisonhere/tidecontacts/internal/domain"
 	"github.com/allisonhere/tideui"
+	tea "github.com/charmbracelet/bubbletea"
 	"strings"
 )
 
@@ -45,7 +46,7 @@ func (m Model) menuCommands() []app.Command {
 	for _, w := range domain.Workspaces() {
 		out = append(out, app.Command{ID: "workspace-" + w.ID, Label: w.Name})
 	}
-	ids := [][]string{{"new-contact", "import-contacts", "tidemail-sync"}, {"new-contact"}, {"relationship-add", "followup-schedule"}, {"activity-log", "tidemail-sync"}, {"task-new", "complete"}, {"project-new"}, {"pipeline-new", "item-new"}, {"reminder-add"}}
+	ids := [][]string{{"new-contact", "tidemail-sync"}, {"new-contact"}, {"relationship-add", "followup-schedule"}, {"activity-log", "tidemail-sync"}, {"task-new", "complete"}, {"project-new"}, {"pipeline-new", "item-new"}, {"reminder-add"}}
 	for _, id := range ids[m.state.Active] {
 		for _, c := range m.registry.Commands() {
 			if c.ID == id {
@@ -53,7 +54,7 @@ func (m Model) menuCommands() []app.Command {
 			}
 		}
 	}
-	out = append(out, app.Command{ID: "themes", Label: "Themes"}, app.Command{ID: "palette", Label: "All actions"}, app.Command{ID: "help", Label: "Help"})
+	out = append(out, app.Command{ID: "import-contacts", Label: "Import data…"}, app.Command{ID: "refresh-address-books", Label: "Refresh address books"}, app.Command{ID: "themes", Label: "Themes"}, app.Command{ID: "palette", Label: "All actions"}, app.Command{ID: "help", Label: "Help"})
 	return out
 }
 func (m Model) menuPane() tideui.Pane {
@@ -95,4 +96,21 @@ func (m Model) menuPane() tideui.Pane {
 		lines = append(lines, rowRenderer.RenderRow(tideui.Row{Prefix: prefix, Text: label, Suffix: key, Selected: selected}, width))
 	}
 	return tideui.Pane{Title: "Menu", Content: strings.Join(lines, "\n"), Focused: m.menuOpen, ScrollOffset: max(0, m.menuSelected-max(1, m.height-9))}
+}
+
+// newFromMenu creates in the highlighted workspace, just as New does in its list.
+func (m Model) newFromMenu() (tea.Model, tea.Cmd) {
+	commands := m.menuCommands()
+	selected := commands[min(max(0, m.menuSelected), len(commands)-1)]
+	m.menuOpen = false
+	var navigate tea.Cmd
+	if strings.HasPrefix(selected.ID, "workspace-") {
+		next, cmd := m.dispatch(selected.ID)
+		m, navigate = next.(Model), cmd
+	}
+	// New in the workspace menu creates the workspace's primary record. In the
+	// pipeline board, list/detail focus otherwise changes New into a new item.
+	m.focus = 0
+	next, create := m.dispatch("new-contact")
+	return next, tea.Batch(navigate, create)
 }

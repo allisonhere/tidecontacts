@@ -1,5 +1,15 @@
 # Database migration, backup and recovery
 
+## Current schema: 4
+
+The current build applies migration 4 once when it opens an older database, including through `tidecontacts --check` or the TideMail plugin’s People/lookup path. The standalone app does not need to run first if the matching plugin opens the database. Plugin **Check connection** remains read-only and does not migrate.
+
+Migration 4 adds `contact_directories` and `directory_contacts`. These store canonical folder paths, refresh revisions, timestamps, card identities and fingerprints, with ownership links to cached contact records. Existing contact and CRM tables and rows are preserved. Migration metadata and schema changes commit atomically. Older executables refuse schema 4; keep a backup if you need to return to an older build.
+
+The aerc/NeoMutt `contacts query` command opens the database read-only and never migrates. If it reports a schema mismatch, open the updated app or run `tidecontacts --check` once.
+
+Connected-folder configuration and cached identities belong to the database, not `config.toml`. A full database backup preserves these connections and IDs. CSV/vCard exports make portable contact copies with new IDs on reimport; they do not restore the folder connection or original local history. Source vCard folders and the vdirsyncer configuration need their own backups. [Folder recovery](vcard-directories.md).
+
 ## Migration to Phase 3
 
 Phase 3 adds schema migration 3. It runs automatically, once, the first time a Phase 3 build opens a Phase 2 (or Phase 1) database, including with `tidecontacts --check`.
@@ -25,7 +35,7 @@ SQLite runs in WAL mode, so `tidecontacts.db-wal` and `tidecontacts.db-shm` may 
 
 Either:
 
-1. Quit TideContacts, then copy `tidecontacts.db` (after a clean exit the WAL has been merged). This is the simplest reliable backup.
+1. Quit TideContacts and TideMail (or stop any other process using the shared book), then copy `tidecontacts.db` (after a clean exit the WAL has been merged). This is the simplest reliable backup.
 2. Or, while it is running, use SQLite's online backup, which is consistent:
 
    ```sh
@@ -43,11 +53,13 @@ tidecontacts --check                                  # opens, migrates if neede
 sqlite3 backup.db "PRAGMA integrity_check; PRAGMA foreign_key_check;"
 ```
 
-To restore: quit TideContacts, move the current `tidecontacts.db`, `-wal` and `-shm` files aside, copy the backup to `tidecontacts.db`, and start the app.
+To restore: quit TideContacts and TideMail, move the current `tidecontacts.db`, `-wal` and `-shm` files aside, copy the backup to `tidecontacts.db`, and start the app.
 
 ## Recovery inside the app
 
-- Contacts are never hard-deleted: search `is:deleted` and run **Restore archived/deleted contact**. `u` undoes the last contact change of the session.
+- Local contacts are never hard-deleted: search `is:deleted` and run **Restore archived/deleted contact**. `u` undoes the last contact change of the session.
 - Tasks, activities, projects and pipeline items are tombstoned on delete (kept in the file, hidden everywhere). Filter with `is:deleted` in their workspace, select the record and run **Restore archived/deleted contact** (the same palette command as for contacts). Reminders dismissed when a task was deleted stay dismissed, and `u` undo still covers contacts only.
 - Every save is one transaction with a revision check. A record changed elsewhere since you opened it is refused with a message instead of being overwritten.
 - A merged contact becomes a tombstone naming its successor; its links are not moved back if you restore it.
+
+- Directory-owned contacts cannot be restored or edited locally. Restore the original card and refresh, or reconnect a disconnected folder to recover its tracked identities. A scan failure leaves the last good snapshot intact.

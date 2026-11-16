@@ -166,21 +166,9 @@ func (u softUI) hints(width int, pairs ...string) string {
 	return u.r.RenderSoftHints(width, hints...)
 }
 
-// rows fits field rows into height: spaced with blank lines when there is room,
-// compact otherwise, and windowed around the focused row when even that overflows.
+// rows keeps input fields single-spaced and windows around focus when needed.
 func (u softUI) rows(rows []string, focused, width, height int) []string {
-	height = max(1, height)
-	if len(rows)*2-1 <= height {
-		out := []string{}
-		for i, r := range rows {
-			if i > 0 {
-				out = append(out, u.blank(width))
-			}
-			out = append(out, r)
-		}
-		return out
-	}
-	start, end := tideui.VisibleRange(len(rows), focused, height)
+	start, end := tideui.VisibleRange(len(rows), focused, max(1, height))
 	return rows[start:end]
 }
 
@@ -195,4 +183,26 @@ func (u softUI) panel(title string, width int, body []string) *tideui.Overlay {
 // Forms are overlays: the screen behind them stays visible.
 func (m Model) formSize(want int) (width, height int) {
 	return max(1, min(want, m.width-6)), max(1, m.height-6)
+}
+
+// recordFormSize keeps creation and edit forms steady across record types and
+// sections, while leaving room for the surrounding screen on short terminals.
+func (m Model) recordFormSize(want int) (width, height int) {
+	width, height = m.formSize(want)
+	return width, min(24, height)
+}
+
+// fixedFormPanel pads beneath the fields so the footer stays at the bottom.
+func (u softUI) fixedFormPanel(title string, width, height int, body, footer []string) *tideui.Overlay {
+	height = max(1, height)
+	if len(footer) > height {
+		footer = footer[len(footer)-height:]
+	}
+	available := height - len(footer)
+	lines := append([]string(nil), body[:min(len(body), available)]...)
+	for len(lines) < available {
+		lines = append(lines, u.blank(width))
+	}
+	lines = append(lines, footer...)
+	return u.panel(title, width, lines)
 }

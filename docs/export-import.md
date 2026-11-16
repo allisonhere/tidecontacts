@@ -10,7 +10,7 @@ Contacts keep their own CSV/vCard export (`E`, `I`; see [import and export](impo
 | Export tasks and reminders (iCalendar) | Writes one `.ics` file |
 | Import CRM records (JSON) | Reads a `.json` export, shows what it contains, asks, then imports |
 
-Enter a path (`~/` works). Exports go through a temporary file and are published atomically; an existing destination is never replaced and a failure leaves nothing behind. The JSON file contains your private notes: treat it like the database.
+Imports open the shared **Import data…** modal, preselected to CRM archives. Browse to a `.json` file or press `p` to enter its path (`~/` works). Exports ask for a destination path. Exports go through a temporary file and are published atomically; an existing destination is never replaced and a failure leaves nothing behind. The JSON file contains your private notes: treat it like the database.
 
 ## What the JSON export contains
 
@@ -27,7 +27,7 @@ The file starts with `"format": "tidecontacts-crm"` and a `"version"`. A build r
 Rules:
 
 - **Nothing existing is overwritten or changed.** A record whose ID is already present is skipped and counted ("already present"), so importing the same file twice is harmless. External activities are also matched by source application and reference.
-- **Links to contacts that are not in this database are dropped** and listed as warnings (the first is shown in the status line); the record itself is still imported. To keep links, import the contacts first (the contact export keeps their IDs) or import into the database the file came from.
+- **Links to contacts that are not in this database are dropped** and listed as warnings (the first is shown in the status line); the record itself is still imported. CSV/vCard contact imports create new local IDs, so importing a contact export first does not preserve archive links to the old IDs. Use the original database or a full database backup when those identities and links must be preserved.
 - Pipelines are imported whole or skipped whole; stages and item history keep their original names and dates.
 - Timestamps of creation and last change become the import time. Activity times, due dates, completion times and stage-entry times are preserved.
 - Follow-up schedules, dates, relationship notes and collections are added only where none exist for that contact or name.

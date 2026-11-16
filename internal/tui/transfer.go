@@ -9,6 +9,7 @@ import (
 	"github.com/allisonhere/tideui"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/x/ansi"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -22,6 +23,15 @@ type transferUI struct {
 	preview                        transfer.Preview
 	selected                       int
 	working                        bool
+	source                         int
+	directory                      string
+	entries                        []browserEntry
+	browserSelected                int
+	showHidden                     bool
+	archive                        domain.Archive
+	books                          []domain.ContactDirectory
+	directorySnapshot              domain.DirectorySnapshot
+	directoryRevision              int
 }
 type importProgress struct{ done, total int }
 type progressWriter interface {
@@ -47,12 +57,54 @@ func (m Model) startTransfer(action string) (Model, tea.Cmd, bool) {
 	t.path = textinput.New()
 	t.path.CharLimit = 4096
 	t.path.Prompt = "Path: "
+	m.contacts.err = ""
 	m.contacts.transfer = t
+	if action == "import-contacts" {
+		t.stage = "source"
+		t.path.Blur()
+		return m, nil, true
+	}
 	return m, t.path.Focus(), true
 }
 func (m Model) updateTransfer(msg tea.Msg) (Model, tea.Cmd, bool) {
 	t := m.contacts.transfer
 	switch v := msg.(type) {
+	case directoryResult:
+		if v.owner != t {
+			return m, nil, true
+		}
+		t.working = false
+		if v.err != nil {
+			t.message = v.err.Error()
+		} else {
+			t.directory = v.path
+			t.entries = v.entries
+			t.browserSelected = 0
+			t.message = ""
+		}
+		return m, nil, true
+	case archiveReadResult:
+		t.working = false
+		if v.err != nil {
+			t.message = v.err.Error()
+			return m, nil, true
+		}
+		t.archive = v.archive
+		t.stage = "archive-preview"
+		t.message = transfer.Counts(v.archive)
+		return m, nil, true
+	case archiveImportResult:
+		t.working = false
+		t.stage = "result"
+		if v.err != nil {
+			t.message = v.err.Error()
+		} else {
+			t.message = "Imported: " + transfer.Summary(v.report)
+			if len(v.report.Warnings) > 0 {
+				t.message += " · " + strings.Join(v.report.Warnings, " · ")
+			}
+		}
+		return m, tea.Batch(m.refreshContacts(), m.loadCRM()), true
 	case importProgress:
 		t.message = fmt.Sprintf("Writing %d/%d records (transaction not yet committed)...", v.done, v.total)
 		return m, func() tea.Msg { return <-t.events }, true
@@ -111,7 +163,88 @@ func (m Model) updateTransfer(msg tea.Msg) (Model, tea.Cmd, bool) {
 			m.contacts.transfer = nil
 			return m, tea.Quit, true
 		}
+		if next, cmd, handled := m.updateDirectoryStage(key); handled {
+			return next, cmd, handled
+		}
 		switch t.stage {
+		case "source":
+			switch key {
+			case "up", "k":
+				t.source = max(0, t.source-1)
+				t.message = ""
+			case "down", "j":
+				t.source = min(len(importSources)-1, t.source+1)
+				t.message = ""
+			case "enter":
+				if importSources[t.source].disabled {
+					t.message = "Coming soon — this importer is not available yet"
+					return m, nil, true
+				}
+
+				if importSources[t.source].directory {
+					t.stage = "directory-books"
+					t.message = ""
+					return m, m.loadDirectoryBooks(), true
+				}
+
+				t.stage = "browse"
+				return m, t.readDirectory("."), true
+			}
+			return m, nil, true
+		case "browse":
+			switch key {
+			case ".":
+				t.showHidden = !t.showHidden
+				return m, t.readDirectory(t.directory), true
+			case "s":
+				if importSources[t.source].directory {
+					return m, m.prepareDirectory(t.directory), true
+				}
+			case "up", "k":
+				t.browserSelected = max(0, t.browserSelected-1)
+			case "down", "j":
+				t.browserSelected = min(max(0, len(t.entries)-1), t.browserSelected+1)
+			case "backspace", "left":
+				return m, t.readDirectory(filepath.Dir(t.directory)), true
+			case "b":
+				t.stage = "source"
+			case "p", "/", "~":
+				t.stage = "path"
+				t.path.SetValue(t.directory + string(filepath.Separator))
+				return m, t.path.Focus(), true
+			case "enter":
+				if len(t.entries) > 0 {
+					entry := t.entries[t.browserSelected]
+					path := filepath.Join(t.directory, entry.name)
+					if entry.directory {
+						return m, t.readDirectory(path), true
+					}
+					if importSources[t.source].directory {
+						t.message = "Press s to connect the current folder"
+						return m, nil, true
+					}
+					t.path.SetValue(path)
+					return m, m.readImport(path), true
+				}
+			}
+			return m, nil, true
+		case "archive-preview":
+			if key == "enter" {
+				t.stage = "archive-confirm"
+				t.message = "Existing records are skipped. Missing contact links are dropped and reported. Import is atomic."
+			}
+			return m, nil, true
+		case "archive-confirm":
+			if key == "n" {
+				t.stage = "archive-preview"
+			}
+			if key == "y" {
+				t.working = true
+				t.message = "Importing CRM archive…"
+				repo, ctx, archive := m.crm.repo, m.contacts.ctx, t.archive
+				return m, func() tea.Msg { report, err := repo.ImportCRM(ctx, archive); return archiveImportResult{report, err} }, true
+			}
+			return m, nil, true
 		case "path":
 			if key == "enter" {
 				path := t.path.Value()
@@ -120,9 +253,7 @@ func (m Model) updateTransfer(msg tea.Msg) (Model, tea.Cmd, bool) {
 					return m, nil, true
 				}
 				if t.action == "import-contacts" {
-					t.working = true
-					t.message = "Reading import..."
-					return m, func() tea.Msg { file, e := transfer.ReadFile(path); return fileResult{file, e} }, true
+					return m, m.readImport(expandHome(path)), true
 				}
 				ext := strings.ToLower(filepath.Ext(path))
 				switch ext {
@@ -317,19 +448,50 @@ func (m *Model) exportContacts() tea.Cmd {
 		return exportResult{len(contacts), path, e}
 	}
 }
-func (m Model) transferView() string {
+func (m Model) transferBody() string {
 	if m.width <= 0 || m.height <= 0 {
 		return ""
 	}
 	t := m.contacts.transfer
-	r := tideui.NewRenderer(m.theme(), tideui.StyleOptions{Density: tideui.Compact})
-	lines := []string{r.Styles.DetailTitle.Render("TideContacts / " + t.action + " / " + t.stage), ""}
+	lines := []string{}
 	w := max(1, m.width-4)
 	switch t.stage {
+	case "browse":
+		hidden := "off"
+		if t.showHidden {
+			hidden = "on"
+		}
+		lines = append(lines, importSources[t.source].label, clip(domain.SafeText(t.directory), w), "Hidden: "+hidden+" · . toggle")
+		visible := max(1, m.height-10)
+		start := max(0, t.browserSelected-visible+1)
+		for i := start; i < min(len(t.entries), start+visible); i++ {
+			entry := t.entries[i]
+			mark := "  "
+			if i == t.browserSelected {
+				mark = "> "
+			}
+			name := domain.SafeText(entry.name)
+			if entry.directory {
+				name += "/"
+			}
+			lines = append(lines, clip(mark+name, w))
+		}
+		if len(t.entries) == 0 {
+			lines = append(lines, "No compatible files in this folder.")
+		}
+		hint := "Enter open · ← parent · p path · b sources · Esc cancel"
+		if importSources[t.source].directory {
+			hint = "s connect this folder · Enter open · ← parent · p path · Esc cancel"
+		}
+		lines = append(lines, "", hint)
+	case "archive-preview":
+		lines = append(lines, "CRM archive: "+domain.SafeText(t.path.Value()), "", "Enter review import · Esc cancel")
+	case "archive-confirm":
+		lines = append(lines, "Import this CRM archive?", "y import · n preview · Esc cancel")
 	case "path":
 		path := t.path
 		path.Width = max(1, w-8)
-		lines = append(lines, "Enter a local CSV or vCard file path.", path.View(), "", "Enter continue · Esc cancel")
+		lines = append(lines, "Enter a local file path (~/ supported).", path.View(), "", "Enter continue · Esc cancel")
 	case "mapping":
 		lines = append(lines, fmt.Sprintf("Header row: %t (h toggles)", t.file.HasHeader), "Up/Down column · Left/Right mapping · Enter preview", "")
 		visible := max(1, m.height-9)
@@ -384,6 +546,33 @@ func (m Model) transferView() string {
 	if m.contacts.err != "" {
 		message = "! " + m.contacts.err
 	}
-	lines = append(lines, "", domain.SafeText(message))
+	lines = append(lines, "", ansi.Hardwrap(domain.SafeText(message), w, true))
 	return bounded(strings.Join(lines, "\n"), m.width, m.height)
+}
+
+func (m Model) transferPanel(r tideui.Renderer) *tideui.Overlay {
+	if strings.HasPrefix(m.contacts.transfer.stage, "directory-") {
+		return m.directoryPanel(r)
+	}
+	if m.contacts.transfer.stage == "source" {
+		return m.importSourcesPanel(r)
+	}
+	w, h := m.formSize(86)
+	inner := m
+	inner.width = w
+	inner.height = max(1, h-3)
+	u := newSoftUI(r)
+	raw := strings.Split(inner.transferBody(), "\n")
+	lines := make([]string, 0, len(raw))
+	for _, line := range raw {
+		if strings.HasPrefix(line, "> ") {
+			line = u.r.SoftRail(true, u.base) + u.style(u.field, u.accent).Bold(true).Render(strings.TrimPrefix(line, "> "))
+		}
+		lines = append(lines, u.line(line, w))
+	}
+	title := "import"
+	if m.contacts.transfer.action != "import-contacts" {
+		title = "export"
+	}
+	return u.panel(title+" / "+m.contacts.transfer.stage, w, lines)
 }

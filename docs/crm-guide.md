@@ -17,12 +17,16 @@ TideContacts is a personal CRM: people, relationships and commitments come first
 
 Every workspace has the same shape: a list on the left, details in the middle, context and key hints on the right (wide terminals). `[` and `]` change the view, `/` filters with one shared search grammar, `Enter` opens or follows, `Esc` goes back.
 
-## Quick capture
+## Creating tasks and activities
 
-Two keys work from anywhere and link to whatever is selected (a person, an organization or a project):
+`T` anywhere, or `n` in Tasks, opens a labeled task form. Status/priority are choices; Space or Ctrl+O on People & orgs or Projects opens a search picker. Tab moves fields and Enter/F2/Ctrl+S saves (Ctrl+S in multiline Description). The selected contact or project is prelinked. No capture syntax is needed. See [tasks](tasks.md). `A` anywhere or `n` in Activities opens the matching activity form; Log meeting/call/note preselects Type. See [activities](activities.md).
 
-- `T` — new task
-- `A` — log an activity (also **Log meeting**, **Log call** and **Add note** in the palette)
+## Optional quick capture
+
+These actions link to the selected person, organization or project:
+
+- **Quick capture task (one line)** in the command palette — optional task capture
+- **Quick capture activity (one line)** in the command palette — optional activity capture; normal `A` and Log meeting/call/note open forms
 
 Type one line and press Enter. Bare words are the title; `key:value` pairs set fields using the same words as search filters:
 

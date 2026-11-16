@@ -100,12 +100,18 @@ func (m Model) focusCount() int {
 	return 3
 }
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	if k, ok := msg.(tea.KeyMsg); ok && m.ready && m.overlay == none && !m.editing && m.contacts.editor == nil && m.crm.form == nil && m.crm.prompt == nil && m.crm.picker == nil && m.crm.confirm == nil {
+	if next, cmd, handled := m.updateDirectories(msg); handled {
+		return next, cmd
+	}
+	if k, ok := msg.(tea.KeyMsg); ok && m.ready && m.overlay == none && !m.editing && m.contacts.editor == nil && m.crm.form == nil && m.crm.prompt == nil && m.crm.picker == nil && m.crm.confirm == nil && m.contacts.transfer == nil {
 		if k.String() == "ctrl+g" {
 			m.menuOpen = !m.menuOpen
 			return m, nil
 		}
 		if m.menuOpen {
+			if m.registry.Key(k.String()) == "new-contact" {
+				return m.newFromMenu()
+			}
 			switch k.String() {
 			case "ctrl+c":
 				return m, tea.Quit
@@ -156,7 +162,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			n.crm.repo = crm
 			n.crm.lists[wsTasks].view = 1 // Tasks opens on Today
 		}
-		cmd := tea.Batch(n.refreshContacts(), n.loadCRM(), n.loadDue())
+		cmd := tea.Batch(n.refreshContacts(), n.loadCRM(), n.loadDue(), n.refreshDirectories(nil))
 		if v.Config.Mouse {
 			return n, tea.Batch(cmd, tea.EnableMouseCellMotion)
 		}
@@ -286,6 +292,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 func (m Model) dispatch(id string) (tea.Model, tea.Cmd) {
+	if id == "refresh-address-books" {
+		return m, m.refreshDirectories(nil)
+	}
+	if id == "import-contacts" && m.contacts.repo != nil {
+		return m.startImportModal()
+	}
 	if id == "" {
 		return m, nil
 	}
@@ -438,9 +450,6 @@ func (m Model) hint(id string) string {
 	return ": commands"
 }
 func (m Model) View() string {
-	if m.contacts.transfer != nil {
-		return m.transferView()
-	}
 	if m.width <= 0 || m.height <= 0 {
 		return ""
 	}
@@ -631,6 +640,9 @@ func (m Model) View() string {
 		layout.Modal = &overlay
 	} else if panel := m.overlayPanel(r); panel != nil {
 		layout.Modal = panel
+	}
+	if m.contacts.transfer != nil {
+		layout.Modal = m.transferPanel(r)
 	}
 	return lipgloss.JoinVertical(lipgloss.Left, header, r.Render(layout))
 }

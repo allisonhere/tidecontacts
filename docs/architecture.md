@@ -14,7 +14,7 @@ The Phase 1 shell remains the host. `cmd/tidecontacts` owns initialization, conf
 
 All saves validate a deep-copied aggregate, reserve new batch identities, resolve named memberships/targets, replace only owned child collections, record a revisioned snapshot, update search projections and commit in one transaction. Reserving identities supports cyclic relationships and forward references in imports. New organization names create organizations within that transaction. Incoming memberships/relationships survive edits to the target. Read projections expose incoming relationships and organization members without treating them as owned editable rows.
 
-Optimistic revision checks reject stale saves. Undo restores a prior aggregate only when the current revision immediately follows it; subsequent external edits are not overwritten. Historical snapshots and tombstones remain available for later sync design. Tags and custom definitions are reusable; global field definitions cannot silently change type or choices.
+Optimistic revision checks reject stale saves. Undo restores a prior aggregate only when the current revision immediately follows it; subsequent external edits are not overwritten. Historical snapshots and tombstones preserve CRM links when cards disappear from connected folders. Tags and custom definitions are reusable; global field definitions cannot silently change type or choices.
 
 The existing one-connection pool, per-connection foreign-key/busy-timeout pragmas and WAL remain. Statements bind user values. Dynamic SQL is limited to application-owned filter fragments; sort/ranking is typed application logic. An aggregate read uses a read transaction for consistency. Export reads each aggregate consistently, but does not claim a single database-wide snapshot if another process is editing concurrently.
 
@@ -26,11 +26,23 @@ The existing one-connection pool, per-connection foreign-key/busy-timeout pragma
 
 The dedicated editor owns a deep draft, so cancellation cannot mutate a saved contact. Scalar fields use Bubbles; repeated sections add/remove rows. Ripple handles notes and biography. Untouched multiline imported scalar values are preserved when editing unrelated fields. UI handlers return commands for all SQL and file work; View is pure rendering.
 
-TideUI provides pane/layout/row/soft-panel/ratio/theme primitives. Existing wide/medium/narrow modes, themes, palette, config and pane persistence remain. People and Organizations replace their placeholders; the other workspaces retain the shell.
+TideUI provides pane/layout/row/soft-panel/ratio/theme primitives. Existing wide/medium/narrow modes, themes, palette, config and pane persistence remain. All eight workspaces use the shared shell. At 120 columns the layout is Menu → record list → details; smaller terminals use a menu overlay.
 
 ## Transfer boundary
 
-`internal/transfer` owns file parsing, mappings, dry-run validation, duplicate warnings, UUID remapping and serialization. Imports are insert-only and selected batches are transactional. A progress-capable repository method reports records written before commit, with a separate final result. Exports publish complete, synced temporary files with a no-clobber hard link. CSV/vCard extensions carry full aggregates; normal fields provide interoperability.
+`internal/transfer` owns file parsing, mappings, dry-run validation, duplicate warnings, UUID remapping and serialization. One-time contact imports are insert-only and selected batches are transactional. Mutt aliases are parsed as literal data without executing commands or following source directives. A progress-capable repository method reports records written before commit, with a separate final result. Exports publish complete, synced temporary files with a no-clobber hard link. CSV/vCard extensions carry full aggregates; normal fields provide interoperability.
+
+The import modal uses `transfer.go` for mapping/preview/confirmation, `import_browser.go` for source selection and asynchronous file browsing, and `directories.go` for connection management. Enabled sources are stably grouped before disabled providers. Soft panels, rails and modal chrome come from TideUI.
+
+## Connected vCard directories
+
+`app.Directories` is the persistence boundary. `transfer.ReadDirectory` builds a bounded, complete local-folder snapshot; `connector/vcarddir` prepares revision-checked snapshots and orchestrates refresh. Missing/unreadable folders, invalid cards and duplicate UIDs fail the scan before any storage change.
+
+Schema migration 4 adds `contact_directories` and `directory_contacts`. Stable local identities derive from canonical folder identity and vCard UID (or filename/card position when UID is absent). `ApplyContactDirectory` applies a complete snapshot in one transaction, checks the connection revision, maintains directory-owned organizations, and tombstones removed records without deleting history or CRM references. Disconnect stops refresh and hides cached contacts while retaining mappings for reconnect. A failed folder can retain its cache while other folders refresh.
+
+The storage write boundary rejects local modifications to directory-owned contacts, including attempts to replace their provenance. Explicit one-time file imports create independent copies. UI labels and edit guards expose the read-only ownership rule; the storage check also protects scripting and plugin writes.
+
+TideContacts schedules refresh after startup and exposes manual refresh. The TideMail bridge refreshes connected folders for contacts.list/search, returns cached results plus warnings when a scan fails, and exposes every email method for search. Demo profiles skip live folder refresh. Recipient CLI completion keeps its separate read-only connection and queries the cached snapshot without scanning sources.
 
 ## Migrations and development
 

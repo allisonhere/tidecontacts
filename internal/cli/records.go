@@ -19,7 +19,7 @@ import (
 )
 
 var actions = map[string]string{
-	"contacts":      "list get create update delete restore history dossier connections",
+	"contacts":      "list get create update delete restore history dossier connections query",
 	"organizations": "list get create update delete restore history dossier connections",
 	"tasks":         "list get create update delete restore complete reopen duplicate",
 	"activities":    "list get create update delete restore",
@@ -66,6 +66,12 @@ func validateCommand(resource, action, id string, o options) error {
 	if resource == "items" && action == "move" {
 		allowed["stage"] = true
 	}
+	if resource == "contacts" && action == "query" {
+		allowed["query"] = true
+		allowed["format"] = true
+		allowed["limit"] = true
+		allowed["kind"] = true
+	}
 	for key := range o.present {
 		if !allowed[key] {
 			return usage("--" + key + " is not supported for " + resource + " " + action)
@@ -84,7 +90,7 @@ func validateCommand(resource, action, id string, o options) error {
 	if !supported {
 		return usage("unsupported action " + resource + " " + action)
 	}
-	needsID := action != "list" && action != "create" && action != "export" && action != "import"
+	needsID := action != "query" && action != "list" && action != "create" && action != "export" && action != "import"
 	if needsID && id == "" {
 		return usage("this action requires an ID")
 	}
@@ -101,6 +107,9 @@ func validateCommand(resource, action, id string, o options) error {
 	if (action == "delete" || action == "archive" || action == "restore") && !o.yes {
 		return usage("this action requires --yes")
 	}
+	if resource == "contacts" && action == "query" && o.format == "aerc" && o.limit > 99 {
+		return usage("aerc --limit must be at most 99 to fit its completion reader")
+	}
 	if o.limit < 1 || o.limit > 5000 {
 		return usage("--limit must be between 1 and 5000")
 	}
@@ -115,6 +124,9 @@ func validateCommand(resource, action, id string, o options) error {
 	}
 	if resource == "pipelines" && (action == "update" || action == "archive") && o.match == "" {
 		return usage("pipeline edits require --if-match from pipelines get's etag")
+	}
+	if o.format != "json" && o.format != "aerc" && o.format != "neomutt" {
+		return usage("--format must be json, aerc or neomutt")
 	}
 	return nil
 }
@@ -132,6 +144,10 @@ func execute(ctx context.Context, s *sqlite.Store, r, a, id string, o options, i
 		}
 		v, e := s.ImportCRM(ctx, archive)
 		return v, 0, e
+	}
+	if a == "query" {
+		v, e := recipientQuery(ctx, s, o)
+		return v, o.limit, e
 	}
 	if a == "list" {
 		return listRecords(ctx, s, r, o)
@@ -516,6 +532,9 @@ func schema(resource string) (any, error) {
 		}
 		v := newRecord(r, "person")
 		descriptions[r] = map[string]any{"actions": splitActions(r), "fields": describe(reflect.TypeOf(v).Elem()), "update": "partial top-level object; arrays/nested objects replace; Revision required except pipelines (--if-match)"}
+	}
+	if details, ok := descriptions["contacts"].(map[string]any); ok {
+		details["query_fields"] = describe(reflect.TypeOf(domain.Recipient{}))
 	}
 	if resource != "" && len(descriptions) == 0 {
 		return nil, usage("unknown schema resource " + resource)

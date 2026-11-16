@@ -49,8 +49,8 @@ func deliver(m Model, cmd tea.Cmd) Model {
 			return m
 		}
 		switch msg.(type) {
-		case listResult, detailResult, saveResult, searchTick, fileResult, previewResult, exportResult, importProgress,
-			crmListMsg, crmPreviewMsg, crmDetailMsg, crmDoneMsg, dossierMsg, pickerResult, editMsg, crmSearchTick, dueMsg:
+		case directoryBooksResult, directoryPreparedResult, directoryRefreshResult, listResult, detailResult, saveResult, searchTick, fileResult, previewResult, exportResult, importProgress,
+			directoryResult, archiveReadResult, archiveImportResult, crmListMsg, crmDetailMsg, crmDoneMsg, dossierMsg, pickerResult, editMsg, crmSearchTick, dueMsg:
 		default:
 			return m
 		}
@@ -141,6 +141,18 @@ func TestEditorCancelDynamicFieldsAndInputOwnership(t *testing.T) {
 	m, _ = key(m, "q1?:")
 	if m.contacts.editor.fields[0][0].input.Value() != "q1?:" || m.overlay != none {
 		t.Fatal("editor key leak")
+	}
+	m, _ = press(m, tea.KeyDown)
+	if m.contacts.editor.selected != 1 {
+		t.Fatal("Down did not select the next input")
+	}
+	m, _ = press(m, tea.KeyUp)
+	if m.contacts.editor.selected != 0 {
+		t.Fatal("Up did not select the previous input")
+	}
+	m, _ = press(m, tea.KeyLeft)
+	if m.contacts.editor.section != 0 || m.contacts.editor.selected != 0 || m.contacts.editor.fields[0][0].input.Value() != "q1?:" {
+		t.Fatal("Left changed sections or input contents")
 	}
 	m, _ = press(m, tea.KeyEsc)
 	if m.contacts.editor.confirm == "" {
@@ -249,6 +261,7 @@ func TestTransferWorkflowMappingDryRunAndMarkedExport(t *testing.T) {
 		t.Fatal(e)
 	}
 	m, _, _ = m.startTransfer("import-contacts")
+	m.contacts.transfer.stage = "path"
 	m.contacts.transfer.path.SetValue(path)
 	m, cmd := press(m, tea.KeyEnter)
 	m = deliver(m, cmd)

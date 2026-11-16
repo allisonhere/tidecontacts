@@ -9,6 +9,7 @@ import (
 	"net/mail"
 	"strings"
 
+	"github.com/allisonhere/tidecontacts/internal/connector/vcarddir"
 	"github.com/allisonhere/tidecontacts/internal/domain"
 	"github.com/allisonhere/tidecontacts/internal/search"
 	"github.com/allisonhere/tidecontacts/internal/storage/sqlite"
@@ -22,6 +23,8 @@ type Contact struct {
 	Phone        string `json:"phone"`
 	Organization string `json:"organization"`
 	Note         string `json:"note"`
+	ReadOnly     bool   `json:"read_only,omitempty"`
+	Source       string `json:"source,omitempty"`
 }
 type Request struct {
 	API       int             `json:"api"`
@@ -41,9 +44,12 @@ type response struct {
 }
 
 func project(c domain.Contact) Contact {
-	out := Contact{ID: c.ID, Revision: c.Revision, Name: c.DisplayName, Note: c.Notes}
+	out := Contact{ID: c.ID, Revision: c.Revision, Name: c.DisplayName, Note: c.Notes, ReadOnly: c.DirectoryReadOnly()}
+	if out.ReadOnly {
+		out.Source = "vCard folder"
+	}
 	for _, m := range c.Methods {
-		if m.Kind == "email" && out.Addr == "" {
+		if m.Kind == "email" && (out.Addr == "" || m.Preferred) {
 			out.Addr = m.Value
 		}
 		if m.Kind == "phone" && out.Phone == "" {
@@ -61,7 +67,16 @@ func Serve(ctx context.Context, s *sqlite.Store, in io.Reader, out io.Writer) er
 		return err
 	}
 	resp := response{API: 1, Type: "response", RequestID: req.RequestID}
+	warning := ""
+	if (req.Method == "contacts.list" || req.Method == "contacts.search") && req.Settings["data_profile"] != "Demo contacts" {
+		_, warning = vcarddir.RefreshAll(ctx, s)
+	}
 	data, err := handle(ctx, s, req)
+	if warning != "" {
+		if result, ok := data.(map[string]any); ok {
+			result["warning"] = domain.SafeText(warning)
+		}
+	}
 	if err != nil {
 		resp.Error = map[string]string{"code": "contacts_error", "message": err.Error()}
 	} else {
@@ -100,13 +115,25 @@ func handle(ctx context.Context, s *sqlite.Store, req Request) (any, error) {
 			limit = min(limit, 50)
 		}
 		contacts := []Contact{}
+		matches := []map[string]string{}
+		seen := map[string]bool{}
 		for _, r := range rows {
-			if len(contacts) >= limit {
+			if (req.Method == "contacts.list" && len(contacts) >= limit) || (req.Method == "contacts.search" && len(matches) >= limit) {
 				break
 			}
 			c, err := s.Contact(ctx, r.ID)
 			if err != nil {
 				return nil, err
+			}
+			if req.Method == "contacts.search" {
+				for _, method := range c.Methods {
+					key := strings.ToLower(method.Value)
+					if method.Kind == "email" && !seen[key] && len(matches) < limit {
+						matches = append(matches, map[string]string{"name": c.DisplayName, "addr": method.Value})
+						seen[key] = true
+					}
+				}
+				continue
 			}
 			p := project(c)
 			if p.Addr != "" {
@@ -114,10 +141,6 @@ func handle(ctx context.Context, s *sqlite.Store, req Request) (any, error) {
 			}
 		}
 		if req.Method == "contacts.search" {
-			matches := []map[string]string{}
-			for _, c := range contacts {
-				matches = append(matches, map[string]string{"name": c.Name, "addr": c.Addr})
-			}
 			return map[string]any{"contacts": matches}, nil
 		}
 		return map[string]any{"contacts": contacts}, nil

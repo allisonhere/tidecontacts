@@ -12,12 +12,12 @@
 │                                   ││                                              ││0 relationships · 0 custom fields                                        │
 │Actions                            ││                                              ││Source: manual                                                           │
 │  New record in this workspace n   ││                                              ││Updated: 2000-01-01T00:00:00Z                                            │
-│  Import CSV or vCard          I   ││                                              ││UUID: 00000000-0000-0000-0000-000000000000                               │
-│  Sync TideMail                    ││                                              ││                                                                         │
+│  Sync TideMail                    ││                                              ││UUID: 00000000-0000-0000-0000-000000000000                               │
+│  Import data…                 I   ││                                              ││                                                                         │
+│  Refresh address books            ││                                              ││                                                                         │
 │  Themes                           ││                                              ││                                                                         │
 │  All actions                  :   ││                                              ││                                                                         │
 │  Help                         ?   ││                                              ││                                                                         │
-│                                   ││                                              ││                                                                         │
 │                                   ││                                              ││                                                                         │
 │                                   ││                                              ││                                                                         │
 │                                   ││                                              ││                                                                         │

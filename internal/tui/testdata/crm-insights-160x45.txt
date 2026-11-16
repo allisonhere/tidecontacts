@@ -12,11 +12,11 @@
 │                                   ││  late Task 06 👩‍💻 xxxxxxx Overdue commitment  ││In inbox since 2026-11-13 12:00 UTC · open                               │
 │Actions                            ││  late Task 07 👩‍💻 xxxxxxx Overdue commitment  ││─ Actions ─────────────────────────────────────────────────────────────  │
 │  Add reminder                 b   ││  late Task 08 👩‍💻 xxxxxxx Overdue commitment  ││Enter open source   c complete   t create/open task                      │
-│  Themes                           ││  late Task 09 👩‍💻 xxxxxxx Overdue commitment  ││z snooze   x dismiss   v mark reviewed   S change schedule               │
-│  All actions                  :   ││  late Task 10 👩‍💻 xxxxxxx Overdue commitment  ││                                                                         │
-│  Help                         ?   ││  late Task 11 👩‍💻 xxxxxxx Overdue commitment  ││                                                                         │
-│                                   ││─ Due now ──────────────────────────────────  ││                                                                         │
-│                                   ││  f/up Sam Lee                 Follow-up due  ││                                                                         │
+│  Import data…                 I   ││  late Task 09 👩‍💻 xxxxxxx Overdue commitment  ││z snooze   x dismiss   v mark reviewed   S change schedule               │
+│  Refresh address books            ││  late Task 10 👩‍💻 xxxxxxx Overdue commitment  ││                                                                         │
+│  Themes                           ││  late Task 11 👩‍💻 xxxxxxx Overdue commitment  ││                                                                         │
+│  All actions                  :   ││─ Due now ──────────────────────────────────  ││                                                                         │
+│  Help                         ?   ││  f/up Sam Lee                 Follow-up due  ││                                                                         │
 │                                   ││  bell Ping                     Reminder due  ││                                                                         │
 │                                   ││─ Upcoming and unprocessed ─────────────────  ││                                                                         │
 │                                   ││  new Task 12 👩‍💻 xxxxxxxxxx Unprocessed task  ││                                                                         │

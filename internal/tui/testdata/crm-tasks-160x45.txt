@@ -11,13 +11,13 @@
 │  Insights                     8   ││  [ ] Task 05 👩‍💻 xxxxxxxxxxxxxx ! 7d overdue  ││Created 2026-11-13 12:00 UTC · updated 2026-11-13 12:00 UTC              │
 │                                   ││  [>] Task 06 👩‍💻 xxxxxxxxxxxxx !! 6d overdue  ││                                                                         │
 │Actions                            ││  [w] Task 07 👩‍💻 xxxxxxxxxxxx !!! 5d overdue  ││                                                                         │
-│  New task (quick capture)     T   ││  [?] Task 08 👩‍💻 xxxxxxxxxxxxxxxx 4d overdue  ││                                                                         │
+│  New task                     T   ││  [?] Task 08 👩‍💻 xxxxxxxxxxxxxxxx 4d overdue  ││                                                                         │
 │  Complete task, milestone or  c   ││  [ ] Task 09 👩‍💻 xxxxxxxxxxxxxx ! 3d overdue  ││                                                                         │
-│  Themes                           ││  [>] Task 10 👩‍💻 xxxxxxxxxxxxx !! 2d overdue  ││                                                                         │
-│  All actions                  :   ││  [w] Task 11 👩‍💻 xxxxxxxxxxxxx !!! yesterday  ││                                                                         │
-│  Help                         ?   ││─ Today ────────────────────────────────────  ││                                                                         │
-│                                   ││  [?] Task 12 👩‍💻 xxxxxxxxxxxxxxxxxxxxx today  ││                                                                         │
-│                                   ││                                              ││                                                                         │
+│  Import data…                 I   ││  [>] Task 10 👩‍💻 xxxxxxxxxxxxx !! 2d overdue  ││                                                                         │
+│  Refresh address books            ││  [w] Task 11 👩‍💻 xxxxxxxxxxxxx !!! yesterday  ││                                                                         │
+│  Themes                           ││─ Today ────────────────────────────────────  ││                                                                         │
+│  All actions                  :   ││  [?] Task 12 👩‍💻 xxxxxxxxxxxxxxxxxxxxx today  ││                                                                         │
+│  Help                         ?   ││                                              ││                                                                         │
 │                                   ││                                              ││                                                                         │
 │                                   ││                                              ││                                                                         │
 │                                   ││                                              ││                                                                         │

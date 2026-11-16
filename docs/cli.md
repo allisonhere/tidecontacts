@@ -200,3 +200,17 @@ core records listed above.
 profile. Unit tests cover every core resource, partial updates, links, duplicate
 commands, invalid JSON, revision conflicts, pipeline tokens, archive handling,
 external-activity ownership and profile isolation.
+
+## Mail-client recipient lookup
+
+`contacts query [TEXT]` provides the minimal email/name/organization projection.
+It defaults to JSON and can use the aerc or NeoMutt wire format with `--format`.
+This lookup treats text literally, searches both people and organizations, and
+opens real databases read-only. See [mail-client setup](mail-clients.md) for
+format-specific exit behavior, limits and the aerc query-substitution limitation.
+
+## Connected-folder contacts
+
+Contacts owned by a connected vCard directory are read-only through these commands too. A supplied replacement `Source`, revision, delete or restore cannot turn one into a local editable contact. Edit the source vCard and refresh through TideContacts or TideMail. Directory connection management currently uses the import modal; it has no dedicated JSON resource.
+
+`contacts query` reads cached folder contacts without refreshing or migrating. Open the updated app or run `--check` if an older database needs schema 4, then refresh connected folders in the app when the source has changed. See [connected folders](vcard-directories.md).

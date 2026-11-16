@@ -13,11 +13,11 @@
 │Actions                            ││                                              ││                                                                         │
 │  Add relationship             r   ││                                              ││                                                                         │
 │  Set follow-up schedule       F   ││                                              ││                                                                         │
+│  Import data…                 I   ││                                              ││                                                                         │
+│  Refresh address books            ││                                              ││                                                                         │
 │  Themes                           ││                                              ││                                                                         │
 │  All actions                  :   ││                                              ││                                                                         │
 │  Help                         ?   ││                                              ││                                                                         │
-│                                   ││                                              ││                                                                         │
-│                                   ││                                              ││                                                                         │
 │                                   ││                                              ││                                                                         │
 │                                   ││                                              ││                                                                         │
 │                                   ││                                              ││                                                                         │

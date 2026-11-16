@@ -74,29 +74,36 @@ func DefaultColumn(s string) string {
 	return "ignore"
 }
 func ReadFile(path string) (File, error) {
+	data, err := readLocalFile(path)
+	if err != nil {
+		return File{}, err
+	}
+	return Read(data)
+}
+func readLocalFile(path string) ([]byte, error) {
 	f, e := os.Open(path)
 	if e != nil {
-		return File{}, e
+		return nil, e
 	}
 	defer func() { _ = f.Close() }()
 	st, e := f.Stat()
 	if e != nil {
-		return File{}, e
+		return nil, e
 	}
 	if !st.Mode().IsRegular() {
-		return File{}, fmt.Errorf("choose a regular file")
+		return nil, fmt.Errorf("choose a regular file")
 	}
 	if st.Size() > 50<<20 {
-		return File{}, fmt.Errorf("import exceeds 50 MiB; split it into smaller files")
+		return nil, fmt.Errorf("import exceeds 50 MiB; split it into smaller files")
 	}
 	b, e := io.ReadAll(io.LimitReader(f, (50<<20)+1))
 	if e != nil {
-		return File{}, e
+		return nil, e
 	}
 	if len(b) > 50<<20 {
-		return File{}, fmt.Errorf("import exceeds 50 MiB")
+		return nil, fmt.Errorf("import exceeds 50 MiB")
 	}
-	return Read(b)
+	return b, nil
 }
 func Read(data []byte) (File, error) {
 	data = bytes.TrimPrefix(data, []byte{239, 187, 191})
@@ -354,6 +361,9 @@ func BuildPreview(ctx context.Context, repo app.Contacts, f File) (Preview, erro
 			c.ID = id
 		} else {
 			c.ID = uuid.NewString()
+		}
+		if c.DirectoryReadOnly() {
+			c.Source = f.Format
 		}
 		c.Revision = 0
 		c.CreatedAt = ""

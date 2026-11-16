@@ -58,15 +58,32 @@ with tempfile.TemporaryDirectory(prefix='tidecontacts-crm-') as root:
         send(F2, 0.5)
         assert query("SELECT display_name FROM entities") == [('Alice Offline',)], tail()
 
-        # Quick capture from the contact: an activity and a task, both linked automatically.
+        # Activity and task forms both preserve the selected contact.
         send('A')
-        send('Coffee and roadmap type:meeting on:yesterday at:10:30')
-        send(b'\r', 0.5)
+        send('Coffee and roadmap')
+        send(b'\t')
+        send(b'\x15')  # replace Type
+        send('meeting')
+        send(b'\t')
+        send(b'\x15')  # replace When
+        send('yesterday 10:30')
+        send(F2, 0.5)
         assert query("SELECT type,title FROM activities") == [('meeting', 'Coffee and roadmap')], tail()
         assert query("SELECT count(*) FROM activity_entities") == [(1,)]
         send('T')
-        send('Send notes due:today pri:high every:week')
-        send(b'\r', 0.5)
+        send('Send notes')
+        send(b'\t')  # Status: scheduled
+        send(b'\x1b[C')
+        send(b'\x1b[C')
+        send(b'\t')  # Priority: high
+        for _ in range(3):
+            send(b'\x1b[C', 0.05)
+        send(b'\t')  # Due date: no capture tokens required.
+        send('today')
+        for _ in range(4):
+            send(b'\t', 0.05)
+        send('weekly')
+        send(F2, 0.5)
         assert query("SELECT title,status,priority FROM tasks") == [('Send notes', 'scheduled', 3)], tail()
         assert query("SELECT freq FROM recurrence_rules") == [('weekly',)]
         send('F')
@@ -129,7 +146,7 @@ with tempfile.TemporaryDirectory(prefix='tidecontacts-crm-') as root:
         assert process.returncode == 0
         assert termios.tcgetattr(slave) == before
         subprocess.run([binary, '--check'], env=env, check=True, capture_output=True, timeout=10)
-        assert query("SELECT max(version) FROM schema_migrations") == [(3,)]
+        assert query("SELECT max(version) FROM schema_migrations") == [(4,)]
         assert query("PRAGMA foreign_key_check") == []
         assert query("SELECT count(*) FROM entities") == [(1,)]
         mode = os.stat(root + '/data/tidecontacts/tidecontacts.db').st_mode & 0o777
