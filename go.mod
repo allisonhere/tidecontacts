@@ -4,7 +4,7 @@ go 1.26.1
 
 require (
 	github.com/BurntSushi/toml v1.6.0
-	github.com/allisonhere/tideui v0.3.2-0.20261108000219-4ef89a31ee20
+	github.com/allisonhere/tideui v0.3.2-0.20261116012908-7f93f13b0bc6
 	github.com/charmbracelet/bubbles v1.0.0
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
@@ -45,5 +45,3 @@ require (
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
 )
-
-replace github.com/allisonhere/tideui => ../tideui

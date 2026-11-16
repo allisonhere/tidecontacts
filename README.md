@@ -51,8 +51,8 @@ content; left or Shift+Tab returns to categories. Scroll the content with arrows
 PageUp/PageDown, Home and End. `/` searches categories, keys and descriptions.
 Enter keeps the filter; Esc clears it before closing. `?` or q closes help.
 
-Development currently requires the sibling `../tideui` checkout containing the
-shared `HelpBrowser` component (see the local replace directive in go.mod).
+The shared help browser is included in the pinned TideUI dependency; no sibling
+TideUI checkout is required.
 
 ## Themes
 
