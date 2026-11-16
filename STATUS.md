@@ -21,3 +21,5 @@ Discoverability: wide terminals use Menu → record list → details. Ctrl+G foc
 Themes: searchable built-in palettes via Menu → Themes, plus Match TideMail for installed supported palettes. Matching resolves on startup.
 
 Help now uses TideUI HelpBrowser: category/content panes, search and staged Escape navigation. Local TideUI checkout is required until this component is released.
+
+Simple TideMail plugin: contacts.list/save/search bridge with revision checks, duplicate protection and CRM-field preservation. Paired TideMail changes provide People, compose, recent cache correspondence and Advanced CRM. See docs/tidemail-plugin.md. External address-book sync remains deferred.

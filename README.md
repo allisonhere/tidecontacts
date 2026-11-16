@@ -188,3 +188,14 @@ UPDATE_GOLDEN=1 go test ./internal/tui # intentionally regenerate reviewed frame
 See [architecture](docs/architecture.md), [keys](docs/keybindings.md), [search grammar](docs/search.md), the [CRM guide](docs/crm-guide.md) and [Phase 3 decisions](docs/phase3-decisions.md).
 
 Deferred: network sync, executable plugins and AI. See [Phase 3 decisions](docs/phase3-decisions.md) for known limitations.
+
+## TideMail contacts plugin
+
+A simple People view inside the updated TideMail provides search, add/edit, compose
+and recent correspondence, with Advanced CRM kept separate. See
+[plugin setup and keys](docs/tidemail-plugin.md). Build with `make plugin`; install
+with `make install-tidemail-plugin`. Older TideMail releases need updating first.
+
+To try the paired integration with fictional data, run `make tidemail-demo-build`,
+then `python3 scripts/tidemail_demo.py` and press **C**. This uses an isolated profile,
+including when you open Advanced CRM.

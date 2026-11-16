@@ -1,0 +1,9 @@
+id = "tidecontacts"
+name = "TideContacts"
+version = "0.1.0"
+api = 1
+command = "tidecontacts-plugin"
+description = "Your contacts, recent correspondence and optional advanced personal CRM."
+[permissions]
+contacts_read = true
+contacts_write = true
