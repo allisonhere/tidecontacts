@@ -29,6 +29,7 @@ type Request struct {
 	RequestID string          `json:"request_id"`
 	Method    string          `json:"method"`
 	Data      json.RawMessage `json:"data"`
+	Settings  map[string]any  `json:"settings,omitempty"`
 }
 type response struct {
 	API       int    `json:"api"`

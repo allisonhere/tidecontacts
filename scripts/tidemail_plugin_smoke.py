@@ -53,6 +53,11 @@ with tempfile.TemporaryDirectory(prefix='tidecontacts-plugin-') as tmp:
         send('C', 1)
         assert b'Recent correspondence' in transcript, bytes(transcript[-5000:])
         assert b'person1@example.com' in transcript, bytes(transcript[-5000:])
+        start = len(transcript)
+        send('A', 2)
+        assert b'TideContacts /' in transcript[start:], bytes(transcript[start:][-6000:])
+        send('q', 1)
+        assert proc.poll() is None, 'TideMail did not resume after Advanced CRM'
         send('n')
         send('Bridge Test')
         send('\t')
@@ -67,7 +72,7 @@ with tempfile.TemporaryDirectory(prefix='tidecontacts-plugin-') as tmp:
         send('c', 1)
         assert b'bridge-test@example.com' in transcript, bytes(transcript[-5000:])
         assert not (root / 'data/tidecontacts/tidecontacts.db').exists(), 'demo opened regular contacts database'
-        print('PASS: plugin discovery, demo people, add/save, search, compose, isolated data')
+        print('PASS: plugin discovery, Advanced CRM launch/return, demo people, add/save, search, compose, isolated data')
     finally:
         proc.send_signal(signal.SIGTERM)
         try:

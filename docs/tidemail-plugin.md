@@ -72,3 +72,28 @@ explicitly identifies real contacts as separate. These labels remain visible
 while adding or editing. The original manager says **TideMail local** and
 **Stored only in TideMail; separate from TideContacts**. No contacts are moved
 automatically between those books.
+
+## Plugin settings
+
+In TideMail, open **Settings → Plugins**, select **TideContacts**, and press
+**Enter** or **s**. Changes save immediately.
+
+- **Default contacts view:** choose what C opens: TideContacts or TideMail local.
+  An explicitly configured different contacts provider remains respected.
+- **Contact data:** choose real or demo TideContacts data. This setting applies
+  only to TideContacts, not TideMail's separate local contacts. Demo data is seeded
+  once and stays separate from the real database. Normal TideMail hides live
+  correspondence while viewing demo contacts. The isolated demo launcher always
+  forces demo data, including for Advanced CRM.
+- **Check connection:** shows the profile and active people count. This is a
+  read-only check; it does not create or migrate the database. A missing database
+  shows Ready and is created only when you open that address book.
+- **Open Advanced CRM:** launches the bundled app with the selected profile.
+
+TideContacts settings are local preferences; external address-book synchronization
+is still not included.
+
+Advanced CRM runs interactively in TideMail’s terminal while TideMail pauses.
+Quit the CRM to return to TideMail. The child inherits the terminal directly,
+so the renderer’s output serialization does not turn its output into a pipe.
+The terminal smoke test verifies launch and return as well as basic contacts.

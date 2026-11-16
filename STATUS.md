@@ -23,3 +23,5 @@ Themes: searchable built-in palettes via Menu → Themes, plus Match TideMail fo
 Help now uses TideUI HelpBrowser: category/content panes, search and staged Escape navigation. Local TideUI checkout is required until this component is released.
 
 Simple TideMail plugin: contacts.list/save/search bridge with revision checks, duplicate protection and CRM-field preservation. Paired TideMail changes provide People, compose, recent cache correspondence and Advanced CRM. See docs/tidemail-plugin.md. External address-book sync remains deferred.
+
+Plugin settings: default contacts view, real/demo profile, read-only connection status and profile-aware Open Advanced CRM. The demo launcher cannot select live data.

@@ -1,9 +1,27 @@
 id = "tidecontacts"
 name = "TideContacts"
-version = "0.1.0"
+version = "0.2.0"
 api = 1
 command = "tidecontacts-plugin"
 description = "Your contacts, recent correspondence and optional advanced personal CRM."
+capabilities = ["plugin.test"]
+
 [permissions]
 contacts_read = true
 contacts_write = true
+
+[[settings]]
+key = "default_view"
+label = "Default contacts view"
+type = "select"
+default = "TideContacts"
+options = ["TideContacts", "TideMail local"]
+help = "Choose what C opens. TideMail local contacts remain a separate address book."
+
+[[settings]]
+key = "data_profile"
+label = "Contact data"
+type = "select"
+default = "Real contacts"
+options = ["Real contacts", "Demo contacts"]
+help = "Applies to TideContacts only; TideMail local contacts stay separate. Demo uses fictional data. The demo launcher always forces Demo."
