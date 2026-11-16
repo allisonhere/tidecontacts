@@ -32,6 +32,22 @@ relationships, activities, tasks, a project, a pipeline and reminders. Dates are
 relative to the first launch. Live TideMail sync and desktop notifications are
 disabled. Reset affects only this demo profile.
 
+## Scripting
+
+TideContacts now has JSON commands for contacts, organizations, tasks, activities,
+projects, pipelines and items. No running app or server is needed:
+
+```sh
+./bin/tidecontacts --demo contacts list --full
+./bin/tidecontacts --demo tasks list --view today
+printf '%s\n' '{"Title":"Follow up"}' | ./bin/tidecontacts --demo tasks create --input -
+./bin/tidecontacts schema tasks
+```
+
+Updates require revisions (or pipeline configuration tokens); JSON errors and
+exit codes are documented in the [CLI guide](docs/cli.md). `make smoke-cli` tests
+the real binary using fictional data.
+
 ## First contact
 
 Start in People, press `n`, and enter a display name. Names are optional: a nickname, contact method or organization can supply the display identity. Press Enter (or F2) to save. The editor opens as a modal over the screen you were on.

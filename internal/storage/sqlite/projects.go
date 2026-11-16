@@ -155,7 +155,7 @@ func saveProject(ctx context.Context, tx *sql.Tx, p *domain.Project, now time.Ti
 		return e
 	}
 	if e == nil && p.Revision != revision {
-		return fmt.Errorf("project changed since it was opened; reload before saving")
+		return fmt.Errorf("%w: project changed since it was opened; reload before saving", ErrConflict)
 	}
 	if e == sql.ErrNoRows {
 		created = stamp(now)

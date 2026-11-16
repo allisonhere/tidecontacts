@@ -213,7 +213,7 @@ func saveActivity(ctx context.Context, tx *sql.Tx, a *domain.Activity, now time.
 		return e
 	}
 	if e == nil && a.Revision != revision {
-		return fmt.Errorf("activity changed since it was opened; reload before saving")
+		return fmt.Errorf("%w: activity changed since it was opened; reload before saving", ErrConflict)
 	}
 	if e == sql.ErrNoRows {
 		created = stamp(now)

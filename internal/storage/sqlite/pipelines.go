@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/allisonhere/tidecontacts/internal/domain"
@@ -44,6 +45,18 @@ func (s *Store) Pipelines(ctx context.Context, archived bool) ([]domain.Pipeline
 // stage list. Stage order follows the slice. A stage that still holds items cannot
 // be removed; move or archive its items first.
 func (s *Store) SavePipeline(ctx context.Context, p domain.Pipeline) (domain.Pipeline, error) {
+	return s.savePipeline(ctx, p, nil)
+}
+
+// SavePipelineIfUnchanged checks the prior configuration inside the same write
+// transaction. Item counts are derived, and do not affect configuration equality.
+func (s *Store) SavePipelineIfUnchanged(ctx context.Context, p, expected domain.Pipeline) (domain.Pipeline, error) {
+	if p.ID != expected.ID || p.ID == "" {
+		return p, fmt.Errorf("%w: pipeline identity changed", ErrConflict)
+	}
+	return s.savePipeline(ctx, p, &expected)
+}
+func (s *Store) savePipeline(ctx context.Context, p domain.Pipeline, expected *domain.Pipeline) (domain.Pipeline, error) {
 	p.Name = strings.TrimSpace(p.Name)
 	if p.Name == "" {
 		return p, fmt.Errorf("a pipeline needs a name")
@@ -52,6 +65,29 @@ func (s *Store) SavePipeline(ctx context.Context, p domain.Pipeline) (domain.Pip
 		return p, fmt.Errorf("a pipeline needs at least one stage")
 	}
 	e := s.write(ctx, func(tx *sql.Tx) error {
+		if expected != nil {
+			var current domain.Pipeline
+			if err := tx.QueryRowContext(ctx, "SELECT id,name,description,archived,position FROM pipelines WHERE id=?", expected.ID).Scan(&current.ID, &current.Name, &current.Description, &current.Archived, &current.Position); err != nil {
+				return err
+			}
+			current.Stages = []domain.Stage{}
+			if err := each(ctx, tx, "SELECT id,pipeline_id,name,position FROM pipeline_stages WHERE pipeline_id=? ORDER BY position", []any{expected.ID}, func(r *sql.Rows) error {
+				var stage domain.Stage
+				err := r.Scan(&stage.ID, &stage.PipelineID, &stage.Name, &stage.Position)
+				current.Stages = append(current.Stages, stage)
+				return err
+			}); err != nil {
+				return err
+			}
+			old := *expected
+			old.Stages = append([]domain.Stage{}, expected.Stages...)
+			for i := range old.Stages {
+				old.Stages[i].Count = 0
+			}
+			if !reflect.DeepEqual(current, old) {
+				return fmt.Errorf("%w: pipeline configuration changed; reload before saving", ErrConflict)
+			}
+		}
 		now := stamp(s.now())
 		if p.ID == "" {
 			p.ID = uuid.NewString()
@@ -271,7 +307,7 @@ func (s *Store) SaveItem(ctx context.Context, it domain.PipelineItem) (domain.Pi
 			return e
 		}
 		if e == nil && it.Revision != revision {
-			return fmt.Errorf("item changed since it was opened; reload before saving")
+			return fmt.Errorf("%w: item changed since it was opened; reload before saving", ErrConflict)
 		}
 		if e == sql.ErrNoRows {
 			created = now

@@ -247,7 +247,7 @@ func saveTask(ctx context.Context, tx *sql.Tx, t *domain.Task, now time.Time, re
 		return e
 	}
 	if e == nil && t.Revision != revision {
-		return fmt.Errorf("task changed since it was opened; reload before saving")
+		return fmt.Errorf("%w: task changed since it was opened; reload before saving", ErrConflict)
 	}
 	if e == sql.ErrNoRows {
 		created = stamp(now)

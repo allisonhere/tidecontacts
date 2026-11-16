@@ -66,3 +66,7 @@ Derived views are computed, not stored: follow-up due dates, the People Inbox, R
 All storage work runs in Bubble Tea commands; `Update` never touches the database and `View` only styles prebuilt rows. Lists render only the visible window. The activity timeline pages 200 rows at a time and a profile loads twelve. A followed link pushes the current workspace, view, selection and focus; Esc restores them.
 
 Reminders are checked once a minute while the app runs. There is no daemon: `--due` and `--notify` are short-lived modes for the operating system's scheduler.
+
+## Headless scripting boundary
+
+`internal/cli` parses resource/action commands before the interactive startup path. It uses the same SQLite repositories and domain validation as the TUI, with versioned JSON envelopes and exact domain field names. Records retain optimistic revisions; pipeline configurations use an etag checked through `SavePipelineIfUnchanged` inside its write transaction, without a schema migration. `sqlite.ErrConflict` provides a shared typed conflict signal. CLI schemas are generated from domain types; incompatible public shape changes require an API-version change. The CLI has no terminal renderer, daemon or network dependency.

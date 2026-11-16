@@ -75,6 +75,6 @@ with tempfile.TemporaryDirectory(prefix='tidecontacts-smoke-') as root:
     config.parent.mkdir(parents=True, exist_ok=True)
     config.write_text('theme = "invalid"\n')
     failed = subprocess.run([binary, '--check'], env=env, capture_output=True, timeout=10)
-    assert failed.returncode != 0 and b'theme must be' in failed.stderr
+    assert failed.returncode != 0 and b'unknown theme' in failed.stderr
     assert config.read_text() == 'theme = "invalid"\n'
 print('PASS: initialize/reopen, PTY navigation/input/palette/resize, q/Ctrl+C/SIGTERM/SIGHUP restore, invalid config')

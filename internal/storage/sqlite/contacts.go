@@ -176,7 +176,7 @@ func saveContact(ctx context.Context, tx *sql.Tx, c *domain.Contact, action stri
 		return e
 	}
 	if exists && (revision != c.Revision || kind != c.Kind) {
-		return fmt.Errorf("record changed since it was opened; reload before saving")
+		return fmt.Errorf("%w: record changed since it was opened; reload before saving", ErrConflict)
 	}
 	if !exists && c.Revision != 0 {
 		return fmt.Errorf("record no longer exists")

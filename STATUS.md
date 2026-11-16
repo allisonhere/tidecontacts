@@ -25,3 +25,5 @@ Help now uses TideUI HelpBrowser: category/content panes, search and staged Esca
 Simple TideMail plugin: contacts.list/save/search bridge with revision checks, duplicate protection and CRM-field preservation. Paired TideMail changes provide People, compose, recent cache correspondence and Advanced CRM. See docs/tidemail-plugin.md. External address-book sync remains deferred.
 
 Plugin settings: default contacts view, real/demo profile, read-only connection status and profile-aware Open Advanced CRM. The demo launcher cannot select live data.
+
+Scripting CLI: versioned JSON read/write commands for contacts, organizations, tasks, activities, projects, pipelines and items, plus CRM archives and schema discovery. Partial record updates require revisions; pipeline edits use transaction-checked configuration tokens. Demo/custom database isolation and structured error exit codes are covered by tests and make smoke-cli. See docs/cli.md for list caps and remaining UI-only surfaces.

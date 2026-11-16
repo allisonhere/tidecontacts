@@ -6,6 +6,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/allisonhere/tidecontacts/internal/cli"
 	"github.com/allisonhere/tidecontacts/internal/config"
 	"github.com/allisonhere/tidecontacts/internal/connector/tidemail"
 	"github.com/allisonhere/tidecontacts/internal/demo"
@@ -27,6 +28,10 @@ import (
 
 func main() {
 	if err := run(); err != nil {
+		var commandError *cli.Error
+		if errors.As(err, &commandError) {
+			os.Exit(commandError.ExitCode)
+		}
 		if errors.As(err, &errDue{}) {
 			os.Exit(3)
 		}
@@ -35,6 +40,17 @@ func main() {
 	}
 }
 func run() (result error) {
+	if cli.Handles(os.Args[1:]) {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		defer cancel()
+		return cli.Run(ctx, os.Args[1:], os.Stdin, os.Stdout, os.Stderr)
+	}
+	flag.Usage = func() {
+		fmt.Fprintln(os.Stderr, "TideContacts: no subcommand opens the terminal UI.")
+		flag.PrintDefaults()
+		fmt.Fprint(os.Stderr, "\n"+cli.Help)
+	}
+
 	demoMode := flag.Bool("demo", false, "open isolated fictional demo data")
 	demoReset := flag.Bool("demo-reset", false, "reset and open the demo profile")
 	syncMail := flag.String("sync-tidemail", "", "import email activity from an absolute TideMail cache path (read-only)")

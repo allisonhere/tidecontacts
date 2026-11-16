@@ -35,3 +35,7 @@ install-tidemail-plugin: plugin
 tidemail-demo-build: plugin
 	cd ../tidemail && go build -buildvcs=false -o ../tidecontact/bin/tidemail .
 	cd ../tidemail && go build -buildvcs=false -o ../tidecontact/bin/tidemail-demo-seed ./cmd/tidecontacts-demo-seed
+
+.PHONY: smoke-cli
+smoke-cli: build
+	python3 scripts/cli_smoke.py
