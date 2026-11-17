@@ -283,8 +283,11 @@ func (m Model) updateEditor(msg tea.Msg) (Model, tea.Cmd, bool) {
 			e.selected = 0
 			e.rebuild()
 			return m, e.focusCmd(), true
-		case "tab", "shift+tab":
+		case "tab", "shift+tab", "up", "down":
 			if e.section >= 5 {
+				if k.String() == "up" || k.String() == "down" {
+					break
+				}
 				if e.section == 5 {
 					e.section = 6
 				} else {
@@ -295,7 +298,7 @@ func (m Model) updateEditor(msg tea.Msg) (Model, tea.Cmd, bool) {
 			n := len(e.fields[e.section])
 			if n > 0 {
 				delta := 1
-				if k.String() == "shift+tab" {
+				if k.String() == "shift+tab" || k.String() == "up" {
 					delta = -1
 				}
 				e.selected = (e.selected + delta + n) % n
@@ -422,11 +425,14 @@ func (m Model) editorPanel(u softUI) *tideui.Overlay {
 			labelW = max(labelW, lipgloss.Width(f.label)+2)
 		}
 	}
-	width, height := m.formSize(84)
+	width, height := m.recordFormSize(84)
 	labelW = min(labelW, max(8, width*2/5))
 	cw := u.controlWidth(width, labelW)
 	body := []string{u.tabs(editorSections, e.section, width), u.blank(width)}
 	budget := max(1, height-7)
+	if e.section >= 5 {
+		budget = max(1, height-8)
+	}
 	if e.section >= 5 {
 		ed := e.notes
 		if e.section == 6 {
@@ -446,26 +452,26 @@ func (m Model) editorPanel(u softUI) *tideui.Overlay {
 		}
 		body = append(body, u.rows(rows, e.selected, width, budget)...)
 	}
-	body = append(body, u.blank(width))
+	footer := []string{u.blank(width)}
 	switch {
 	case m.contacts.busy:
-		body = append(body, u.note("Saving…", width, false))
+		footer = append(footer, u.note("Saving…", width, false))
 	case e.confirm != "":
-		body = append(body, u.note(e.confirm, width, true))
+		footer = append(footer, u.note(e.confirm, width, true))
 	case e.err != "":
-		body = append(body, u.note(domain.SafeText(e.err), width, true))
+		footer = append(footer, u.note(domain.SafeText(e.err), width, true))
 	default:
-		body = append(body, u.note(helpText, width, false))
+		footer = append(footer, u.note(helpText, width, false))
 	}
 	switch {
 	case e.confirm != "":
-		body = append(body, u.hints(width, "y", "discard", "n", "keep editing"))
+		footer = append(footer, u.hints(width, "y", "discard", "n", "keep editing"))
 	case e.section >= 5:
-		body = append(body, u.hints(width, "ctrl+s", "save", "f5/f6", "section", "tab", "notes/biography", "esc", "cancel"))
+		footer = append(footer, u.hints(width, "ctrl+s", "save", "tab", "notes/biography"), u.hints(width, "f5", "previous section", "f6", "next section", "esc", "cancel"))
 	default:
-		body = append(body, u.hints(width, "enter", "save", "tab", "next field", "f5/f6", "section"), u.hints(width, "ctrl+n", "add entry", "ctrl+d", "remove entry", "esc", "cancel"))
+		footer = append(footer, u.hints(width, "enter", "save", "↑/↓", "field", "ctrl+n", "add entry", "ctrl+d", "remove entry"), u.hints(width, "f5", "previous section", "f6", "next section", "esc", "cancel"))
 	}
-	return u.panel(title, width, body)
+	return u.fixedFormPanel(title, width, height, body, footer)
 }
 
 // entryLabel names a field of a repeated entry: "1 kind", "2 postal code".

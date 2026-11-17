@@ -21,7 +21,11 @@ The list loads 200 entries at a time; the last row loads older ones. A person's 
 
 ## Recording and editing
 
-`n` or `A` logs with quick capture; `e` opens the form (type, title, when, people, projects, tags, visibility, multi-line notes). `t` creates a follow-up task carrying the same people and projects and a link back to the activity. `L` links more people or projects; in the detail pane `x` unlinks the row under the cursor. `D` deletes after confirmation.
+`n` in Activities or `A` anywhere opens **New activity**, a modal with labeled Title, Type, When, People & orgs, Projects, Tags, Visibility and multiline Notes. Log meeting, Log call and Add note use the same form with Type prefilled. The selected person, organization, project or task stays linked.
+
+Tab moves fields. Type is a plain label such as `meeting` or a custom word; When accepts `yesterday 10:30`, `today 14:30` or a date/time. No `type:`, `with:` or `on:` tokens are required. On People & orgs or Projects, Space/Ctrl+O searches existing records; Enter toggles a link and returns, and Ctrl+D removes the last link. Enter/F2/Ctrl+S saves (Ctrl+S in Notes); Esc asks before discarding a changed draft.
+
+For optional one-line syntax, use **Quick capture activity (one line)** in the palette. `e` edits an existing local activity in the same modal. `t` creates a follow-up task carrying the same people and projects and a link back to the activity. `L` links more people or projects; in the detail pane `x` unlinks the row under the cursor. `D` deletes after confirmation.
 
 Completing a task that is linked to a person, organization or project adds one `done` entry; reopening the task withdraws it. Changing a project's status adds a `proj` entry.
 

@@ -21,7 +21,8 @@ var phase3 = []Command{
 	{ID: "tidemail-sync", Label: "Sync TideMail", Soft: true},
 	{ID: "tidemail-status", Label: "Show TideMail sync status", Soft: true},
 	// Phase 3: contextual keys act on the selected record of the active workspace.
-	{ID: "task-new", Label: "New task (quick capture)", Keys: []string{"T"}, Soft: true}, {ID: "activity-log", Label: "Log activity (quick capture)", Keys: []string{"A"}, Soft: true},
+	{ID: "task-quick-capture", Label: "Quick capture task (one line)", Keys: nil},
+	{ID: "task-new", Label: "New task", Keys: []string{"T"}, Soft: true}, {ID: "activity-quick-capture", Label: "Quick capture activity (one line)", Keys: nil}, {ID: "activity-log", Label: "New activity", Keys: []string{"A"}, Soft: true},
 	{ID: "complete", Label: "Complete task, milestone or inbox entry", Keys: []string{"c"}, Soft: true}, {ID: "reopen", Label: "Reopen task", Keys: []string{"R"}, Soft: true},
 	{ID: "snooze", Label: "Snooze task, reminder or inbox entry", Keys: []string{"z"}, Soft: true}, {ID: "reschedule", Label: "Reschedule: set due or follow-up date", Keys: []string{"S"}, Soft: true},
 	{ID: "priority", Label: "Cycle priority", Keys: []string{"p"}, Soft: true}, {ID: "stage-next", Label: "Advance status or pipeline stage", Keys: []string{">"}, Soft: true}, {ID: "stage-previous", Label: "Move status or pipeline stage back", Keys: []string{"<"}, Soft: true},
@@ -102,7 +103,8 @@ func Defaults() Registry {
 		{ID: "restore", Label: "Restore archived/deleted contact", Keys: nil}, {ID: "delete-contact", Label: "Delete selected record", Keys: []string{"D"}}, {ID: "undo-contact", Label: "Undo last contact change", Keys: []string{"u"}},
 		{ID: "profile-next", Label: "Next view", Keys: []string{"]"}}, {ID: "profile-previous", Label: "Previous view", Keys: []string{"["}},
 		{ID: "sort", Label: "Cycle sort or status filter", Keys: []string{"s"}}, {ID: "density", Label: "Toggle list density", Keys: nil},
-		{ID: "import-contacts", Label: "Import CSV or vCard", Keys: []string{"I"}}, {ID: "export-filtered", Label: "Export filtered contacts", Keys: []string{"E"}}, {ID: "export-selected", Label: "Export marked or selected contacts", Keys: nil}, {ID: "export-all", Label: "Export all contacts", Keys: nil},
+		{ID: "refresh-address-books", Label: "Refresh connected address books", Keys: nil},
+		{ID: "import-contacts", Label: "Import data…", Keys: []string{"I"}}, {ID: "export-filtered", Label: "Export filtered contacts", Keys: []string{"E"}}, {ID: "export-selected", Label: "Export marked or selected contacts", Keys: nil}, {ID: "export-all", Label: "Export all contacts", Keys: nil},
 		{ID: "page-down", Label: "Page down", Keys: []string{"pgdown"}}, {ID: "page-up", Label: "Page up", Keys: []string{"pgup"}}, {ID: "top", Label: "Go to top", Keys: []string{"home"}}, {ID: "bottom", Label: "Go to bottom", Keys: []string{"end"}},
 		{ID: "theme-dark", Label: "Use dark theme", Keys: nil}, {ID: "theme-light", Label: "Use light theme", Keys: nil}, {ID: "theme-contrast", Label: "Use high-contrast theme", Keys: nil},
 	} {

@@ -27,7 +27,7 @@
 
 | Key | Action |
 |---|---|
-| `n` / `T` | Quick capture |
+| `n` / `T` | New task form (`n` in Tasks; `T` anywhere) |
 | `e` | Full form |
 | `c` / `R` | Complete / reopen |
 | `S` | Reschedule: `fri`, `+1w`, `2026-12-01 14:30`, `none` |
@@ -42,6 +42,16 @@
 | `b` | Add a reminder for the task |
 
 Filters: `status:waiting`, `is:open|done|overdue|today|recurring|waiting|snoozed|unlinked|archived`, `due:today|tomorrow|week|month|overdue|none|any|2026-12-01|<date|>date`, `pri:high`, `with:`, `org:`, `project:`, `tag:`, and free words.
+
+## Creating a task
+
+Press `n` in Tasks or `T` anywhere to open **New task** in the same modal style as editing. Enter a title, then Tab between labeled fields. Status and priority use Left/Right choices. Dates accept plain values such as `tomorrow`, `fri` or `2026-12-01`; no `due:` or `project:` tokens are needed.
+
+On **People & orgs** or **Projects**, press Space or Ctrl+O to search existing records. Enter selects or removes a link and returns to the form; Ctrl+D removes the last link from the focused field. The selected record’s identity is preserved even if names are duplicated. Starting from a contact or project preselects that link. Creating a task from an activity or inbox entry opens the form with its title/context filled in.
+
+Enter, F2 or Ctrl+S saves; use Ctrl+S while editing the multiline Description. Esc asks before discarding a changed draft. A title-only task defaults to Inbox. Other fields are optional.
+
+For the old one-line syntax, choose **Quick capture task (one line)** from the command palette. It remains optional for users who prefer `due:`, `pri:` and other tokens.
 
 ## Recurrence
 

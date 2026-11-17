@@ -15,7 +15,7 @@ The MIT emersion/go-vcard revision `v0.0.0-20241024213814-c9703dde27ff` matches 
 - Normalized tables with a shared entity identity enable people, organizations, all three relationship combinations and separate memberships without polymorphic foreign-key gaps.
 - Complete aggregate transactions keep method preferences, tags, fields, history and search projections consistent. Revision checks make concurrent editing explicit.
 - Soft deletion preserves history and references for future sync. Undo covers the latest recoverable edit/flag/deletion in the current session; durable restore is available through tombstone search and the palette.
-- A full-screen sectioned editor avoids chains of small dialogs. Exact organization/relationship names or UUIDs resolve links. New organization names create records; ambiguous names fail with an actionable error.
+- The sectioned editor now uses a modal over the workspace, preserving the single-surface flow without chains of small dialogs. Exact organization/relationship names or UUIDs resolve links. New organization names create records; ambiguous names fail with an actionable error.
 - Import duplicates are unchecked by default and never merged/overwritten. The user can explicitly create separate duplicates. Whole selected batches roll back on any storage failure.
 - Export refuses existing paths, including racing destinations. Full aggregate extensions preserve data beyond portable vCard/CSV fields.
 - Config adds compact/comfortable density. Runtime density/theme remain session preferences, consistent with Phase 1.

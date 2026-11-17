@@ -68,6 +68,12 @@ func serve(in io.Reader, out io.Writer) error {
 			return err
 		}
 	}
+	if useDemo {
+		if req.Settings == nil {
+			req.Settings = map[string]any{}
+		}
+		req.Settings["data_profile"] = "Demo contacts"
+	}
 	raw, err := json.Marshal(req)
 	if err != nil {
 		return err

@@ -7,7 +7,7 @@ TideContacts database; there is no second copy of a contact to synchronize.
 ## Build and install
 
 This development feature requires the updated TideMail source in `../tidemail`.
-Older TideMail releases do not recognize `contacts_write` and cannot show this UI.
+Older TideMail releases do not recognize `contacts_write` and cannot show this UI. The checkout used by `go run .` must include the TideContacts integration; an updated binary elsewhere does not change that checkout.
 
 ```sh
 make install-tidemail-plugin
@@ -28,8 +28,9 @@ TideMail's original local address book, whose contents remain separate.
 ## Everyday actions
 
 - **n**: add a person (email is required).
-- **e**: edit name, email, phone, organization and a note. Other CRM fields and
+- **e**: edit a local person’s name, email, phone, organization and note. Folder contacts are read-only. Other CRM fields and
   additional contact methods are preserved. Concurrent edits are rejected.
+- **r**: reload People and refresh connected vCard folders.
 - **/**: search, then Enter to load the results; Esc clears the query.
 - **c** or **Enter**: compose an email to the selected person.
 - **A**: open Advanced CRM. The installed plugin bundles its matching TideContacts executable.
@@ -41,10 +42,15 @@ active people with an email address appear. Duplicate email addresses are reject
 when saving. Recent correspondence shows up to 15 matching subjects and dates from
 TideMail's local cache, checked by exact participant email addresses. Message bodies
 and attachments never cross the plugin bridge. Recipient Ctrl+T lookup also uses
-the plugin when no other provider is configured.
+the plugin when no other provider is configured. All email methods on a contact are available through Ctrl+T; the People list shows its preferred email when set, otherwise its first email.
 
-No external address-book sync, automatic native-contact import, or contact deletion
-ships in this version. Existing TideMail local contacts remain available with L.
+## Connected address books
+
+Open **A → Import data… → khard / vdirsyncer** to connect a local vCard folder. In the folder manager, press `n` to browse and `s` to select the current folder, or `p` to enter its path. Preview and confirm the connection.
+
+Folder contacts carry a **folder · read-only** label in People. Edit them in the original address-book tool, then press **r**. TideMail refreshes connected folders whenever it loads or refreshes People or handles Ctrl+T lookup. The standalone TideContacts app does not need to run. Successful refreshes update changed cards and hide removed cards; failed scans retain the last good contacts and display a warning. Local contacts with matching names/emails stay separate. See [folder connections](vcard-directories.md) for UID behavior, limits and disconnect/reconnect.
+
+vdirsyncer owns CardDAV synchronization and credentials. This integration reads its local files. TideMail's native contacts are not imported automatically, and the simple People view has no delete action; use **L** for the separate native address book.
 
 ## Try it without live data
 
@@ -90,10 +96,15 @@ In TideMail, open **Settings → Plugins**, select **TideContacts**, and press
   shows Ready and is created only when you open that address book.
 - **Open Advanced CRM:** launches the bundled app with the selected profile.
 
-TideContacts settings are local preferences; external address-book synchronization
-is still not included.
+TideContacts settings are local preferences. Connect and manage vCard folders in Advanced CRM’s import modal; they are stored in the selected TideContacts database rather than these plugin settings.
 
 Advanced CRM runs interactively in TideMail’s terminal while TideMail pauses.
 Quit the CRM to return to TideMail. The child inherits the terminal directly,
 so the renderer’s output serialization does not turn its output into a pipe.
 The terminal smoke test verifies launch and return as well as basic contacts.
+
+## A red plugin or missing settings
+
+If TideMail reports **manifest has unknown keys: permissions.contacts_write**, its running source/binary lacks the integration. Update that checkout or executable, then restart TideMail. Do not remove the permission from the manifest: adding and editing local contacts requires it.
+
+When starting with `go run .`, run it inside the compatible TideMail checkout. Reinstalling the plugin or updating `~/.local/bin/tidemail` alone does not update that source tree. **Check connection** is read-only; opening People can apply the matching TideContacts schema migrations.

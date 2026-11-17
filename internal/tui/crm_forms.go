@@ -2,6 +2,7 @@ package tui
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -45,6 +46,7 @@ type crmConfirm struct {
 }
 
 type pickerResult struct {
+	owner   *crmPicker
 	seq     uint64
 	options []domain.Ref
 }
@@ -110,7 +112,7 @@ func (m *Model) pickerSearch() tea.Cmd {
 				}
 			}
 		}
-		return pickerResult{seq, out}
+		return pickerResult{owner: p, seq: seq, options: out}
 	}
 }
 
@@ -269,9 +271,14 @@ type formField struct {
 	multiline        bool
 	editor           multiline
 	initial          string
+	referenceSource  string
+	references       []domain.Ref
 }
 
 func (f formField) value() string {
+	if f.referenceSource != "" {
+		return refsText(f.references)
+	}
 	if f.multiline {
 		return f.editor.Value()
 	}
@@ -314,7 +321,7 @@ func (f *crmForm) focus() tea.Cmd {
 		if i == f.selected {
 			if fd.multiline {
 				fd.editor.Focus()
-			} else if len(fd.options) == 0 {
+			} else if len(fd.options) == 0 && fd.referenceSource == "" {
 				cmd = fd.input.Focus()
 			}
 		}
@@ -324,7 +331,11 @@ func (f *crmForm) focus() tea.Cmd {
 
 func (f *crmForm) dirty() bool {
 	for _, fd := range f.fields {
-		if fd.value() != fd.initial {
+		current := fd.value()
+		if fd.referenceSource != "" {
+			current = referenceIdentity(fd.references)
+		}
+		if current != fd.initial {
 			return true
 		}
 	}
@@ -366,6 +377,32 @@ func (m Model) updateForm(msg tea.Msg) (Model, tea.Cmd) {
 		move := func(delta int) (Model, tea.Cmd) {
 			f.selected = (f.selected + delta + len(f.fields)) % len(f.fields)
 			return m, f.focus()
+		}
+		if fd.referenceSource != "" {
+			switch key {
+			case "ctrl+o", " ", "right":
+				owner, selected := f, f.selected
+				return m, m.openPicker("Choose "+strings.ToLower(fd.label), "Type to search; Enter toggles a link; Esc returns to the form.", fd.referenceSource, nil, func(m *Model, ref domain.Ref) tea.Cmd {
+					if m.crm.form != owner {
+						return nil
+					}
+					field := &owner.fields[selected]
+					ref.Role = ""
+					for i, existing := range field.references {
+						if existing.ID == ref.ID {
+							field.references = append(field.references[:i], field.references[i+1:]...)
+							return owner.focus()
+						}
+					}
+					field.references = append(field.references, ref)
+					return owner.focus()
+				})
+			case "ctrl+d":
+				if len(fd.references) > 0 {
+					fd.references = fd.references[:len(fd.references)-1]
+				}
+				return m, nil
+			}
 		}
 		switch key {
 		case "ctrl+c", "esc":
@@ -419,7 +456,7 @@ func (m Model) updateForm(msg tea.Msg) (Model, tea.Cmd) {
 				return m, nil
 			}
 		}
-		if len(fd.options) > 0 {
+		if len(fd.options) > 0 || fd.referenceSource != "" {
 			return m, nil
 		}
 	}
@@ -439,7 +476,7 @@ func (m Model) formPanel(u softUI) *tideui.Overlay {
 	for _, x := range f.fields {
 		labelW = max(labelW, lipgloss.Width(x.label)+2)
 	}
-	width, height := m.formSize(max(64, min(84, labelW+50)))
+	width, height := m.recordFormSize(max(64, min(84, labelW+50)))
 	labelW = min(labelW, max(8, width*2/5))
 	cw := u.controlWidth(width, labelW)
 	fd := f.fields[f.selected]
@@ -458,6 +495,8 @@ func (m Model) formPanel(u softUI) *tideui.Overlay {
 			focused := i == f.selected
 			var control string
 			switch {
+			case x.referenceSource != "":
+				control = u.choice(orDefault(x.value(), "None"), cw, focused)
 			case x.multiline:
 				first, _, more := strings.Cut(x.editor.Value(), "\n")
 				if more {
@@ -473,28 +512,30 @@ func (m Model) formPanel(u softUI) *tideui.Overlay {
 		}
 		body = append(body, u.rows(rows, f.selected, width, budget)...)
 	}
-	body = append(body, u.blank(width))
+	footer := []string{u.blank(width)}
 	switch {
 	case m.crm.busy:
-		body = append(body, u.note("Saving…", width, false))
+		footer = append(footer, u.note("Saving…", width, false))
 	case f.confirm != "":
-		body = append(body, u.note(f.confirm, width, true))
+		footer = append(footer, u.note(f.confirm, width, true))
 	case f.err != "":
-		body = append(body, u.note(domain.SafeText(f.err), width, true))
+		footer = append(footer, u.note(domain.SafeText(f.err), width, true))
 	default:
-		body = append(body, u.note(fd.help, width, false))
+		footer = append(footer, u.note(fd.help, width, false))
 	}
 	switch {
 	case f.confirm != "":
-		body = append(body, u.hints(width, "y", "discard", "n", "keep editing"))
+		footer = append(footer, u.hints(width, "y", "discard", "n", "keep editing"))
 	case fd.multiline:
-		body = append(body, u.hints(width, "ctrl+s", "save", "tab", "next field", "esc", "cancel"))
+		footer = append(footer, u.hints(width, "ctrl+s", "save", "tab", "next field", "esc", "cancel"))
+	case fd.referenceSource != "":
+		footer = append(footer, u.hints(width, "enter", "save", "space", "choose", "ctrl+d", "remove last", "↑/↓", "field", "esc", "cancel"))
 	case len(fd.options) > 0:
-		body = append(body, u.hints(width, "enter", "save", "←→", "change", "tab", "next field", "esc", "cancel"))
+		footer = append(footer, u.hints(width, "enter", "save", "←→", "change", "↑/↓", "field", "esc", "cancel"))
 	default:
-		body = append(body, u.hints(width, "enter", "save", "tab", "next field", "esc", "cancel"))
+		footer = append(footer, u.hints(width, "enter", "save", "↑/↓", "field", "tab", "next field", "esc", "cancel"))
 	}
-	return u.panel(strings.ToLower(f.title), width, body)
+	return u.fixedFormPanel(strings.ToLower(f.title), width, height, body, footer)
 }
 
 // refsFrom parses a comma-separated list of names ("Name" or "Name (role)"). Names
@@ -670,4 +711,24 @@ func (m *Model) crmDo(note string, fn func(ctx context.Context) (string, error))
 		want, e := fn(ctx)
 		return crmDoneMsg{note: note, want: want, err: e}
 	}
+}
+
+func referenceField(key, label, source string, refs []domain.Ref) formField {
+	return formField{key: key, label: label, help: "Space or Ctrl+O searches existing records. Enter in the picker toggles a link; Ctrl+D removes the last link.", referenceSource: source, references: append([]domain.Ref(nil), refs...), initial: referenceIdentity(refs)}
+}
+func (m Model) formReferences(key string) []domain.Ref {
+	for _, field := range m.crm.form.fields {
+		if field.key == key {
+			return append([]domain.Ref(nil), field.references...)
+		}
+	}
+	return nil
+}
+
+func referenceIdentity(refs []domain.Ref) string {
+	if len(refs) == 0 {
+		return "[]"
+	}
+	raw, _ := json.Marshal(refs)
+	return string(raw)
 }

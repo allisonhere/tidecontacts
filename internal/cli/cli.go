@@ -50,6 +50,7 @@ func Handles(args []string) bool {
 const Help = `TideContacts scripting CLI (JSON API version 1)
 
   contacts|organizations list|get|create|update|delete|restore|history|dossier|connections
+  contacts query [TEXT]   recipient lookup: --format json|aerc|neomutt
   tasks                  list|get|create|update|delete|restore|complete|reopen|duplicate
   activities             list|get|create|update|delete|restore
   projects               list|get|create|update|delete|restore
@@ -65,6 +66,7 @@ Options (before or after subcommands):
   --query TEXT           same search grammar as the UI
   --kind person|organization  contact list/create kind (default person)
   --full                 return full records from contact lists
+  --format FORMAT        contacts query output (json default, aerc or neomutt)
   --view VIEW            task list view; --status STATUS for projects
   --limit N              task/activity page size (default 200)
   --pipeline ID          pipeline whose items to list
@@ -83,10 +85,10 @@ Exit codes: 0 success; 1 runtime; 2 usage; 3 invalid input; 4 not found; 5 confl
 `
 
 type options struct {
-	present                                                                    map[string]bool
-	demo, json, yes, help, full                                                bool
-	database, input, query, kind, view, status, pipeline, entity, stage, match string
-	limit                                                                      int
+	present                                                                            map[string]bool
+	demo, json, yes, help, full                                                        bool
+	database, input, query, kind, view, status, pipeline, entity, stage, match, format string
+	limit                                                                              int
 }
 type envelope struct {
 	Version int       `json:"schema_version"`
@@ -103,11 +105,15 @@ type metadata struct {
 }
 
 func Run(ctx context.Context, args []string, in io.Reader, out, stderr io.Writer) (result error) {
+	addressFormat := ""
 	defer func() {
 		if result != nil {
 			var e *Error
 			if !errors.As(result, &e) {
 				e = &Error{1, "runtime", result.Error()}
+			}
+			if addressFormat == "neomutt" {
+				_, _ = io.WriteString(out, "TideContacts: "+singleLine(e.Message)+"\n")
 			}
 			_ = json.NewEncoder(stderr).Encode(map[string]any{"schema_version": 1, "error": map[string]string{"code": e.Kind, "message": e.Message}})
 			result = e
@@ -141,6 +147,19 @@ func Run(ctx context.Context, args []string, in io.Reader, out, stderr io.Writer
 			return err
 		}
 		return json.NewEncoder(out).Encode(envelope{Version: 1, Data: data})
+	}
+	if len(pos) >= 2 && pos[0] == "contacts" && pos[1] == "query" {
+		addressFormat = o.format
+		if o.format == "aerc" && !o.present["limit"] {
+			o.limit = 99
+		}
+		if len(pos) > 2 {
+			if o.present["query"] {
+				return usage("use either --query or positional query text")
+			}
+			o.query = strings.Join(pos[2:], " ")
+			pos = pos[:2]
+		}
 	}
 	if len(pos) < 2 || len(pos) > 3 {
 		return usage("expected RESOURCE ACTION [ID]; use --help")
@@ -179,7 +198,12 @@ func Run(ctx context.Context, args []string, in io.Reader, out, stderr io.Writer
 	if o.demo {
 		paths = demo.Paths(paths)
 	}
-	s, err := sqlite.Open(ctx, paths.Database)
+	var s *sqlite.Store
+	if resource == "contacts" && action == "query" && !o.demo {
+		s, err = sqlite.OpenReadOnly(ctx, paths.Database)
+	} else {
+		s, err = sqlite.Open(ctx, paths.Database)
+	}
 	if err != nil {
 		return err
 	}
@@ -202,6 +226,9 @@ func Run(ctx context.Context, args []string, in io.Reader, out, stderr io.Writer
 			return fail(5, "conflict", err.Error())
 		}
 		return err
+	}
+	if resource == "contacts" && action == "query" && o.format != "json" {
+		return writeRecipients(out, data.([]domain.Recipient), o.format)
 	}
 	response := envelope{Version: 1, Data: data, Meta: &metadata{Resource: resource, Action: action, Limit: limit}}
 	value := reflect.ValueOf(data)
@@ -227,6 +254,7 @@ func parse(args []string) (options, []string, error) {
 	fs.BoolVar(&o.json, "json", true, "")
 	fs.BoolVar(&o.yes, "yes", false, "")
 	fs.BoolVar(&o.help, "help", false, "")
+	fs.StringVar(&o.format, "format", "json", "")
 	fs.StringVar(&o.database, "database", "", "")
 	fs.StringVar(&o.input, "input", "", "")
 	fs.StringVar(&o.query, "query", "", "")

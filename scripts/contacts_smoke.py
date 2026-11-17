@@ -91,6 +91,10 @@ with tempfile.TemporaryDirectory(prefix='tidecontacts-crud-') as root:
         assert pathlib.Path(destination).exists(), bytes(transcript[-4000:])
         send(b'\x1b')
         send('I')
+        send(b'\x1b[B')  # vCard source
+        send(b'\r', 0.4)
+        send('p')
+        send(b'\x15')  # replace browser location
         send(destination)
         send(b'\r', 0.6)
         assert b'Dry run' in transcript, bytes(transcript[-4000:])

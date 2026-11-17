@@ -168,6 +168,20 @@ func resolveName(ctx context.Context, tx *sql.Tx, name, kind string) (string, er
 	return ids[0], nil
 }
 func saveContact(ctx context.Context, tx *sql.Tx, c *domain.Contact, action string) error {
+	return saveDirectoryContact(ctx, tx, c, action, false)
+}
+func saveDirectoryContact(ctx context.Context, tx *sql.Tx, c *domain.Contact, action string, directoryWrite bool) error {
+	if !directoryWrite {
+		var source string
+		err := tx.QueryRowContext(ctx, "SELECT source FROM entities WHERE id=?", c.ID).Scan(&source)
+		if err != nil && err != sql.ErrNoRows {
+			return err
+		}
+		if strings.HasPrefix(source, domain.DirectorySourcePrefix) || c.DirectoryReadOnly() {
+			return fmt.Errorf("directory contacts are read-only; edit the original vCard and refresh")
+		}
+	}
+
 	var revision int
 	var created, kind string
 	e := tx.QueryRowContext(ctx, "SELECT revision,created_at,kind FROM entities WHERE id=?", c.ID).Scan(&revision, &created, &kind)

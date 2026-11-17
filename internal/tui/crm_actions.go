@@ -18,13 +18,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-// crmPreviewMsg carries a parsed import file back to the UI for confirmation.
-type crmPreviewMsg struct {
-	archive domain.Archive
-	path    string
-	err     error
-}
-
 func expandHome(p string) string {
 	p = strings.TrimSpace(p)
 	if p == "~" || strings.HasPrefix(p, "~/") {
@@ -177,7 +170,7 @@ func (m Model) crmGlobal(id string) (Model, tea.Cmd, bool) {
 	}
 	if c.busy {
 		switch id {
-		case "task-new", "activity-log", "meeting-log", "call-log", "note-add", "reminder-add", "followup-schedule", "flag", "date-add", "relationship-add", "merge-contacts":
+		case "task-new", "task-quick-capture", "activity-log", "activity-quick-capture", "meeting-log", "call-log", "note-add", "reminder-add", "followup-schedule", "flag", "date-add", "relationship-add", "merge-contacts":
 			return m, nil, true
 		}
 	}
@@ -253,11 +246,15 @@ func (m Model) crmGlobal(id string) (Model, tea.Cmd, bool) {
 		}
 		return m, m.openPrompt("Find TideMail", "No TideMail cache found at the usual location. Open TideMail first, or enter a custom cache path.", defaultPath, submit), true
 	case "task-new":
+		return m, m.newTaskForm("", link, nil), true
+	case "task-quick-capture":
 		return m, m.quickTask("", link, nil), true
 	case "activity-log":
+		return m, m.newActivityForm("conversation", link), true
+	case "activity-quick-capture":
 		return m, m.quickActivity("conversation", link), true
 	case "meeting-log", "call-log", "note-add":
-		return m, m.quickActivity(map[string]string{"meeting-log": "meeting", "call-log": "call", "note-add": "note"}[id], link), true
+		return m, m.newActivityForm(map[string]string{"meeting-log": "meeting", "call-log": "call", "note-add": "note"}[id], link), true
 	case "reminder-add":
 		return m, m.quickReminder(link), true
 	case "followup-schedule":
@@ -379,16 +376,11 @@ func (m Model) crmGlobal(id string) (Model, tea.Cmd, bool) {
 			}), nil
 		}), true
 	case "crm-import":
-		return m, m.openPrompt("Import CRM records", "Path to a TideContacts CRM export (.json). You will see what it contains before anything is written. Existing records are never overwritten.", "", func(m *Model, path string) (tea.Cmd, error) {
-			path = expandHome(path)
-			if path == "" {
-				return nil, fmt.Errorf("enter the path of an export file")
-			}
-			return func() tea.Msg {
-				archive, e := transfer.ReadArchiveFile(path)
-				return crmPreviewMsg{archive: archive, path: path, err: e}
-			}, nil
-		}), true
+		next, _, handled := m.startTransfer("import-contacts")
+		next.contacts.transfer.source = 2
+		next.contacts.transfer.stage = "browse"
+		return next, next.contacts.transfer.readDirectory("."), handled
+
 	case "merge-contacts":
 		if !m.isContacts() || m.contacts.contact.ID == "" {
 			c.err = "Open People or Organizations, mark the duplicate with Space, select the record to keep, then run this command"
@@ -920,12 +912,12 @@ func (m Model) crmAction(id string) (Model, tea.Cmd, bool) {
 				return m, m.crmDo("Flag cleared for "+it.Title, func(ctx context.Context) (string, error) { return "", repo.SetFlag(ctx, it.Source.ID, false, "") }), true
 			case strings.HasPrefix(it.Kind, "followup"):
 				// A follow-up is completed by recording the interaction that happened.
-				return m, m.quickActivity("conversation", it.Person), true
+				return m, m.newActivityForm("conversation", it.Person), true
 			default:
 				return m, m.crmDo("Marked reviewed", func(ctx context.Context) (string, error) { return "", repo.InboxAct(ctx, it.Key, "review", "") }), true
 			}
 		case "followup", "signal":
-			return m, m.quickActivity("conversation", row.ref), true
+			return m, m.newActivityForm("conversation", row.ref), true
 		}
 	case "reviewed":
 		if kind == "inbox" {
@@ -1061,13 +1053,9 @@ func (m Model) crmAction(id string) (Model, tea.Cmd, bool) {
 		switch kind {
 		case "activity":
 			a := row.data.(domain.Activity)
-			return m, m.quickTask("Follow up: "+a.Title, domain.Ref{}, func(t *domain.Task) {
-				for _, r := range a.Entities {
-					t.Entities = append(t.Entities, domain.Ref{ID: r.ID})
-				}
-				for _, r := range a.Projects {
-					t.Projects = append(t.Projects, domain.Ref{ID: r.ID})
-				}
+			return m, m.newTaskForm("Follow up: "+a.Title, domain.Ref{}, func(t *domain.Task) {
+				t.Entities = append(t.Entities, a.Entities...)
+				t.Projects = append(t.Projects, a.Projects...)
 				t.Activities = append(t.Activities, domain.Ref{ID: a.ID})
 			}), true
 		case "inbox":
@@ -1076,9 +1064,9 @@ func (m Model) crmAction(id string) (Model, tea.Cmd, bool) {
 				next, cmd := m.follow(it.Source)
 				return next, cmd, true
 			}
-			return m, m.quickTask("Follow up with "+it.Title, it.Person, nil), true
+			return m, m.newTaskForm("Follow up with "+it.Title, it.Person, nil), true
 		case "item":
-			return m, m.quickTask(row.text+": ", domain.Ref{}, func(t *domain.Task) {}), true
+			return m, m.newTaskForm(row.text+": ", domain.Ref{}, func(t *domain.Task) {}), true
 		default:
 			return m.crmGlobal("task-new")
 		}

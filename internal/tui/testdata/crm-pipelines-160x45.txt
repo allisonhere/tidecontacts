@@ -13,11 +13,11 @@
 │Actions                            ││                                              ││                                                                         │
 │  New pipeline                     ││                                              ││                                                                         │
 │  New pipeline item                ││                                              ││                                                                         │
+│  Import data…                 I   ││                                              ││                                                                         │
+│  Refresh address books            ││                                              ││                                                                         │
 │  Themes                           ││                                              ││                                                                         │
 │  All actions                  :   ││                                              ││                                                                         │
 │  Help                         ?   ││                                              ││                                                                         │
-│                                   ││                                              ││                                                                         │
-│                                   ││                                              ││                                                                         │
 │                                   ││                                              ││                                                                         │
 │                                   ││                                              ││                                                                         │
 │                                   ││                                              ││                                                                         │

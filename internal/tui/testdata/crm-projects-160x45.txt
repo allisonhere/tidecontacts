@@ -12,11 +12,11 @@
 │                                   ││                                              ││  11-13 call Activity 01                                                 │
 │Actions                            ││                                              ││  11-12 mtg Activity 02                                                  │
 │  New project                      ││                                              ││                                                                         │
-│  Themes                           ││                                              ││Created 2026-11-13 12:00 UTC · updated 2026-11-13 12:00 UTC              │
+│  Import data…                 I   ││                                              ││Created 2026-11-13 12:00 UTC · updated 2026-11-13 12:00 UTC              │
+│  Refresh address books            ││                                              ││                                                                         │
+│  Themes                           ││                                              ││                                                                         │
 │  All actions                  :   ││                                              ││                                                                         │
 │  Help                         ?   ││                                              ││                                                                         │
-│                                   ││                                              ││                                                                         │
-│                                   ││                                              ││                                                                         │
 │                                   ││                                              ││                                                                         │
 │                                   ││                                              ││                                                                         │
 │                                   ││                                              ││                                                                         │

@@ -53,7 +53,7 @@ func do(m Model, keys ...string) Model {
 		default:
 			m, cmd = key(m, k)
 		}
-		if m.crm.prompt != nil && k != "enter" || m.crm.form != nil && k != "f2" {
+		if m.crm.prompt != nil && k != "enter" || m.crm.form != nil && m.crm.picker == nil && k != "f2" && k != "enter" {
 			continue // typing: do not wait on cursor blink timers
 		}
 		m = deliver(m, cmd)
@@ -86,7 +86,7 @@ func TestTaskCaptureLifecycleAndInputOwnership(t *testing.T) {
 		t.Fatal(m.state.Active, m.viewName())
 	}
 	// Quick capture: one line, no form. Every printable key belongs to the prompt.
-	m = do(m, "n")
+	m = do(m, ":", "Quick capture task", "enter")
 	if m.crm.prompt == nil {
 		t.Fatal("no capture prompt")
 	}
@@ -104,7 +104,7 @@ func TestTaskCaptureLifecycleAndInputOwnership(t *testing.T) {
 		t.Fatalf("%+v", task)
 	}
 	// A bad capture stays in the prompt with an explanation and writes nothing.
-	m = do(m, "n", "Broken due:someday", "enter")
+	m = do(m, ":", "Quick capture task", "enter", "Broken due:someday", "enter")
 	if m.crm.prompt == nil || m.crm.prompt.err == "" {
 		t.Fatal("invalid capture accepted")
 	}
@@ -218,14 +218,14 @@ func TestActivitiesDossierAndBackNavigation(t *testing.T) {
 		t.Fatal("expected Alex selected")
 	}
 	// Log an activity for the selected person without leaving People.
-	m = do(m, "A", "Coffee type:meeting on:yesterday at:10:30 project:Harbor", "enter")
+	m = do(m, ":", "Quick capture activity", "enter", "Coffee type:meeting on:yesterday at:10:30 project:Harbor", "enter")
 	if !strings.Contains(m.contacts.err, "project") {
 		t.Fatal("unknown project should be reported:", m.contacts.err)
 	}
 	if _, e := s.SaveProject(context.Background(), domain.Project{Name: "Harbor"}); e != nil {
 		t.Fatal(e)
 	}
-	m = do(m, "A", "Coffee type:meeting on:yesterday at:10:30 project:Harbor", "enter", "T", "Send recap due:tomorrow", "enter", "F", "2w", "enter", "d", "First met 2019-03-03", "enter")
+	m = do(m, ":", "Quick capture activity", "enter", "Coffee type:meeting on:yesterday at:10:30 project:Harbor", "enter", ":", "Quick capture task", "enter", "Send recap due:tomorrow", "enter", "F", "2w", "enter", "d", "First met 2019-03-03", "enter")
 	// The dossier is one keypress back from Overview.
 	m = do(m, "[", "[")
 	if profileViews[m.contacts.view] != "Dossier" || m.focus != 1 {
@@ -310,8 +310,8 @@ func TestActivitiesDossierAndBackNavigation(t *testing.T) {
 		t.Fatal(row)
 	}
 	m = do(m, "t")
-	if m.crm.prompt == nil || m.crm.prompt.input.Value() != "Follow up: Coffee" {
-		t.Fatal("convert-to-task prompt")
+	if m.crm.form == nil || m.crm.form.fields[0].value() != "Follow up: Coffee" {
+		t.Fatal("convert-to-task form")
 	}
 	m = do(m, "enter")
 	tasks, _ := s.Tasks(context.Background(), app.TaskFilter{View: "open"})
@@ -325,7 +325,7 @@ func TestActivitiesDossierAndBackNavigation(t *testing.T) {
 	if m.crm.form == nil {
 		t.Fatal(m.crm.err)
 	}
-	m = do(m, "tab", " and cake", "f2")
+	m = do(m, " and cake", "f2")
 	if a, _ := s.Activities(context.Background(), app.ActivityFilter{Query: search.Query{Terms: []string{"cake"}}}); len(a) != 1 || len(a[0].Entities) != 1 {
 		t.Fatal("activity edit lost links or text", a, m.crm.err)
 	}
@@ -341,7 +341,7 @@ func TestProjectsPipelinesInboxAndCollections(t *testing.T) {
 	if len(projects) != 1 || projects[0].Target != "2026-11-27" || projects[0].Members[0].Role != "lead" || m.crm.detailTitle != "Harbor" {
 		t.Fatalf("%q %+v", m.crm.err, projects)
 	}
-	m = do(m, "M", "Signed brief due:fri", "enter", "T", "Draft plan pri:high", "enter")
+	m = do(m, "M", "Signed brief due:fri", "enter", ":", "Quick capture task", "enter", "Draft plan pri:high", "enter")
 	for i, name := range crmViews[wsProjects] {
 		if m.list().view != i || !strings.Contains(frame(m), name+" · Harbor") {
 			t.Fatalf("project view %s: %d", name, m.list().view)
@@ -779,7 +779,7 @@ func TestRestoreDeletedRecordsFromTheTUI(t *testing.T) {
 	m, s := crmApp(t, 120, 36)
 	ctx := context.Background()
 	seedPeople(t, s)
-	m = do(m, "5", "n", "Plan offsite due:today", "enter")
+	m = do(m, "5", ":", "Quick capture task", "enter", "Plan offsite due:today", "enter")
 	task, ok := m.listRow()
 	if !ok || task.text != "Plan offsite" {
 		t.Fatal(m.crm.err)
@@ -825,8 +825,8 @@ func TestCRMExportAndImportThroughTheTUI(t *testing.T) {
 	m, s := crmApp(t, 120, 36)
 	ctx := context.Background()
 	alex, _ := seedPeople(t, s)
-	m = do(m, "5", "n", `Send deck with:"Alex Rivera" due:fri every:week`, "enter")
-	m = do(m, "A", "Intro call type:call", "enter")
+	m = do(m, "5", ":", "Quick capture task", "enter", `Send deck with:"Alex Rivera" due:fri every:week`, "enter")
+	m = do(m, ":", "Quick capture activity", "enter", "Intro call type:call", "enter")
 	m = do(m, "b", "Stretch at:11:00", "enter")
 	dir := t.TempDir()
 	jsonPath, icsPath := filepath.Join(dir, "crm.json"), filepath.Join(dir, "tasks.ics")
@@ -869,30 +869,35 @@ func TestCRMExportAndImportThroughTheTUI(t *testing.T) {
 	if _, e = s2.SaveContacts(ctx, []domain.Contact{c2}, "create"); e != nil {
 		t.Fatal(e)
 	}
-	n = do(n, "5", ":", "import crm", "enter", filepath.Join(dir, "missing.json"), "enter")
-	if n.crm.err == "" {
+
+	n = do(n, "5", ":", "import crm", "enter", "p")
+	n.contacts.transfer.path.SetValue(filepath.Join(dir, "missing.json"))
+	n = do(n, "enter")
+	if n.contacts.transfer.message == "" {
 		t.Fatal("missing file not reported")
 	}
-	n.crm.err = ""
-	n = do(n, ":", "import crm", "enter", jsonPath, "enter")
-	if n.crm.confirm == nil || !strings.Contains(n.crm.confirm.text, "1 activities, 1 tasks, 1 reminders") {
-		t.Fatalf("preview missing or wrong: %q %+v", n.crm.err, n.crm.confirm)
+	n.contacts.transfer.path.SetValue(jsonPath)
+	n = do(n, "enter")
+	if n.contacts.transfer.stage != "archive-preview" || !strings.Contains(n.contacts.transfer.message, "1 activities, 1 tasks, 1 reminders") {
+		t.Fatalf("preview missing: %+v", n.contacts.transfer)
 	}
 	if got, _ := s2.Tasks(ctx, app.TaskFilter{}); len(got) != 0 {
 		t.Fatal("preview wrote records")
 	}
-	n = do(n, "n")
-	if got, _ := s2.Tasks(ctx, app.TaskFilter{}); len(got) != 0 || n.crm.confirm != nil {
+	n = do(n, "enter", "n")
+	if got, _ := s2.Tasks(ctx, app.TaskFilter{}); len(got) != 0 || n.contacts.transfer.stage != "archive-preview" {
 		t.Fatal("declined import wrote records")
 	}
-	n = do(n, ":", "import crm", "enter", jsonPath, "enter", "y")
+	n = do(n, "enter", "y")
 	got, _ := s2.Tasks(ctx, app.TaskFilter{})
-	if len(got) != 1 || got[0].Title != "Send deck" || len(got[0].Entities) != 1 || !strings.Contains(n.feedback, "Imported: ") {
-		t.Fatalf("%q %q %+v", n.crm.err, n.feedback, got)
+	if len(got) != 1 || got[0].Title != "Send deck" || len(got[0].Entities) != 1 || !strings.Contains(n.contacts.transfer.message, "Imported: ") {
+		t.Fatalf("%q %+v", n.contacts.transfer.message, got)
 	}
-	// A second import skips everything.
-	n = do(n, ":", "import crm", "enter", jsonPath, "enter", "y")
-	if got, _ = s2.Tasks(ctx, app.TaskFilter{}); len(got) != 1 || !strings.Contains(n.feedback, "already present") {
-		t.Fatalf("%q %d", n.feedback, len(got))
+	n = do(n, "esc", ":", "import crm", "enter", "p")
+	n.contacts.transfer.path.SetValue(jsonPath)
+	n = do(n, "enter", "enter", "y")
+	if got, _ = s2.Tasks(ctx, app.TaskFilter{}); len(got) != 1 || !strings.Contains(n.contacts.transfer.message, "already present") {
+		t.Fatalf("%q %d", n.contacts.transfer.message, len(got))
 	}
+
 }

@@ -25,6 +25,21 @@ func dateField(value, today string) (string, error) {
 	return domain.ParseWhen(value, today)
 }
 
+// newTaskForm keeps context links while offering the same fields as task editing.
+func (m *Model) newTaskForm(title string, link domain.Ref, extra func(*domain.Task)) tea.Cmd {
+	task := domain.Task{Title: title}
+	switch link.Kind {
+	case "person", "organization":
+		task.Entities = []domain.Ref{link}
+	case "project":
+		task.Projects = []domain.Ref{link}
+	}
+	if extra != nil {
+		extra(&task)
+	}
+	return m.taskForm(task)
+}
+
 func (m *Model) taskForm(t domain.Task) tea.Cmd {
 	title := "New task"
 	if t.Revision > 0 {
@@ -44,8 +59,8 @@ func (m *Model) taskForm(t domain.Task) tea.Cmd {
 		field("start", "Start date", t.Start, dates),
 		field("repeat", "Repeat", t.Recurrence.String(), "daily, weekdays, every 2 weeks, weekly on mon wed, monthly on 31, yearly, until YYYY-MM-DD, x10, after completion"),
 		field("snooze", "Snoozed until", t.SnoozedUntil, dates),
-		field("people", "People & orgs", refsText(t.Entities), linkHelp),
-		field("projects", "Projects", refsText(t.Projects), linkHelp),
+		referenceField("people", "People & orgs", "entity", t.Entities),
+		referenceField("projects", "Projects", "project", t.Projects),
 		field("tags", "Tags", strings.Join(t.Tags, ", "), "Comma-separated."),
 		textArea("description", "Description", t.Description),
 	}
@@ -67,7 +82,7 @@ func (m *Model) taskForm(t domain.Task) tea.Cmd {
 		if !next.Recurrence.IsZero() && t.Recurrence.String() == next.Recurrence.String() {
 			next.Recurrence.Anchor = anchor
 		}
-		next.Entities, next.Projects, next.Tags = refsFrom(v["people"], t.Entities), refsFrom(v["projects"], t.Projects), splitList(v["tags"])
+		next.Entities, next.Projects, next.Tags = m.formReferences("people"), m.formReferences("projects"), splitList(v["tags"])
 		next.Normalize()
 		if e = next.Validate(); e != nil {
 			return nil, e
@@ -80,8 +95,20 @@ func (m *Model) taskForm(t domain.Task) tea.Cmd {
 	})
 }
 
+func (m *Model) newActivityForm(kind string, link domain.Ref) tea.Cmd {
+	a := domain.Activity{Type: kind}
+	switch link.Kind {
+	case "person", "organization":
+		a.Entities = []domain.Ref{link}
+	case "project":
+		a.Projects = []domain.Ref{link}
+	case "task":
+		a.Tasks = []domain.Ref{link}
+	}
+	return m.activityForm(a)
+}
 func (m *Model) activityForm(a domain.Activity) tea.Cmd {
-	title := "Log activity"
+	title := "New activity"
 	if a.Revision > 0 {
 		title = "Edit activity"
 	}
@@ -94,11 +121,11 @@ func (m *Model) activityForm(a domain.Activity) tea.Cmd {
 		a.Visibility = "private"
 	}
 	fields := []formField{
-		field("type", "Type", orDefault(a.Type, "note"), "email, call, meeting, conversation, message, note, event — or any single word of your own."),
 		field("title", "Title", a.Title, "A short summary. Leave empty to use the first line of the notes."),
+		field("type", "Type", orDefault(a.Type, "note"), "email, call, meeting, conversation, message, note, event — or any single word of your own."),
 		field("when", "When", when, "YYYY-MM-DD HH:MM, or today 14:30, yesterday, fri…"),
-		field("people", "People & orgs", refsText(a.Entities), linkHelp),
-		field("projects", "Projects", refsText(a.Projects), linkHelp),
+		referenceField("people", "People & orgs", "entity", a.Entities),
+		referenceField("projects", "Projects", "project", a.Projects),
 		field("tags", "Tags", strings.Join(a.Tags, ", "), "Comma-separated."),
 		field("visibility", "Visibility", a.Visibility, "Private entries are for you; shared marks what you would be comfortable exporting.", "private", "shared"),
 		textArea("body", "Notes", a.Body),
@@ -110,7 +137,7 @@ func (m *Model) activityForm(a domain.Activity) tea.Cmd {
 			return nil, e
 		}
 		next.Type, next.Title, next.Body, next.Visibility, next.OccurredAt = strings.TrimSpace(v["type"]), v["title"], v["body"], v["visibility"], at
-		next.Entities, next.Projects, next.Tags = refsFrom(v["people"], a.Entities), refsFrom(v["projects"], a.Projects), splitList(v["tags"])
+		next.Entities, next.Projects, next.Tags = m.formReferences("people"), m.formReferences("projects"), splitList(v["tags"])
 		check := next
 		check.Normalize(clock())
 		if e = check.Validate(); e != nil {

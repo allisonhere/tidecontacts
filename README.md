@@ -29,7 +29,7 @@ Demo mode uses its own database, configuration and logs under the `demo` directo
 beside your normal database. It preserves your demo edits between launches and
 shows **DEMO** in the status bar. Includes fictional contacts, organizations,
 relationships, activities, tasks, a project, a pipeline and reminders. Dates are
-relative to the first launch. Live TideMail sync and desktop notifications are
+relative to the first launch. Live TideMail activity sync, vCard-folder connections and desktop notifications are
 disabled. Reset affects only this demo profile.
 
 ## Scripting
@@ -52,7 +52,7 @@ the real binary using fictional data.
 
 Start in People, press `n`, and enter a display name. Names are optional: a nickname, contact method or organization can supply the display identity. Press Enter (or F2) to save. The editor opens as a modal over the screen you were on.
 
-Use F5/F6 to move between editor sections: Identity, Methods, Organizations, Tags & fields, Relationships, Notes and Biography. Tab/Shift+Tab moves fields. Ctrl+N adds a repeated entry; Ctrl+D removes the current entry. Enter, F2 or Ctrl+S saves the entire record atomically (in Notes and Biography Enter is a newline, so use Ctrl+S); Esc cancels and asks before discarding changes.
+Use F5/F6 to move between editor sections: Identity, Methods, Organizations, Tags & fields, Relationships, Notes and Biography. Down/Up or Tab/Shift+Tab moves between inputs; Left/Right moves within text. F5 is previous section and F6 is next section. Ctrl+N adds a repeated entry; Ctrl+D removes the current entry. Enter, F2 or Ctrl+S saves the entire record atomically (in Notes and Biography Enter is a newline, so use Ctrl+S); Esc cancels and asks before discarding changes.
 
 In Methods, choose `email`, `phone`, `website`, `social`, `messaging` or `address`. Changing the kind to address exposes its postal components. Use `true`/`false` for flags. There can be one preferred method of each kind. In Organizations, an existing name/UUID selects an organization; a new name creates it in the same save transaction. Relationship targets must already exist or be included in the same import.
 
@@ -84,7 +84,7 @@ Unsupported TideMail themes (including its dynamic desktop theme) are not offere
 
 Terminals at least 120 columns wide show **Menu → record list → details**. The menu names every
 workspace and lists actions for the current one. Press **Ctrl+G** to focus it,
-use arrows or j/k to choose, then Enter. Esc or Tab returns to your records.
+use arrows or j/k to choose, then Enter. Press `n` on a workspace to open its New dialog directly (or your configured New shortcut). Esc or Tab returns to your records.
 Shift+Tab from the record list also opens the menu. On smaller terminals it
 opens as a modal. Workspace number shortcuts and the command palette still work.
 
@@ -106,7 +106,7 @@ is:archived
 is:deleted
 ```
 
-Normal lists exclude archived and deleted records. `a` archives/unarchives, `f` toggles favorite, `D` requests deletion confirmation, and `u` undoes the last recoverable edit/flag/deletion in the session. Search deleted records and use **Restore archived/deleted contact** in the palette to recover a tombstone. A newer external edit prevents undo or stale saves from overwriting it.
+Normal lists exclude archived and deleted records. For local contacts, `a` archives/unarchives, `f` toggles favorite, `D` requests deletion confirmation, and `u` undoes the last recoverable edit/flag/deletion in the session. Search deleted records and use **Restore archived/deleted contact** in the palette to recover a tombstone. A newer external edit prevents undo or stale saves from overwriting it. Connected vCard-folder contacts are read-only; edit their original cards and refresh.
 
 `s` cycles name, organization, recently updated and recently added sorts. Space marks contacts for export. Compact/comfortable density is configurable. List rendering is virtualized; searches run asynchronously and discard stale results.
 
@@ -139,7 +139,7 @@ There is no automatic polling, network access or TideMail write-back.
 
 Everything here is local and works offline. Start with the [personal CRM guide](docs/crm-guide.md).
 
-- **Capture in one line, from anywhere.** `T` adds a task and `A` logs an activity, linked to whatever is selected: `Send proposal with:"Alex Rivera" due:fri pri:high project:Harbor`. `e` opens a full form when you want one.
+- **Create a task without command syntax.** `T` opens the New task modal anywhere; `n` does the same in Tasks. Tab through labeled fields, cycle status/priority and search existing people/projects with Space or Ctrl+O. The selected contact/project is linked automatically. One-line task capture remains an optional palette command; `A` opens the matching New activity form.
 - **Activities (4).** One timeline of calls, meetings, notes and custom entries, grouped by day, filterable by type, person, project, tag and date. Imported and external records keep their provenance and are read-only. [Details](docs/activities.md)
 - **Tasks (5).** Inbox, Today, Upcoming, Waiting, All, By person, By project, plus your own pinned views. Complete, reopen, reschedule, snooze, prioritize, link, duplicate. Recurrence (`every 2 weeks`, `monthly on 31`, `after completion`) creates exactly one successor and is correct across daylight-saving changes. Reminders show while the app runs; `--notify` covers the rest if you schedule it. [Details](docs/tasks.md)
 - **Projects (6).** People, tasks, milestones, timeline and notes in one place. **Pipelines (7).** Stages you define, moved entirely from the keyboard; a board on wide terminals, a stage list on narrow ones. [Details](docs/projects-pipelines.md)
@@ -153,7 +153,19 @@ Everything here is local and works offline. Start with the [personal CRM guide](
 
 ## Import and export
 
-`I` starts a real import workflow: enter a CSV/vCard path, map CSV columns, inspect the dry-run preview, review duplicates, select records, and explicitly confirm. No writes occur during preview. Invalid records show errors. Duplicate names, emails and normalized phones produce warnings and are excluded by default; Space explicitly includes them as new records. Import never overwrites an existing contact. The selected batch commits atomically, with progress and a results summary.
+Press **I** or choose **Menu → Import data…** to open the import modal. Active sources appear first; planned sources follow in much dimmer text with **coming soon** labels and cannot be activated.
+
+| Active source | Behavior |
+|---|---|
+| CSV contacts | Browse a `.csv`, map columns, preview and confirm a one-time import |
+| vCard address book | Browse a `.vcf` or `.vcard`, preview and confirm a one-time import |
+| TideContacts CRM archive | Browse a `.json`, review its counts and confirm |
+| Mutt / NeoMutt aliases | Read literal alias definitions, then preview and review duplicates |
+| khard / vdirsyncer | Connect a local vCard folder as a read-only, refreshable address book |
+
+Use ↑/↓ and Enter to choose a source. Enter opens folders or selects files, ←/Backspace goes to the parent, `p` opens direct path entry (`~/` works), and `.` toggles hidden files/folders (off initially). Mapping, preview, confirmation and results stay in the modal. Esc closes it before writing. One-time contact imports show invalid rows and leave duplicates unchecked; Space explicitly includes them as new contacts. The confirmed batch commits atomically without overwriting existing contacts. [Formats and limitations](docs/import-export.md).
+
+For **khard / vdirsyncer**, press `n` to browse and `s` to select the current folder, or `p` to enter its path. Preview and confirm the connection. Folders refresh at TideContacts startup, from **Refresh address books** in the menu, and when the TideMail plugin loads or refreshes contacts or handles Ctrl+T lookup. TideContacts need not be running for the plugin to refresh them. A failed refresh keeps the previous snapshot; a successful one updates changed cards and hides removed cards. Local contacts stay separate. vdirsyncer continues to own remote CardDAV sync. [Folder setup and recovery](docs/vcard-directories.md).
 
 CSV header detection can be toggled. Left/Right changes a column's mapping; repeated email/phone columns are supported. Common export headers have defaults. `b` returns from preview to mapping. Input files are limited to 50 MiB per batch.
 
@@ -190,28 +202,40 @@ quit = ["x"] # replaces q outside inputs
 
 Wide terminals show three panes; medium terminals show list/profile; narrow terminals show one focused pane with Tab navigation and Esc back to the list. Shift+Left/Right adjusts the left pane; Shift+Down/Up adjusts context width. Ratios save on orderly exit and override TOML defaults. Theme choices are saved on exit and override the startup theme; density changes last for the session. `NO_COLOR` retains text focus markers. `TERM=dumb` uses plain guidance.
 
-SQLite migrations are append-only and preserve all Phase 1 and Phase 2 data; Phase 3 only adds tables (see [migration and backup](docs/migration-backup.md)). Foreign keys, WAL, busy timeout, transactions, optimistic revisions and tombstones protect local data. Back up the database using SQLite's backup API, or copy it after the app has closed; do not copy only the main file while WAL writes are active. JSON logs currently append without rotation.
+SQLite migrations are append-only; the current schema is version 4 and adds directory ownership tables while preserving existing contacts and CRM data (see [migration and backup](docs/migration-backup.md)). Foreign keys, WAL, busy timeout, transactions, optimistic revisions and tombstones protect local data. Back up the database using SQLite's backup API, or copy it after the app has closed; do not copy only the main file while WAL writes are active. JSON logs currently append without rotation.
 
 ## Development
 
 ```sh
 make check # formatting, build, vet, race tests
 make smoke # real PTY lifecycle, contact and CRM workflow tests (Python 3, Unix)
+make smoke-directories # folder connection and plugin-only refresh in an isolated profile
+make smoke-cli # versioned JSON command workflows
+make smoke-mail-clients # aerc/NeoMutt output and shell argument checks
 go test ./... # includes a 10,000-contact scale test; add -short to skip it
 UPDATE_GOLDEN=1 go test ./internal/tui # intentionally regenerate reviewed frames
 ```
 
 See [architecture](docs/architecture.md), [keys](docs/keybindings.md), [search grammar](docs/search.md), the [CRM guide](docs/crm-guide.md) and [Phase 3 decisions](docs/phase3-decisions.md).
 
-Deferred: network sync, executable plugins and AI. See [Phase 3 decisions](docs/phase3-decisions.md) for known limitations.
+Deferred: direct CardDAV/network sync, calling khard as an external query command, additional provider-specific importers, and AI. See [Phase 3 decisions](docs/phase3-decisions.md) for known limitations.
 
 ## TideMail contacts plugin
 
-A simple People view inside the updated TideMail provides search, add/edit, compose
-and recent correspondence, with Advanced CRM kept separate. See
+A simple People view inside the updated TideMail provides search, local contact add/edit, compose,
+folder refresh with **r**, read-only folder labels and recent correspondence, with Advanced CRM kept separate. See
 [plugin setup and keys](docs/tidemail-plugin.md). Build with `make plugin`; install
-with `make install-tidemail-plugin`. Older TideMail releases need updating first.
+with `make install-tidemail-plugin`. The TideMail checkout used by `go run .` must include the integration too. If the plugin is red with `unknown keys: permissions.contacts_write`, update that TideMail checkout or binary and restart; installing the plugin alone cannot add host support.
 
 To try the paired integration with fictional data, run `make tidemail-demo-build`,
 then `python3 scripts/tidemail_demo.py` and press **C**. This uses an isolated profile,
 including when you open Advanced CRM.
+
+## aerc and NeoMutt
+
+`contacts query --format aerc|neomutt` supplies recipient candidates from the
+shared address book without a running app. NeoMutt supports searched completion;
+the safe aerc configuration provides a candidate list without shell-interpolated
+query text. See [setup, limits and examples](docs/mail-clients.md).
+
+Recipient commands read the cached address book without refreshing external folders. Refresh in TideContacts or TideMail before querying changed folder contacts. [Mutt alias import](docs/import-export.md#mutt--neomutt-aliases) is a separate workflow.

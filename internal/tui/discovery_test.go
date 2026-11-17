@@ -115,3 +115,42 @@ func TestThemeLivePreviewCancelAndKeep(t *testing.T) {
 		t.Fatal("search cancel failed")
 	}
 }
+
+func TestNewFromFocusedMenuUsesHighlightedWorkspace(t *testing.T) {
+	for _, width := range []int{100, 160} {
+		for _, test := range []struct {
+			workspace int
+			title     string
+		}{{wsActivities, "New activity"}, {wsTasks, "New task"}, {wsProjects, "New project"}, {wsPipelines, "New pipeline"}} {
+			t.Run(fmt.Sprintf("%d/%s", width, test.title), func(t *testing.T) {
+				m, _ := crmApp(t, width, 36)
+				m = do(m, "ctrl+g")
+				for i := 0; i < test.workspace; i++ {
+					m = do(m, "down")
+				}
+				m = do(m, "n")
+				if m.menuOpen || m.state.Active != test.workspace || m.crm.form == nil || m.crm.form.title != test.title {
+					t.Fatalf("wrong creation target: ws=%d menu=%v form=%+v", m.state.Active, m.menuOpen, m.crm.form)
+				}
+			})
+		}
+	}
+}
+func TestNewFromMenuRespectsBindingAndOrganizationKind(t *testing.T) {
+	m, _ := crmApp(t, 160, 36)
+	cfg := config.Defaults()
+	cfg.Keybindings["new-contact"] = []string{"N"}
+	registry, err := cfg.Registry()
+	if err != nil {
+		t.Fatal(err)
+	}
+	m.registry = registry
+	m = do(m, "ctrl+g", "down", "n")
+	if !m.menuOpen || m.contacts.editor != nil {
+		t.Fatal("unbound lowercase n created a record")
+	}
+	m = do(m, "N")
+	if m.menuOpen || m.state.Active != wsOrganizations || m.contacts.editor == nil || m.contacts.editor.draft.Kind != "organization" {
+		t.Fatal("custom New did not create an organization")
+	}
+}

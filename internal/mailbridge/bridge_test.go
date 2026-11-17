@@ -59,7 +59,7 @@ func TestBookCRUDPreservesCRM(t *testing.T) {
 	edit.Phone = ""
 	edit.Note = "Updated in TideMail"
 	edit.Organization = "Harbor"
-	raw, ok = invoke("contacts.save", edit)
+	_, ok = invoke("contacts.save", edit)
 	if !ok {
 		t.Fatal("save failed")
 	}

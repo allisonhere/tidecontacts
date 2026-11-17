@@ -39,3 +39,11 @@ tidemail-demo-build: plugin
 .PHONY: smoke-cli
 smoke-cli: build
 	python3 scripts/cli_smoke.py
+
+.PHONY: smoke-mail-clients
+smoke-mail-clients: build
+	python3 scripts/mail_clients_smoke.py
+
+.PHONY: smoke-directories
+smoke-directories: plugin
+	python3 scripts/directory_smoke.py

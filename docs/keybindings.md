@@ -13,7 +13,8 @@ Every key below is a command in one registry: the same command runs from its key
 | Esc | Go back to where a followed link came from; otherwise return to the list; clear active search; close overlay |
 | / | Incremental workspace search |
 | :, Ctrl+K | Fuzzy command palette |
-| ? | Contextual help; j/k scroll, Esc close |
+| ? | Searchable help browser; categories on the left, shortcuts on the right |
+| Ctrl+G | Focus the workspace/action menu (modal below 120 columns); n opens New for the highlighted workspace |
 | 1–8 | Switch workspace: People, Organizations, Relationships, Activities, Tasks, Projects, Pipelines, Insights |
 | n / e | New / edit contact or organization |
 | f / a | Toggle favorite / archived |
@@ -22,14 +23,14 @@ Every key below is a command in one registry: the same command runs from its key
 | [ / ] | Previous/next profile view (… History, Dossier, Timeline) |
 | s | Cycle name/organization/updated/added sort |
 | Space | Mark/unmark contact for export |
-| I / E | Import / export filtered records |
+| I / E | Open Import data modal / export filtered contacts |
 | Shift+Left/Right | Shrink/grow left pane |
 | Shift+Down/Up | Shrink/grow context pane |
 | q | Quit outside inputs/overlays |
 | Ctrl+C | Safe exit; cancels an active save/import before exiting |
 | Ctrl+Z | Suspend outside the editor |
 
-The palette also exposes restore, export-all, export-marked/selected, density and three theme choices. Normal lists exclude archived and deleted records. Search `is:archived` or `is:deleted` to recover them. Incoming relationships and organization members appear in profiles; edit the source person/contact to change those links.
+The palette also exposes restore, export-all, export-marked/selected, density, the searchable theme picker and connected address-book refresh. Normal lists exclude archived and deleted records. Search `is:archived` or `is:deleted` to recover them. Incoming relationships and organization members appear in profiles; edit the source person/contact to change those links.
 
 ## CRM workspaces (3–8)
 
@@ -41,7 +42,7 @@ The palette also exposes restore, export-all, export-marked/selected, density an
 | [ / ] | Previous/next view (list view, detail section, or pipeline) |
 | / | Filter with the workspace's [search grammar](search.md) |
 | n / e | New record (quick capture or form) / edit in the full form |
-| T / A | Quick-capture a task / log an activity, linked to the selection — works in every workspace |
+| T / A | Open New task / New activity modal, linked to the selection — works in every workspace |
 | b | Add a reminder (linked to the selected task or person) |
 | c / R | Complete (task, milestone, reminder, inbox entry) / reopen task |
 | S / z | Reschedule (due date, target date, milestone date, reminder) / snooze |
@@ -62,7 +63,7 @@ The palette also exposes restore, export-all, export-marked/selected, density an
 
 Pipelines board: ←/→ or h/l change stage, ↑/↓ or j/k change item, `>`/`<` move the item, Enter opens it. See [projects and pipelines](projects-pipelines.md).
 
-Palette-only commands: Log meeting, Log call, Add note, New project, Open project…, New pipeline, New pipeline item, Rename pipeline / edit stages, Archive or unarchive pipeline, Move pipeline up/down, Move item to stage…, Add / Rename / Remove / Reorder pipeline stage, Explore relationships of selected contact, Edit relationship notes, Review People Inbox, Open Relationship Radar, Relationship Radar settings, Open smart collections, Open reminders, Open follow-up schedules, Merge marked contact into selected contact, Export CRM records (JSON), Export tasks and reminders (iCalendar), Import CRM records (JSON), Restore archived/deleted contact (also restores deleted tasks, activities, projects and pipeline items shown by `is:deleted`).
+Palette-only commands: Quick capture task (one line), Quick capture activity (one line), Log meeting, Log call, Add note, New project, Open project…, New pipeline, New pipeline item, Rename pipeline / edit stages, Archive or unarchive pipeline, Move pipeline up/down, Move item to stage…, Add / Rename / Remove / Reorder pipeline stage, Explore relationships of selected contact, Edit relationship notes, Review People Inbox, Open Relationship Radar, Relationship Radar settings, Open smart collections, Open reminders, Open follow-up schedules, Merge marked contact into selected contact, Export CRM records (JSON), Export tasks and reminders (iCalendar), Import CRM records (JSON), Restore archived/deleted contact (also restores deleted tasks, activities, projects and pipeline items shown by `is:deleted`).
 
 ### Prompts, pickers and forms
 
@@ -72,14 +73,17 @@ Palette-only commands: Log meeting, Log call, Add note, New project, Open projec
 | Picker | Type to search, Up/Down (or Ctrl+P/Ctrl+N) select, Enter chooses, Esc cancels |
 | Confirmation | y confirms, n or Esc cancels |
 | Record form (modal) | Tab/Shift+Tab or Up/Down move between fields, Left/Right/Space change a choice, Enter, F2 or Ctrl+S saves (Ctrl+S in a multi-line field, where Enter is a newline), Esc cancels (asks before discarding changes) |
+| Task/activity People & orgs / Projects | Space or Ctrl+O opens a searchable chooser; Enter toggles a link and returns; Ctrl+D removes the last link |
 | Multi-line field in a form | Same editor as contact notes; Tab leaves it |
+
+Creation and edit forms share a fixed vertical height, with compact input rows and footer hints pinned to the bottom. They shrink to fit short terminals.
 
 ## Contact editor (modal)
 
 | Keys | Action |
 |---|---|
-| F5 / F6 | Previous/next section |
-| Tab / Shift+Tab | Previous/next field; switch Notes/Biography when editing multiline text |
+| F5 / F6 | Previous section / next section; Left/Right stay in the current text input |
+| Down / Up, Tab / Shift+Tab | Next/previous input; in multiline Notes/Biography, arrows move the cursor and Tab switches the two sections |
 | Ctrl+N / Ctrl+D | Add/remove a method, membership, custom field or relationship |
 | Enter / F2 / Ctrl+S | Validate and atomically save (in Notes and Biography, Enter is a newline: use Ctrl+S) |
 | Esc | Cancel; confirm discard if modified |
@@ -87,15 +91,38 @@ Palette-only commands: Log meeting, Log call, Add note, New project, Open projec
 
 All printable keys belong to the focused input. Repeated fields remain on one editor surface rather than opening modal chains. Flags accept true/false. Tags, aliases and enumerated choices use comma-separated values (CSV quoting supports commas inside values). Custom field names reuse a global definition with a fixed type/options; changing an existing global definition to a conflicting type is rejected.
 
-Ripple notes/biography: arrows/Home/End/Page keys move, Shift+movement selects, Ctrl+A selects all, Ctrl+Z/Ctrl+Y undo/redo, Alt+C copies, Ctrl+X cuts, Ctrl+V pastes when OS clipboard helpers are available. Terminal bracketed paste works independently. F2 saves the record; Esc belongs to the host's cancel flow. The notes editor's own Find command is disabled so its Tab/Esc rules cannot conflict with the full-screen form.
+Ripple notes/biography: arrows/Home/End/Page keys move, Shift+movement selects, Ctrl+A selects all, Ctrl+Z/Ctrl+Y undo/redo, Alt+C copies, Ctrl+X cuts, Ctrl+V pastes when OS clipboard helpers are available. Terminal bracketed paste works independently. F2 saves the record; Esc belongs to the host's cancel flow. The notes editor's own Find command is disabled so its Tab/Esc rules cannot conflict with the host form.
 
 ## Imports/exports
 
-Enter accepts the path. CSV mapping: Up/Down selects columns, Left/Right cycles mappings, h toggles header handling. Preview: Up/Down moves, Space includes/excludes valid rows, b returns to mapping, Enter opens confirmation. y confirms; n returns. Esc cancels before writing. During a transaction, Ctrl+C requests cancellation; a final success or rollback precedes exit. Export destinations must not exist.
+Press **I** or choose **Menu → Import data…**. Active sources appear first; disabled planned sources are dimmed and marked coming soon.
+
+| Where | Keys |
+|---|---|
+| Source chooser | Up/Down or j/k selects; Enter opens an active source; Esc closes |
+| File browser | Enter opens a folder or selects a file; Left/Backspace opens the parent; p enters a path; b returns to sources; . toggles hidden entries (initially off) |
+| Path entry | Enter accepts (`~/` works); Esc closes |
+| CSV mapping | Up/Down selects a column; Left/Right/Space cycles mapping; h toggles header; Enter previews |
+| Contact preview | Up/Down selects; Space includes/excludes valid records; b returns to CSV mapping; Enter reviews confirmation |
+| Confirmation | y confirms; n returns to preview; Esc closes before writing |
+| Connected-folder manager | n browses; p enters a folder path; Up/Down selects a connection; Enter previews/reconnects; r refreshes all; x opens disconnect confirmation; b returns to sources |
+| Folder browser | Navigate as above; s selects the current folder for connection |
+| Folder preview | Enter reviews the connection; b returns to connections; then y confirms |
+| Results | Enter or Esc closes |
+
+During a contact-write transaction, Ctrl+C requests cancellation and waits for success or rollback before exit. Export destinations must not exist. Folder contacts stay read-only; edit their source cards and refresh through **Menu → Refresh address books**, the palette’s **Refresh connected address books**, or `r` in the folder manager. In TideMail People, **r** refreshes connected folders and **Ctrl+T** in recipient fields performs lookup. [Full folder behavior](vcard-directories.md).
+
+## Help and theme pickers
+
+In help, Up/Down selects a category; Right/Tab/Enter focuses its content; Left/Shift+Tab returns. PageUp/PageDown and Home/End scroll content. `/` searches; Enter retains the filter; Esc first clears it, then closes. `?` or q closes help.
+
+In **Menu → Themes**, move or search to preview live. Enter keeps the theme; Esc restores the previous choice. **Match TideMail** appears when an installed supported palette is detected. Confirmed themes save on normal exit.
 
 ## Customization
 
 `[keybindings]` maps command IDs to replacement arrays. An empty array removes the normal shortcut but retains the palette command. Conflicts, reserved keys, unknown commands and invalid key names fail configuration validation. Input editing/overlay controls are fixed; browser bindings are configurable. Existing Phase 1 command IDs remain supported.
+
+Additional command: `refresh-address-books` refreshes all connected folders (no default key; available in the menu and palette).
 
 Phase 2 IDs: new-contact, edit-contact, favorite, archive, restore, delete-contact, undo-contact, profile-next, profile-previous, sort, density, mark-contact, import-contacts, export-all, export-selected, export-filtered, page-down, page-up, top, bottom.
 
