@@ -545,7 +545,16 @@ func TestRelationshipExplorerLinkingRemindersAndMerge(t *testing.T) {
 	}
 	// Add a relationship with the searchable picker and a custom label.
 	m.focus = 0
-	m = do(m, "r", "sam")
+	m = do(m, "r")
+	if m.crm.picker == nil || !strings.Contains(m.crm.picker.title, alex.DisplayName) {
+		t.Fatal("relationship picker lost the selected contact")
+	}
+	for _, option := range m.crm.picker.options {
+		if option.ID == alex.ID {
+			t.Fatal("relationship picker offered the source as its own target")
+		}
+	}
+	m = do(m, "sam")
 	if m.crm.picker == nil || len(m.crm.picker.options) != 1 || m.crm.picker.options[0].ID != sam.ID {
 		t.Fatalf("picker: %+v", m.crm.picker)
 	}

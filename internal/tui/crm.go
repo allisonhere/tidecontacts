@@ -3,6 +3,7 @@ package tui
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -734,6 +735,9 @@ func (m Model) updateCRM(msg tea.Msg) (Model, tea.Cmd, bool) {
 		return m, nil, true
 	case pickerResult:
 		if c.picker != nil && v.owner == c.picker && v.seq == c.picker.seq {
+			if id := c.picker.excludeID; id != "" {
+				v.options = slices.DeleteFunc(v.options, func(ref domain.Ref) bool { return ref.ID == id })
+			}
 			c.picker.options = v.options
 			c.picker.selected = min(c.picker.selected, max(0, len(v.options)-1))
 		}

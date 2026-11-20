@@ -19,6 +19,21 @@ func fit(s string, width int) string {
 	return s
 }
 
+func activityAccent(theme tideui.Theme, kind string) lipgloss.Color {
+	switch kind {
+	case "email", "message":
+		return theme.BorderFocus
+	case "call", "conversation":
+		return theme.Success
+	case "meeting", "event":
+		return theme.Warning
+	case "task-completion", "project-update":
+		return theme.Unread
+	default:
+		return theme.Dimmed
+	}
+}
+
 // renderRows turns rows into physical lines and reports the line holding the cursor.
 // The cursor row is marked with "> " as well as the selection style, so focus never
 // depends on colour.
@@ -44,7 +59,13 @@ func (m Model) renderRows(r tideui.Renderer, rows []crmRow, cursor int, active b
 				at = len(lines)
 			}
 			if row.tag != "" {
-				prefix += row.tag
+				tag := domain.SafeText(row.tag)
+				if row.activityType != "" && !(active && i == cursor) {
+					theme := r.Styles.Theme
+					color := tideui.Legible(activityAccent(theme, row.activityType), theme.Bg, 4.5)
+					tag = lipgloss.NewStyle().Foreground(color).Render(tag)
+				}
+				prefix += tag
 				if !strings.HasSuffix(row.tag, " ") {
 					prefix += " "
 				}

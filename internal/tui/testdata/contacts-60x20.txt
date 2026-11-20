@@ -2,18 +2,18 @@
   People 1/1        > Overview            Context           
 Renée Rivera                                                
                                                             
-email /                                                     
-renee@example.com                                           
+─ Contact details ──────────────────────────────────────    
+email            renee@example.com                          
                                                             
+─ Private notes ────────────────────────────────────────    
 Private notes                                               
 Second line                                                 
                                                             
+─ Record details ───────────────────────────────────────    
+Source           manual                                     
+Updated          Jan 1, 2000 · 00:00 UTC                    
+UUID             00000000-0000-0000-0000-000000000000       
 0 relationships · 0 custom fields                           
-Source: manual                                              
-Updated: 2000-01-01T00:00:00Z                               
-UUID: 00000000-0000-0000-0000-000000000000                  
-                                                            
-                                                            
                                                             
                                                             
                                                             

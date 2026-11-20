@@ -268,6 +268,11 @@ func (m Model) crmGlobal(id string) (Model, tea.Cmd, bool) {
 		}
 		return m, nil, true
 	case "relationship-add":
+		if m.isCRM() || m.dossierVisible() && m.crm.dossierFor == link.ID {
+			if row, ok := m.target(); ok && (row.ref.Kind == "person" || row.ref.Kind == "organization") {
+				return m, m.relationshipAdd(row.ref), true
+			}
+		}
 		if ref, ok := needPerson(); ok {
 			return m, m.relationshipAdd(ref), true
 		}

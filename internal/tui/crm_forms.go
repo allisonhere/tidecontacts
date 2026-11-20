@@ -27,6 +27,7 @@ type crmPrompt struct {
 
 // crmPicker is a filterable list overlay for choosing a record or an option.
 type crmPicker struct {
+	excludeID     string
 	preview       func(*Model, domain.Ref)
 	cancel        func(*Model)
 	originalTheme string

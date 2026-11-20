@@ -348,6 +348,10 @@ func (m *Model) radarFormFor(cfg domain.RadarConfig) tea.Cmd {
 // contextRef is the record the current selection is about, used to pre-link quick captures.
 func (m Model) contextRef() domain.Ref {
 	if m.isContacts() {
+		if i := m.contacts.selected; i >= 0 && i < len(m.contacts.rows) {
+			row := m.contacts.rows[i]
+			return domain.Ref{Kind: row.Kind, ID: row.ID, Name: row.Name}
+		}
 		if c := m.contacts.contact; c.ID != "" {
 			return domain.Ref{Kind: c.Kind, ID: c.ID, Name: c.DisplayName}
 		}
@@ -555,7 +559,7 @@ func (m *Model) datePrompt(person domain.Ref) tea.Cmd {
 // relationshipAdd picks a target and a type, then saves through the contact aggregate
 // so revision checks and history apply exactly as they do in the editor.
 func (m *Model) relationshipAdd(person domain.Ref) tea.Cmd {
-	return m.openPicker("Relate "+person.Name+" to…", "Type to search people and organizations", "entity", nil, func(m *Model, target domain.Ref) tea.Cmd {
+	cmd := m.openPicker("Relate "+person.Name+" to…", "Choose the other person or organization", "entity", nil, func(m *Model, target domain.Ref) tea.Cmd {
 		types := []domain.Ref{}
 		for _, t := range []string{"friend", "family", "colleague", "collaborator", "client", "mentor", "partner", "introduced by"} {
 			types = append(types, domain.Ref{Name: t})
@@ -576,6 +580,8 @@ func (m *Model) relationshipAdd(person domain.Ref) tea.Cmd {
 			})
 		})
 	})
+	m.crm.picker.excludeID = person.ID
+	return cmd
 }
 
 func (m *Model) confirmDo(text, note string, fn func(ctx context.Context) error) {

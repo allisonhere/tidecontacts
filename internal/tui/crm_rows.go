@@ -12,14 +12,15 @@ import (
 // crmRow is one line of a CRM list or detail pane. Rows are plain data built off
 // the UI loop; View only styles and clips them.
 type crmRow struct {
-	kind  string // header, text, or a record kind: task, activity, project, item, person, …
-	id    string
-	tag   string // short fixed-width type or state indicator; never colour alone
-	text  string
-	meta  string
-	muted bool
-	ref   domain.Ref // where Enter leads
-	data  any
+	activityType string
+	kind         string // header, text, or a record kind: task, activity, project, item, person, …
+	id           string
+	tag          string // short fixed-width type or state indicator; never colour alone
+	text         string
+	meta         string
+	muted        bool
+	ref          domain.Ref // where Enter leads
+	data         any
 }
 
 func (r crmRow) selectable() bool { return r.kind != "header" && r.kind != "text" }
@@ -197,12 +198,18 @@ func provenanceMark(a domain.Activity) string {
 	return ""
 }
 
+func activityLink(a domain.Activity, dateLayout, meta string) crmRow {
+	row := lnk(domain.Ref{Kind: "activity", ID: a.ID, Name: a.Title}, a.OccurredAt.Format(dateLayout)+" "+activityTag(a.Type), a.Title, meta)
+	row.activityType = a.Type
+	return row
+}
+
 func activityRow(a domain.Activity) crmRow {
 	text := a.Title
 	if who := refsText(a.Entities); who != "" {
 		text += " · " + who
 	}
-	return crmRow{kind: "activity", id: a.ID, tag: a.OccurredAt.Format("15:04") + " " + activityTag(a.Type), text: text, meta: provenanceMark(a),
+	return crmRow{activityType: a.Type, kind: "activity", id: a.ID, tag: a.OccurredAt.Format("15:04") + " " + activityTag(a.Type), text: text, meta: provenanceMark(a),
 		ref: domain.Ref{Kind: "activity", ID: a.ID, Name: a.Title}, data: a}
 }
 
@@ -487,7 +494,7 @@ func projectDetail(p domain.Project, sub int, tasks []domain.Task, acts []domain
 		if len(acts) > 0 {
 			rows = append(rows, head("Latest activity"))
 			for _, a := range acts[:min(3, len(acts))] {
-				rows = append(rows, lnk(domain.Ref{Kind: "activity", ID: a.ID, Name: a.Title}, a.OccurredAt.Format("01-02")+" "+activityTag(a.Type), a.Title, ""))
+				rows = append(rows, activityLink(a, "01-02", ""))
 			}
 		}
 		rows = append(rows, txt(""), dim("Created "+stampDay(p.CreatedAt)+" · updated "+stampDay(p.UpdatedAt)))
@@ -507,7 +514,7 @@ func projectDetail(p domain.Project, sub int, tasks []domain.Task, acts []domain
 		}
 	case 3:
 		for _, a := range acts {
-			rows = append(rows, lnk(domain.Ref{Kind: "activity", ID: a.ID, Name: a.Title}, a.OccurredAt.Format("2006-01-02")+" "+activityTag(a.Type), a.Title, refsText(a.Entities)))
+			rows = append(rows, activityLink(a, "2006-01-02", refsText(a.Entities)))
 		}
 		if len(rows) == 0 {
 			rows = append(rows, dim("No recorded activity — press A to log one for this project."))
@@ -760,7 +767,7 @@ func connectionsDetail(c domain.Connections, sub int, today string) []crmRow {
 		rows = append(rows, dateLines(c.Dates, today)...)
 		rows = append(rows, head("Relationship history"))
 		for _, a := range c.Recent {
-			rows = append(rows, lnk(domain.Ref{Kind: "activity", ID: a.ID, Name: a.Title}, a.OccurredAt.Format("2006-01-02")+" "+activityTag(a.Type), a.Title, ""))
+			rows = append(rows, activityLink(a, "2006-01-02", ""))
 		}
 		if len(c.Recent) == 0 {
 			rows = append(rows, dim("No recorded activity."))
@@ -780,7 +787,7 @@ func dossierRows(d domain.Dossier, timeline bool, today string) []crmRow {
 				day = x
 				rows = append(rows, head(dayLabel(x, today)))
 			}
-			rows = append(rows, lnk(domain.Ref{Kind: "activity", ID: a.ID, Name: a.Title}, a.OccurredAt.Format("15:04")+" "+activityTag(a.Type), a.Title, provenanceMark(a)))
+			rows = append(rows, activityLink(a, "15:04", provenanceMark(a)))
 		}
 		if len(d.Recent) == 0 {
 			rows = append(rows, dim("Nothing recorded yet. Activities are only ever what you log or import."))

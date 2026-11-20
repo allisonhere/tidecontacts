@@ -438,9 +438,30 @@ func (m Model) contactPanes(r tideui.Renderer) [3]tideui.Pane {
 		if suffix != "" && rowHeight == 1 {
 			text += " · " + domain.SafeText(suffix)
 		}
-		rows = append(rows, r.RenderRow(tideui.Row{Prefix: prefix, Text: text, Selected: i == c.selected && m.focus == 0}, navWidth))
+		selected := i == c.selected && m.focus == 0
+		band := r.Styles.Theme.Bg
+		if i%2 == 1 {
+			band = r.Styles.Theme.Overlay
+			if band == r.Styles.Theme.Bg && r.Styles.Theme.Name == "contrast" {
+				band = "#202020"
+			}
+		}
+		rowRenderer := r
+		nameColor := r.Styles.Theme.Fg
+		switch {
+		case c.marked[row.ID]:
+			nameColor = r.Styles.Theme.Success
+		case row.Favorite:
+			nameColor = r.Styles.Theme.Warning
+		}
+		rowRenderer.Styles.Item = r.Styles.Item.Background(band).Foreground(tideui.Legible(nameColor, band, 4.5))
+		rows = append(rows, rowRenderer.RenderRow(tideui.Row{Prefix: prefix, Text: text, Selected: selected}, navWidth))
 		if rowHeight == 2 {
-			rows = append(rows, r.Styles.DetailMeta.Render(clip("  "+domain.SafeText(suffix), navWidth)))
+			meta := r.Styles.DetailMeta.Background(band).Foreground(tideui.Legible(r.Styles.Theme.Dimmed, band, 4.5))
+			if selected {
+				meta = r.Styles.ItemSelected
+			}
+			rows = append(rows, meta.Width(navWidth).Render(clip("  "+domain.SafeText(suffix), navWidth)))
 		}
 	}
 	if c.loading {
@@ -452,8 +473,12 @@ func (m Model) contactPanes(r tideui.Renderer) [3]tideui.Pane {
 		rows = append(rows, r.Styles.DetailBody.Foreground(r.Styles.Theme.Error).Render("! "+clip(domain.SafeText(c.err), navWidth)))
 	}
 	title := fmt.Sprintf("%s %d/%d", domain.Workspaces()[m.state.Active].Name, min(c.selected+1, len(c.rows)), len(c.rows))
-	content := m.profileContent()
-	content = r.Styles.DetailBody.Width(detailWidth).Render(domain.SafeText(content))
+	var content string
+	if c.view == 0 && c.contact.ID != "" {
+		content = contactOverview(r, c.contact, detailWidth)
+	} else {
+		content = r.Styles.DetailBody.Width(detailWidth).Render(domain.SafeText(m.profileContent()))
+	}
 	lines := strings.Split(content, "\n")
 	offset := min(c.scroll, max(0, len(lines)-max(1, m.height-5)))
 	if c.view >= 7 && c.contact.ID != "" {
@@ -538,28 +563,6 @@ func (m Model) profileContent() string {
 		}
 	}
 	switch m.contacts.view {
-	case 0:
-		methods()
-		organizations()
-		if len(c.Tags) > 0 {
-			lines = append(lines, "Tags: "+strings.Join(c.Tags, ", "))
-		}
-		if c.Birthday != "" {
-			lines = append(lines, "Birthday: "+c.Birthday)
-		}
-		if c.Anniversary != "" {
-			lines = append(lines, "Anniversary: "+c.Anniversary)
-		}
-		if c.Nickname != "" {
-			lines = append(lines, "Nickname: "+c.Nickname)
-		}
-		if c.Phonetic != "" {
-			lines = append(lines, "Pronunciation: "+c.Phonetic)
-		}
-		if len(c.Aliases) > 0 {
-			lines = append(lines, "Aliases: "+strings.Join(c.Aliases, ", "))
-		}
-		lines = append(lines, "", c.Biography, "", clip(c.Notes, 400), "", fmt.Sprintf("%d relationships · %d custom fields", len(c.Relationships)+len(c.Incoming), len(c.Fields)), "Source: "+c.Source, "Updated: "+c.UpdatedAt, "UUID: "+c.ID)
 	case 1:
 		methods()
 		if len(c.Methods) == 0 {
@@ -594,16 +597,6 @@ func (m Model) profileContent() string {
 			lines = append(lines, fmt.Sprintf("r%d  %s", h.Revision, h.Action), h.At, "")
 		}
 		lines = append(lines, "Local record changes only. No email/activity integration.")
-	}
-	if m.contacts.view == 0 {
-		compact := []string{}
-		for _, line := range lines {
-			if line == "" && len(compact) > 0 && compact[len(compact)-1] == "" {
-				continue
-			}
-			compact = append(compact, line)
-		}
-		lines = compact
 	}
 	return strings.Join(lines, "\n")
 }
