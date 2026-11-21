@@ -17,6 +17,26 @@ go install ./cmd/tidecontacts
 
 `--check` validates configuration and initializes/upgrades the database without opening the TUI. `--due` prints what is due and exits with status 3 when something is; `--notify` sends newly due reminders to the desktop notification service once (both are for your OS scheduler; see [tasks](docs/tasks.md#reminders)). `--version` prints the milestone. Noninteractive output prints guidance and exits. The Makefile disables VCS stamping for source archives and restricted workspaces.
 
+### Nix
+
+The repository is a flake. Run TideContacts without installing it:
+
+```sh
+nix run github:allisonhere/tidecontacts
+```
+
+To install it, add the flake as an input and use
+`inputs.tidecontacts.packages.${system}.default` (or apply
+`inputs.tidecontacts.overlays.default` and use `pkgs.tidecontacts`) in
+`environment.systemPackages` or `home.packages`. You can also run
+`nix profile install github:allisonhere/tidecontacts`. On Linux the package adds
+`xdg-open` and `notify-send` to the end of TideContacts' `PATH`. It also ships the
+TideMail contacts plugin in `share/tidemail/plugins/tidecontacts`; see
+[TideMail contacts plugin](docs/tidemail-plugin.md#nix) to enable it.
+
+`nix develop` opens a shell with Go, gopls, golangci-lint, delve and Python for
+the smoke tests.
+
 ## Try fictional demo data
 
 ```sh
@@ -215,6 +235,15 @@ make smoke-mail-clients # aerc/NeoMutt output and shell argument checks
 go test ./... # includes a 10,000-contact scale test; add -short to skip it
 UPDATE_GOLDEN=1 go test ./internal/tui # intentionally regenerate reviewed frames
 ```
+
+The Nix flake needs no Nix knowledge day to day. After a `go.mod` or `go.sum`
+change lands on `main`, the Nix workflow (`.github/workflows/nix.yml`) opens a
+`build(nix): update vendorHash` PR, and once a month it opens a
+`build(nix): update flake.lock` PR; merge them when they appear. Those PRs don't
+trigger other workflows on their own; close and reopen one to run them. To fix
+the hash locally instead, run `bash scripts/update-nix-vendor-hash.sh` (requires
+Nix). The one manual edit: when `go.mod` moves to a new Go minor version (e.g.
+1.27), change both `go_1_26` references in `flake.nix` to match.
 
 See [architecture](docs/architecture.md), [keys](docs/keybindings.md), [search grammar](docs/search.md), the [CRM guide](docs/crm-guide.md) and [Phase 3 decisions](docs/phase3-decisions.md).
 

@@ -25,6 +25,24 @@ configured, it is preserved; select `provider = "tidecontacts"` under `[contacts
 in TideMail's config to use this bridge instead. **L** in the simple view opens
 TideMail's original local address book, whose contents remain separate.
 
+### Nix
+
+The Nix package ships the plugin directory, with its matching TideContacts
+executable, at `share/tidemail/plugins/tidecontacts`. Instead of
+`make install-tidemail-plugin`, link it into TideMail's plugin directory, for
+example from a `nix profile` install:
+
+```sh
+mkdir -p ~/.config/tidemail/plugins
+ln -s ~/.nix-profile/share/tidemail/plugins/tidecontacts \
+  ~/.config/tidemail/plugins/tidecontacts
+```
+
+With Home Manager, use
+`xdg.configFile."tidemail/plugins/tidecontacts".source = "${pkgs.tidecontacts}/share/tidemail/plugins/tidecontacts";`.
+The link follows Nix upgrades, so the plugin and Advanced CRM stay in step with
+the installed TideContacts.
+
 ## Everyday actions
 
 - **n**: add a person (email is required).
