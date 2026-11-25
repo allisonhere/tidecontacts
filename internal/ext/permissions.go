@@ -41,6 +41,10 @@ var permissionTable = []Permission{
 	{"ui.register", "Contribute host-rendered panels", EnforcedByHost, false},
 	{"commands.register", "Add command-palette actions", EnforcedByHost, false},
 	{"storage.extension", "Use the extension's private key-value storage", EnforcedByHost, false},
+	{"cli.register", "Add top-level JSON CLI resources", EnforcedByHost, false},
+	{"signals.provide", "Contribute attention signals to the People Inbox", EnforcedByHost, false},
+	{"events.publish", "Publish extension-namespaced events (identifiers only)", EnforcedByHost, false},
+	{"storage.sql", "Keep a private SQLite database in the extension's data directory (the host cannot restrict what it contains)", EnforcedByHost, true},
 	{"network.access", "Declares that the extension uses the network (not enforceable by the host)", DeclaredOnly, true},
 }
 

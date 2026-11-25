@@ -33,8 +33,14 @@ func Wrap(s *sqlite.Store, bus *ext.Bus, src string) *Store {
 }
 
 func (s *Store) emit(typ, id string, revision int, source, corr string) {
+	s.emitRel(typ, id, "", revision, source, corr)
+}
+
+func (s *Store) emitRel(typ, id, related string, revision int, source, corr string) {
 	if s.bus != nil && id != "" {
-		s.bus.Publish(ext.NewEvent(typ, id, revision, source, corr))
+		e := ext.NewEvent(typ, id, revision, source, corr)
+		e.RelatedID = related
+		s.bus.Publish(e)
 	}
 }
 
@@ -66,6 +72,8 @@ func (s *Store) contactEvents(in, saved []domain.Contact, action string) {
 		}
 		typ := kind + ".updated"
 		switch {
+		case c.Deleted:
+			typ = kind + ".deleted"
 		case created:
 			typ = kind + ".created"
 		case kind == "contact" && c.Archived:
@@ -92,7 +100,7 @@ func (s *Store) SaveContactsWithProgress(ctx context.Context, in []domain.Contac
 func (s *Store) MergeContacts(ctx context.Context, keepID, mergeID string) (domain.Contact, error) {
 	c, err := s.Store.MergeContacts(ctx, keepID, mergeID)
 	if err == nil {
-		s.emit("contact.merged", c.ID, c.Revision, s.src, "")
+		s.emitRel("contact.merged", c.ID, mergeID, c.Revision, s.src, "")
 	}
 	return c, err
 }

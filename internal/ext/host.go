@@ -27,7 +27,13 @@ type Session struct {
 	Config      map[string]any
 	Entitlement string // capability to re-check on every call, if the manifest declares one
 	Entitled    EntitlementProvider
+	Bus         *Bus              // where events.publish goes; nil drops them
+	Published   map[string]string // declared event type -> entity type
+	published   int
 }
+
+// maxPublishPerCall bounds events one request may publish (an import, say).
+const maxPublishPerCall = 1000
 
 func perr(code, format string, a ...any) *ProtocolError {
 	return &ProtocolError{Code: code, Message: fmt.Sprintf(format, a...)}
@@ -83,12 +89,31 @@ func (s *Session) Call(ctx context.Context, method string, data json.RawMessage)
 			return nil, perr(CodeEntitlement, "capability %s is not entitled", s.Entitlement)
 		}
 	}
-	if s.Repo == nil && !strings.HasPrefix(method, "storage.") && method != "config.get" {
+	if s.Repo == nil && !strings.HasPrefix(method, "storage.") && method != "config.get" && method != "entitlement.check" && method != "events.publish" {
 		return nil, perr(CodeUnknownMethod, "records are not available")
 	}
 	switch method {
 	case "config.get":
 		return s.Config, nil
+	case "entitlement.check":
+		var a struct {
+			Capability string `json:"capability"`
+		}
+		if e := decode(data, &a); e != nil {
+			return nil, e
+		}
+		if !capPattern.MatchString(a.Capability) || s.Entitled == nil {
+			return nil, perr(CodeInvalid, "capability is malformed")
+		}
+		d, err := s.Entitled.Check(ctx, a.Capability)
+		if err != nil {
+			d = EntitlementDecision{Capability: a.Capability, Reason: "decision unavailable", Source: "error"}
+		}
+		return d, nil
+	case "events.publish":
+		return s.publish(data)
+	case "records.resolve":
+		return s.resolve(ctx, data)
 	case "storage.get", "storage.put", "storage.delete", "storage.keys":
 		return s.storage(method, data)
 	case "contacts.list":
@@ -311,4 +336,131 @@ func (s *Session) storage(method string, data json.RawMessage) (any, *ProtocolEr
 		return k, nil
 	}
 	return map[string]any{}, nil
+}
+
+// publish emits a declared, extension-namespaced event. The payload is
+// identifiers only; the host stamps the source so it cannot be forged, and
+// extension-sourced events are never delivered back to extensions.
+func (s *Session) publish(data json.RawMessage) (any, *ProtocolError) {
+	if e := s.need("events.publish"); e != nil {
+		return nil, e
+	}
+	var a struct {
+		Type          string `json:"type"`
+		EntityID      string `json:"entity_id"`
+		Revision      int    `json:"revision"`
+		CorrelationID string `json:"correlation_id"`
+	}
+	if e := decode(data, &a); e != nil {
+		return nil, e
+	}
+	entity, ok := s.Published[a.Type]
+	if !ok {
+		return nil, perr(CodePermissionDenied, "event %s is not declared in the manifest", a.Type)
+	}
+	if !idToken.MatchString(a.EntityID) || len(a.CorrelationID) > 64 {
+		return nil, perr(CodeInvalid, "entity_id or correlation_id is malformed")
+	}
+	if s.published++; s.published > maxPublishPerCall {
+		return nil, perr(CodeQuota, "too many events in one request")
+	}
+	if s.Bus != nil {
+		e := NewEvent(a.Type, a.EntityID, a.Revision, ExtensionSource+s.ID, Clean(a.CorrelationID, 64, false))
+		e.EntityType = entity
+		s.Bus.Publish(e)
+	}
+	return map[string]any{}, nil
+}
+
+// Record is a minimal projection of a core record for display and integrity
+// checks. It is deliberately smaller than the record itself.
+type Record struct {
+	ID         string `json:"id"`
+	Kind       string `json:"kind"`
+	Name       string `json:"name,omitempty"`
+	Detail     string `json:"detail,omitempty"` // primary email, organization, status…
+	Status     string `json:"status,omitempty"`
+	Due        string `json:"due,omitempty"`
+	When       string `json:"when,omitempty"`
+	URL        string `json:"url,omitempty"`
+	Revision   int    `json:"revision,omitempty"`
+	Archived   bool   `json:"archived,omitempty"`
+	Deleted    bool   `json:"deleted,omitempty"`
+	Missing    bool   `json:"missing,omitempty"`
+	MergedInto string `json:"merged_into,omitempty"`
+}
+
+const maxResolve = 500
+
+// resolve looks up many core records in one host call (no per-record process
+// round trips). It needs the read permission for the kind.
+func (s *Session) resolve(ctx context.Context, data json.RawMessage) (any, *ProtocolError) {
+	var a struct {
+		Kind string   `json:"kind"`
+		IDs  []string `json:"ids"`
+	}
+	if e := decode(data, &a); e != nil {
+		return nil, e
+	}
+	perm := map[string]string{"contact": "contacts.read", "organization": "organizations.read", "task": "tasks.read", "activity": "activities.read", "project": "projects.read"}[a.Kind]
+	if perm == "" {
+		return nil, perr(CodeInvalid, "kind must be contact, organization, task, activity or project")
+	}
+	if e := s.need(perm); e != nil {
+		return nil, e
+	}
+	if len(a.IDs) > maxResolve {
+		return nil, perr(CodeInvalid, "at most %d ids", maxResolve)
+	}
+	out := make([]Record, 0, len(a.IDs))
+	for _, id := range a.IDs {
+		r := Record{ID: id, Kind: a.Kind}
+		var err error
+		switch a.Kind {
+		case "contact", "organization":
+			var c domain.Contact
+			if c, err = s.Repo.Contact(ctx, id); err == nil {
+				if (c.Kind == "organization") != (a.Kind == "organization") {
+					r = Record{ID: id, Kind: a.Kind, Missing: true} // wrong kind: do not disclose
+					break
+				}
+				r.Name, r.Archived, r.Deleted, r.Revision = c.DisplayName, c.Archived, c.Deleted, c.Revision
+				for _, m := range c.Methods {
+					if m.Kind == "email" && (r.Detail == "" || m.Preferred) {
+						r.Detail = m.Value
+					}
+				}
+				if c.Deleted {
+					var into string
+					if raw, ok := c.Extensions["merged_into"]; ok && json.Unmarshal(raw, &into) == nil {
+						r.MergedInto = into
+					}
+				}
+				if r.Detail == "" && len(c.Memberships) > 0 {
+					r.Detail = c.Memberships[0].Organization
+				}
+			}
+		case "task":
+			var t domain.Task
+			if t, err = s.Repo.Task(ctx, id); err == nil {
+				r.Name, r.Status, r.Due, r.Archived, r.Deleted, r.Revision = t.Title, t.Status, t.Due, t.Archived, t.Deleted, t.Revision
+			}
+		case "activity":
+			var ac domain.Activity
+			if ac, err = s.Repo.Activity(ctx, id); err == nil {
+				r.Name, r.Detail, r.Deleted, r.Revision, r.URL = ac.Title, ac.Type, ac.Deleted, ac.Revision, ac.ExternalURL
+				r.When = ac.OccurredAt.Format("2006-01-02")
+			}
+		case "project":
+			var p domain.Project
+			if p, err = s.Repo.Project(ctx, id); err == nil {
+				r.Name, r.Status, r.Deleted, r.Revision = p.Name, p.Status, p.Deleted, p.Revision
+			}
+		}
+		if err != nil {
+			r = Record{ID: id, Kind: a.Kind, Missing: true}
+		}
+		out = append(out, r)
+	}
+	return out, nil
 }

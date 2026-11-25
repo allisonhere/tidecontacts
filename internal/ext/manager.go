@@ -124,6 +124,9 @@ type Options struct {
 	Logger                  *slog.Logger
 	// Timeout overrides DefaultTimeout (tests).
 	Timeout time.Duration
+	// Notice is shown with the manager's warnings (for example, that development
+	// entitlements are active).
+	Notice string
 }
 
 // Manager discovers extensions and manages their lifecycle. A nil Manager is
@@ -168,6 +171,9 @@ func (m *Manager) Discover(ctx context.Context) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.warnings = nil
+	if m.o.Notice != "" {
+		m.warnings = append(m.warnings, m.o.Notice)
+	}
 	if serr != nil {
 		m.warnings = append(m.warnings, serr.Error())
 	}
@@ -284,20 +290,13 @@ func (m *Manager) resolveLocked(st stateFile) {
 			continue
 		}
 		r.execSHA = sum
-		need := append([]string{}, r.m.Entitlement)
-		for _, p := range r.m.Provides {
-			if strings.HasPrefix(p.ID, "pro.") {
-				need = append(need, p.ID)
-			}
-		}
-		for _, c := range need {
-			if c == "" {
-				continue
-			}
+		// Only the extension's own declared entitlement gates it as a whole.
+		// Each provided pro. capability is entitled (or not) independently below,
+		// so a partial entitlement enables exactly what it covers.
+		if c := r.m.Entitlement; c != "" {
 			d, err := m.o.Entitlements.Check(ctx, c)
 			if err != nil || !d.Allowed {
 				r.status, r.detail = StatusEntitlement, "capability "+c+" is not entitled"
-				break
 			}
 		}
 		if r.status == StatusDisabled {
@@ -327,6 +326,12 @@ func (m *Manager) resolveLocked(st stateFile) {
 			}
 			for _, p := range r.m.Provides {
 				if c, ok := m.reg.Get(p.ID); ok && !c.Available {
+					if p.entitlementOf() != "" {
+						if d, err := m.o.Entitlements.Check(ctx, p.ID); err != nil || !d.Allowed {
+							m.reg.SetAvailable(p.ID, false, "not entitled")
+							continue
+						}
+					}
 					m.reg.SetAvailable(p.ID, true, "")
 					changed = true
 				}
@@ -620,7 +625,11 @@ func (m *Manager) session(r *record) *Session {
 	for k, v := range r.entry.Config {
 		cfg[k] = v
 	}
-	return &Session{ID: r.m.ID, Granted: r.effective(), Repo: m.o.Repo, Storage: r.store, Config: cfg, Entitlement: r.m.Entitlement, Entitled: m.o.Entitlements}
+	pub := map[string]string{}
+	for _, p := range r.m.Published {
+		pub[p.Type] = p.EntityType
+	}
+	return &Session{ID: r.m.ID, Granted: r.effective(), Repo: m.o.Repo, Storage: r.store, Config: cfg, Entitlement: r.m.Entitlement, Entitled: m.o.Entitlements, Bus: m.o.Bus, Published: pub}
 }
 
 // invoke runs one request against an active (or activating) extension and
@@ -638,6 +647,13 @@ func (m *Manager) invoke(ctx context.Context, id, method string, params any) (js
 		return nil, fmt.Errorf("extension %s is %s", id, st)
 	}
 	sess, dir, cmd, sem := m.session(r), r.dir, r.m.Command, r.sem
+	timeout, opt := m.o.Timeout, InvokeOptions{}
+	if r.m.TimeoutSeconds > 0 {
+		timeout = time.Duration(r.m.TimeoutSeconds) * time.Second
+	}
+	if r.m.Storage.SQL && r.effective().Has("storage.sql") {
+		opt.DataDir = filepath.Join(m.dataRoot(), id)
+	}
 	m.mu.Unlock()
 	select {
 	case sem <- struct{}{}:
@@ -645,7 +661,7 @@ func (m *Manager) invoke(ctx context.Context, id, method string, params any) (js
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	}
-	res, err := Invoke(ctx, dir, cmd, id, method, params, m.o.Timeout, sess.Call)
+	res, err := InvokeOpts(ctx, dir, cmd, id, method, params, timeout, sess.Call, opt)
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	cur := m.recs[id]

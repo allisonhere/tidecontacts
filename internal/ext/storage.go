@@ -170,16 +170,15 @@ func (s *Storage) Keys() ([]string, error) {
 	return keys, err
 }
 
-// Purge deletes the extension's data. It is only called on an explicit user
-// request; disabling or removing an extension never destroys data.
+// Purge deletes the extension's data directory, including any SQLite database
+// it keeps there. It is only called on an explicit user request; disabling or
+// removing an extension never destroys data. It refuses a directory that holds
+// a manifest, so a misconfigured data root can never delete a program.
 func (s *Storage) Purge() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	// Remove only what this package created. Never RemoveAll: if a misconfigured
-	// data root ever coincided with a program directory, that would delete code.
-	if err := os.Remove(filepath.Join(s.dir, storageFileName)); err != nil && !os.IsNotExist(err) {
-		return err
+	if _, err := os.Stat(filepath.Join(s.dir, ManifestFile)); err == nil {
+		return fmt.Errorf("refusing to purge %s: it contains an extension program", s.dir)
 	}
-	_ = os.Remove(s.dir) // succeeds only when empty
-	return nil
+	return os.RemoveAll(s.dir)
 }

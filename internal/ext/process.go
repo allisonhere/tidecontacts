@@ -108,8 +108,11 @@ func ResolveExecutable(dir, command string) (string, error) {
 
 // scrubbedEnv gives an extension the minimum it needs. No application secrets
 // or inherited environment variables are passed. This is hygiene, not a sandbox.
-func scrubbedEnv(id string) []string {
+func scrubbedEnv(id, dataDir string) []string {
 	env := []string{"PATH=" + defaultPath(), "LANG=C.UTF-8", "TIDECONTACTS_EXTENSION_ID=" + id, fmt.Sprintf("TIDECONTACTS_EXTENSION_API=%d", APIVersion)}
+	if dataDir != "" { // only extensions granted storage.sql learn where their data directory is
+		env = append(env, "TIDECONTACTS_EXTENSION_DATA="+dataDir)
+	}
 	if runtime.GOOS == "windows" {
 		env = append(env, "SystemRoot="+os.Getenv("SystemRoot"))
 	}
@@ -143,6 +146,17 @@ func (l *limitedBuffer) String() string { l.mu.Lock(); defer l.mu.Unlock(); retu
 // killed (with its process group on Unix) on timeout, cancellation, protocol
 // violation or oversized output, and is always reaped before Invoke returns.
 func Invoke(ctx context.Context, dir, command, id, method string, params any, timeout time.Duration, host HostFunc) (Result, error) {
+	return InvokeOpts(ctx, dir, command, id, method, params, timeout, host, InvokeOptions{})
+}
+
+// InvokeOptions carries optional per-call settings.
+type InvokeOptions struct {
+	// DataDir, when set, is created (0700) and exposed as TIDECONTACTS_EXTENSION_DATA.
+	DataDir string
+}
+
+// InvokeOpts is Invoke with options.
+func InvokeOpts(ctx context.Context, dir, command, id, method string, params any, timeout time.Duration, host HostFunc, opt InvokeOptions) (Result, error) {
 	start := time.Now()
 	res := Result{}
 	if timeout <= 0 {
@@ -152,6 +166,11 @@ func Invoke(ctx context.Context, dir, command, id, method string, params any, ti
 	exe, err := ResolveExecutable(dir, command)
 	if err != nil {
 		return res, err
+	}
+	if opt.DataDir != "" {
+		if err := os.MkdirAll(opt.DataDir, 0o700); err != nil {
+			return res, fmt.Errorf("extension data directory: %w", err)
+		}
 	}
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
@@ -164,7 +183,7 @@ func Invoke(ctx context.Context, dir, command, id, method string, params any, ti
 
 	cmd := exec.CommandContext(ctx, exe)
 	cmd.Dir = dir
-	cmd.Env = scrubbedEnv(id)
+	cmd.Env = scrubbedEnv(id, opt.DataDir)
 	setProcessGroup(cmd)
 	cmd.Cancel = func() error { return killProcess(cmd) }
 	cmd.WaitDelay = killGrace

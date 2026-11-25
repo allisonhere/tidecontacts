@@ -160,3 +160,34 @@ func TestNilBusIsPassThrough(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestMergeAndDeleteEvents(t *testing.T) {
+	s, sub := setup(t)
+	ctx := context.Background()
+	a, b := domain.NewContact("person"), domain.NewContact("person")
+	a.DisplayName, b.DisplayName = "Ada Fictional", "A. Fictional"
+	saved, err := s.SaveContacts(ctx, []domain.Contact{a, b}, "edit")
+	if err != nil {
+		t.Fatal(err)
+	}
+	drain(sub)
+	keep, err := s.MergeContacts(ctx, saved[0].ID, saved[1].ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ev := drain(sub)
+	if len(ev) != 1 || ev[0].Type != "contact.merged" || ev[0].EntityID != keep.ID || ev[0].RelatedID != saved[1].ID {
+		t.Fatalf("merge event: %+v", ev)
+	}
+	org := domain.NewContact("organization")
+	org.DisplayName = "Example Works"
+	o, _ := s.SaveContacts(ctx, []domain.Contact{org}, "edit")
+	drain(sub)
+	o[0].Deleted = true
+	if _, err := s.SaveContacts(ctx, o, "edit"); err != nil {
+		t.Fatal(err)
+	}
+	if ev = drain(sub); len(ev) != 1 || ev[0].Type != "organization.deleted" {
+		t.Fatalf("delete event: %+v", ev)
+	}
+}

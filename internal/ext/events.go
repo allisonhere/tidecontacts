@@ -29,6 +29,9 @@ type Event struct {
 	Revision      int    `json:"revision,omitempty"`
 	Source        string `json:"source"` // ui, cli, import, sync, extension:<id>
 	CorrelationID string `json:"correlation_id,omitempty"`
+	// RelatedID names a second record the event concerns: for contact.merged, the
+	// record that was merged away (a tombstone naming EntityID as its successor).
+	RelatedID string `json:"related_id,omitempty"`
 }
 
 // EventType describes one event contract.
@@ -45,6 +48,8 @@ var eventTable = []EventType{
 	{"contact.updated", "contact", "contacts.read", true},
 	{"contact.archived", "contact", "contacts.read", true},
 	{"contact.merged", "contact", "contacts.read", true},
+	{"contact.deleted", "contact", "contacts.read", true},
+	{"organization.deleted", "organization", "organizations.read", true},
 	{"organization.created", "organization", "organizations.read", true},
 	{"organization.updated", "organization", "organizations.read", true},
 	{"activity.created", "activity", "activities.read", true},

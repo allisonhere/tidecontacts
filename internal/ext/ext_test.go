@@ -511,7 +511,7 @@ printf '{"api":1,"type":"response","request_id":"%s","ok":true,"data":{}}\n' "$i
 	}
 	time.Sleep(200 * time.Millisecond)
 	data, _ = os.ReadFile(log)
-	if strings.Count(string(data), "event.deliver") != 1 || !strings.Contains(string(data), `"entity_id":"c1"`) || strings.Contains(string(data), "c2") {
+	if strings.Count(string(data), "event.deliver") != 1 || !strings.Contains(string(data), `"entity_id":"c1"`) || strings.Contains(string(data), `"entity_id":"c2"`) {
 		t.Fatalf("delivery log:\n%s", data)
 	}
 	if strings.Contains(strings.ToLower(string(data)), "name") {
@@ -570,14 +570,15 @@ func TestDataRootNeverCollidesWithPrograms(t *testing.T) {
 	if dir == data || strings.HasPrefix(data, dir+string(filepath.Separator)) || strings.HasPrefix(dir, data+string(filepath.Separator)) {
 		t.Fatalf("program dir %s and data dir %s overlap", dir, data)
 	}
-	// Purging data removes only the store, never other files.
+	// A directory holding a program is never purged, even if misconfigured.
 	prog := filepath.Join(root, "prog")
 	_ = os.MkdirAll(prog, 0o755)
+	_ = os.WriteFile(filepath.Join(prog, ManifestFile), []byte("x"), 0o644)
 	_ = os.WriteFile(filepath.Join(prog, "run.sh"), []byte("x"), 0o755)
 	s, _ := OpenStorage(root, "prog", 0)
 	_ = s.Put("k", "v")
-	if err := s.Purge(); err != nil {
-		t.Fatal(err)
+	if err := s.Purge(); err == nil {
+		t.Fatal("purged a program directory")
 	}
 	if _, err := os.Stat(filepath.Join(prog, "run.sh")); err != nil {
 		t.Fatal("purge deleted a program file")

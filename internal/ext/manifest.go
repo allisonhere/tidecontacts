@@ -43,7 +43,38 @@ type Manifest struct {
 	Events      EventDecl      `toml:"events" json:"events"`
 	Config      []ConfigOption `toml:"config" json:"config,omitempty"`
 	Storage     StorageDecl    `toml:"storage" json:"storage"`
+	// Additive API 1 contributions.
+	Workspaces []WorkspaceDecl  `toml:"workspaces" json:"workspaces,omitempty"`
+	CLI        []CLIDecl        `toml:"cli" json:"cli,omitempty"`
+	Signals    bool             `toml:"signals" json:"signals,omitempty"`
+	Published  []PublishedEvent `toml:"published_events" json:"published_events,omitempty"`
+	// TimeoutSeconds raises the per-request budget (default 10, host cap 30).
+	TimeoutSeconds int `toml:"timeout_seconds" json:"timeout_seconds,omitempty"`
 }
+
+// WorkspaceDecl contributes a full-screen workspace, listed in the menu only
+// while the extension is enabled. The host renders what the extension describes.
+type WorkspaceDecl struct {
+	ID    string `toml:"id" json:"id"`
+	Title string `toml:"title" json:"title"`
+}
+
+// CLIDecl contributes a top-level JSON CLI resource served by the extension.
+type CLIDecl struct {
+	Resource    string   `toml:"resource" json:"resource"`
+	Description string   `toml:"description" json:"description,omitempty"`
+	Actions     []string `toml:"actions" json:"actions,omitempty"`
+}
+
+// PublishedEvent declares an event type the extension may publish through the
+// host. The payload is identifiers only; the host stamps the source.
+type PublishedEvent struct {
+	Type       string `toml:"type" json:"type"`
+	EntityType string `toml:"entity_type" json:"entity_type"`
+}
+
+// ReservedCLIResources are built-in names an extension cannot take over.
+var ReservedCLIResources = map[string]bool{"contacts": true, "organizations": true, "tasks": true, "activities": true, "projects": true, "pipelines": true, "items": true, "crm": true, "schema": true, "extensions": true, "capabilities": true, "help": true}
 
 // Provided is a capability an extension offers.
 type Provided struct {
@@ -74,6 +105,9 @@ type EventDecl struct {
 type StorageDecl struct {
 	Required bool `toml:"required" json:"required"`
 	MaxKB    int  `toml:"max_kb" json:"max_kb,omitempty"`
+	// SQL asks for a private directory (TIDECONTACTS_EXTENSION_DATA) in which the
+	// extension keeps its own SQLite database. It needs storage.sql.
+	SQL bool `toml:"sql" json:"sql,omitempty"`
 }
 
 // ConfigOption describes one user setting. Values live in host state, not in
@@ -292,6 +326,12 @@ func (m Manifest) Validate() error {
 	if err := dupes("event subscription", m.Events.Subscribe); err != nil {
 		return err
 	}
+	if m.Storage.SQL && !granted.Has("storage.sql") {
+		return fmt.Errorf("an SQL data directory requires the storage.sql permission")
+	}
+	if err := m.validateContributions(granted); err != nil {
+		return err
+	}
 	if (m.Storage.Required || m.Storage.MaxKB != 0) && !granted.Has("storage.extension") {
 		return fmt.Errorf("storage requires the storage.extension permission")
 	}
@@ -446,4 +486,81 @@ func (m Manifest) SortedPermissions() []string {
 	out := append([]string(nil), m.Permissions...)
 	sort.Strings(out)
 	return out
+}
+
+var (
+	publishedType   = regexp.MustCompile(`^[a-z][a-z0-9-]*(\.[a-z][a-z0-9_]*)+$`)
+	publishedEntity = regexp.MustCompile(`^[a-z][a-z_]{0,29}$`)
+)
+
+func (m Manifest) validateContributions(granted PermissionSet) error {
+	if m.TimeoutSeconds < 0 || m.TimeoutSeconds > int(MaxTimeout.Seconds()) {
+		return fmt.Errorf("timeout_seconds must be between 0 and %d", int(MaxTimeout.Seconds()))
+	}
+	if len(m.Workspaces) > 0 && !granted.Has("ui.register") {
+		return fmt.Errorf("workspaces require the ui.register permission")
+	}
+	if len(m.Workspaces) > 2 {
+		return fmt.Errorf("at most 2 workspaces")
+	}
+	var ids []string
+	for _, w := range m.Workspaces {
+		if !localPattern.MatchString(w.ID) {
+			return fmt.Errorf("workspace id %q is malformed", w.ID)
+		}
+		if err := text("workspace title", w.Title, 24, true); err != nil {
+			return err
+		}
+		ids = append(ids, w.ID)
+	}
+	if err := dupes("workspace", ids); err != nil {
+		return err
+	}
+	if len(m.CLI) > 0 && !granted.Has("cli.register") {
+		return fmt.Errorf("CLI resources require the cli.register permission")
+	}
+	if len(m.CLI) > 8 {
+		return fmt.Errorf("at most 8 CLI resources")
+	}
+	var res []string
+	for _, c := range m.CLI {
+		if !localPattern.MatchString(c.Resource) || ReservedCLIResources[c.Resource] {
+			return fmt.Errorf("CLI resource %q is malformed or reserved", c.Resource)
+		}
+		if err := text("CLI description", c.Description, 120, false); err != nil {
+			return err
+		}
+		if len(c.Actions) > 24 {
+			return fmt.Errorf("at most 24 actions per CLI resource")
+		}
+		for _, a := range c.Actions {
+			if !localPattern.MatchString(a) {
+				return fmt.Errorf("CLI action %q is malformed", a)
+			}
+		}
+		res = append(res, c.Resource)
+	}
+	if err := dupes("CLI resource", res); err != nil {
+		return err
+	}
+	if m.Signals && !granted.Has("signals.provide") {
+		return fmt.Errorf("signals require the signals.provide permission")
+	}
+	if len(m.Published) > 0 && !granted.Has("events.publish") {
+		return fmt.Errorf("published events require the events.publish permission")
+	}
+	if len(m.Published) > 32 {
+		return fmt.Errorf("at most 32 published events")
+	}
+	var pub []string
+	for _, p := range m.Published {
+		if !publishedType.MatchString(p.Type) || len(p.Type) > 48 || !publishedEntity.MatchString(p.EntityType) {
+			return fmt.Errorf("published event %q is malformed", p.Type)
+		}
+		if _, core := LookupEventType(p.Type); core {
+			return fmt.Errorf("published event %q collides with a core event", p.Type)
+		}
+		pub = append(pub, p.Type)
+	}
+	return dupes("published event", pub)
 }
