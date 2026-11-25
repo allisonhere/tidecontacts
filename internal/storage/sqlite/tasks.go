@@ -145,10 +145,9 @@ func (s *Store) taskWhere(f TaskFilter) (where, error) {
 			}
 		}
 	}
-	if archived {
-		w.add("t.archived=1")
-	} else {
-		w.add("t.archived=0")
+	// Deleted tasks show regardless of archive state so Restore can find them.
+	if !deleted {
+		w.add("t.archived=?", archived)
 	}
 	w.linked(f.Query, "task", "t")
 	w.terms(f.Query, "task", "t", "title")

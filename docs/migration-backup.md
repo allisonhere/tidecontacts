@@ -58,7 +58,7 @@ To restore: quit TideContacts and TideMail, move the current `tidecontacts.db`, 
 ## Recovery inside the app
 
 - Local contacts are never hard-deleted: search `is:deleted` and run **Restore archived/deleted contact**. `u` undoes the last contact change of the session.
-- Tasks, activities, projects and pipeline items are tombstoned on delete (kept in the file, hidden everywhere). Filter with `is:deleted` in their workspace, select the record and run **Restore archived/deleted contact** (the same palette command as for contacts). Reminders dismissed when a task was deleted stay dismissed, and `u` undo still covers contacts only.
+- Tasks, activities, projects and pipeline items are tombstoned on delete (kept in the file, hidden everywhere). Filter with `is:deleted` in their workspace (archived records are included), select the record and run **Restore archived/deleted contact** (the same palette command as for contacts). Restoring also unarchives the record (an archived project returns as active). Reminders dismissed when a task was deleted stay dismissed, and `u` undo still covers contacts only.
 - Every save is one transaction with a revision check. A record changed elsewhere since you opened it is refused with a message instead of being overwritten.
 - A merged contact becomes a tombstone naming its successor; its links are not moved back if you restore it.
 

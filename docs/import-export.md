@@ -6,7 +6,7 @@ One-time contact import is preview-first and insert-only. Connected folders inst
 
 ## Workflow
 
-1. Press `I`, choose CSV, vCard or Mutt/NeoMutt aliases, then browse to a file or press `p` to enter its path. Select the CRM source for the [archive workflow](export-import.md), or khard/vdirsyncer/Google Contacts for a [connected address book](vcard-directories.md).
+1. Press `I`, choose CSV, vCard or Mutt/NeoMutt aliases, then browse to a file or press `p` to enter its path (`~/` works for both import and export). Select the CRM source for the [archive workflow](export-import.md), or khard/vdirsyncer/Google Contacts for a [connected address book](vcard-directories.md).
 2. CSV: review header detection (`h`), choose columns with Up/Down, and change mappings with Left/Right. Enter builds the dry-run preview.
 3. Preview: inspect validation errors and duplicates. Space toggles valid rows. `b` returns to CSV mapping. Esc cancels with no changes.
 4. Enter opens the final confirmation. `y` imports the selected records; `n` returns to review.

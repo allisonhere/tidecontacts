@@ -38,4 +38,4 @@ Export only; iCalendar cannot be imported. Tasks become `VTODO` (due date or dat
 
 ## Restore
 
-Deleting a task, activity, project or pipeline item keeps a tombstone in the database. To bring one back, open its workspace, filter with `is:deleted`, select it and run **Restore archived/deleted contact** from the palette. Restoring twice is harmless. Reminders that were dismissed when a task was deleted stay dismissed. A deleted pipeline item returns to its original stage. Contacts keep their own restore flow, and `u` undo covers contacts only.
+Deleting a task, activity, project or pipeline item keeps a tombstone in the database. To bring one back, open its workspace, filter with `is:deleted`, select it and run **Restore archived/deleted contact** from the palette. Restoring also takes the record out of the archive (an archived project returns as active), so it reappears in the normal lists. Restoring twice is harmless. Reminders that were dismissed when a task was deleted stay dismissed. A deleted pipeline item returns to its original stage. Contacts keep their own restore flow, and `u` undo covers contacts only.

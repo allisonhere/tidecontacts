@@ -383,7 +383,8 @@ func (s *Store) List(ctx context.Context, kind string, q search.Query, order str
 			}
 		}
 	}
-	if !archived {
+	// Tombstones are listed whether or not they were archived first, so Restore can find them.
+	if !archived && !deleted {
 		hasActive := false
 		for _, f := range q.Filters {
 			if f.Key == "is" && f.Value == "active" {

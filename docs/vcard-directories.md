@@ -17,7 +17,7 @@ Connect each address-book folder separately. The reader accepts `.vcf` and `.vca
 3. Enter the account email and the 16-character app password (Tab switches fields), then press Enter. TideContacts validates the credentials by fetching the full contact list before anything is shown.
 4. Review the number of cards, press Enter, then `y` to connect.
 
-The app password is stored in the OS keychain (`secret-tool` on Linux, Keychain Access on macOS), never in the SQLite database or a config file. If no system keychain is available, connecting still works but the password cannot be saved, and the next refresh will fail until you reconnect. Disconnecting (`x`, then `y`) hides the cached contacts but keeps the saved password, so reconnecting from the books list (`Enter` on a disconnected entry) does not require re-entering it.
+TideContacts only fetches cards from the same scheme and host as the Google collection; any other address in a server response is ignored, so the email and app password are never sent elsewhere. The app password is stored in the OS keychain (`secret-tool` on Linux, Keychain Access on macOS), never in the SQLite database or a config file. If no system keychain is available, connecting still works but the password cannot be saved, and the next refresh will fail until you reconnect. Disconnecting (`x`, then `y`) hides the cached contacts but keeps the saved password, so reconnecting from the books list (`Enter` on a disconnected entry) does not require re-entering it.
 
 ## Refresh and use in TideMail
 

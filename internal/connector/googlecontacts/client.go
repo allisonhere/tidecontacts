@@ -164,6 +164,11 @@ func listCardHrefs(ctx context.Context, client *http.Client, collection, email, 
 		if err != nil {
 			continue
 		}
+		// Cards are fetched with the account's credentials, so an href that points
+		// to another scheme or host must never be followed.
+		if !strings.EqualFold(resolved.Scheme, base.Scheme) || !strings.EqualFold(resolved.Host, base.Host) {
+			continue
+		}
 		if strings.TrimRight(resolved.String(), "/") == collectionNormalized {
 			continue // the collection's own entry, not a card
 		}

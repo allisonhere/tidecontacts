@@ -529,12 +529,13 @@ func (m *Model) followUpPrompt(person domain.Ref) tea.Cmd {
 			switch {
 			case value == "" || value == "none":
 				f.Interval, f.Never, f.NextDate, f.SnoozedUntil = domain.Interval{}, false, "", ""
+			// A cadence, a date and "never" replace one another.
 			case never:
-				f.Never = true
+				f.Interval, f.Never, f.NextDate, f.SnoozedUntil = domain.Interval{}, true, "", ""
 			case intervalErr == nil:
-				f.Interval, f.Never, f.SnoozedUntil = interval, false, ""
+				f.Interval, f.Never, f.NextDate, f.SnoozedUntil = interval, false, "", ""
 			default:
-				f.NextDate, f.Never, f.SnoozedUntil = day, false, ""
+				f.Interval, f.Never, f.NextDate, f.SnoozedUntil = domain.Interval{}, false, day, ""
 			}
 			return person.ID, repo.SetFollowUp(ctx, f)
 		}), nil

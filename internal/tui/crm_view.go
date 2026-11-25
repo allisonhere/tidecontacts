@@ -122,6 +122,20 @@ func (m Model) paneWidths() (int, int, int) {
 // the focused stage's items when only one column fits.
 func (m Model) boardContent(r tideui.Renderer, width, height int) string {
 	c := m.crm
+	// The board loads asynchronously after the pipeline changes, so it can be
+	// shorter than the new pipeline's stage list for a frame. Never index past it.
+	boardAt := func(i int) []domain.PipelineItem {
+		if i >= 0 && i < len(c.board) {
+			return c.board[i]
+		}
+		return nil
+	}
+	selAt := func(i int) int {
+		if i >= 0 && i < len(c.rowSel) {
+			return c.rowSel[i]
+		}
+		return -1
+	}
 	p, ok := m.currentPipeline()
 	if !ok {
 		return r.Styles.DetailBody.Width(width).Render("No pipelines yet.\n\nA pipeline tracks anything that moves through stages: job applications, partnerships, client onboarding, personal goals.\n\nPress n to create one.")
@@ -137,15 +151,15 @@ func (m Model) boardContent(r tideui.Renderer, width, height int) string {
 			if i == c.col {
 				prefix = "> "
 			}
-			lines = append(lines, r.RenderRow(tideui.Row{Prefix: prefix, Text: domain.SafeText(g.Name), Suffix: fmt.Sprint(len(c.board[i])), Selected: i == c.col && active, Muted: len(c.board[i]) == 0}, width))
+			lines = append(lines, r.RenderRow(tideui.Row{Prefix: prefix, Text: domain.SafeText(g.Name), Suffix: fmt.Sprint(len(boardAt(i))), Selected: i == c.col && active, Muted: len(boardAt(i)) == 0}, width))
 		}
 		if c.col < len(p.Stages) {
 			lines = append(lines, r.RenderSectionDivider(tideui.SectionDivider{Label: domain.SafeText(p.Stages[c.col].Name), Width: width}, r.Styles.Theme.Bg))
 			rows := []crmRow{}
-			for _, it := range c.board[c.col] {
+			for _, it := range boardAt(c.col) {
 				rows = append(rows, itemRow(it, today))
 			}
-			items, at := m.renderRows(r, rows, c.rowSel[c.col], active, width)
+			items, at := m.renderRows(r, rows, selAt(c.col), active, width)
 			if len(items) == 0 {
 				items = []string{r.Styles.DetailMeta.Render("  No items in this stage — n adds one")}
 			}
@@ -162,15 +176,15 @@ func (m Model) boardContent(r tideui.Renderer, width, height int) string {
 		if i == c.col {
 			mark = "▸ "
 		}
-		column := []string{r.RenderRow(tideui.Row{Prefix: mark, Text: domain.SafeText(g.Name), Suffix: fmt.Sprint(len(c.board[i])), Selected: i == c.col && active}, cell),
+		column := []string{r.RenderRow(tideui.Row{Prefix: mark, Text: domain.SafeText(g.Name), Suffix: fmt.Sprint(len(boardAt(i))), Selected: i == c.col && active}, cell),
 			r.Styles.DetailMeta.Render(strings.Repeat("─", cell))}
 		rows := []crmRow{}
-		for _, it := range c.board[i] {
+		for _, it := range boardAt(i) {
 			rows = append(rows, itemRow(it, today))
 		}
 		cursor := -1
 		if i == c.col {
-			cursor = c.rowSel[i]
+			cursor = selAt(i)
 		}
 		items, at := m.renderRows(r, rows, cursor, active, cell)
 		if len(items) == 0 {

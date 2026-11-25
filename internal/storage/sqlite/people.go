@@ -51,7 +51,7 @@ func (s *Store) FollowUps(ctx context.Context) ([]domain.FollowUp, error) {
 
 func (s *Store) followUps(ctx context.Context, q querier) ([]domain.FollowUp, error) {
 	list := []domain.FollowUp{}
-	e := each(ctx, q, "SELECT "+followUpColumns+" FROM followup_prefs f JOIN entities e ON e.id=f.entity_id WHERE e.deleted=0 AND e.archived=0", []any{stamp(s.now())}, func(r *sql.Rows) error {
+	e := each(ctx, q, "SELECT "+followUpColumns+" FROM followup_prefs f JOIN entities e ON e.id=f.entity_id WHERE e.deleted=0 AND e.archived=0 AND (f.every>0 OR f.next_date!='' OR f.never=1)", []any{stamp(s.now())}, func(r *sql.Rows) error {
 		f, e := s.scanFollowUp(r)
 		list = append(list, f)
 		return e
@@ -106,6 +106,10 @@ const dateSelect = `SELECT d.id AS date_id,e.id AS entity_id,e.kind,e.display_na
 const builtinDates = `SELECT '',e.id,e.kind,e.display_name,'Birthday',p.birthday,1,'' FROM people p JOIN entities e ON e.id=p.id WHERE e.deleted=0 AND p.birthday!=''
  UNION ALL SELECT '',e.id,e.kind,e.display_name,'Anniversary',p.anniversary,1,'' FROM people p JOIN entities e ON e.id=p.id WHERE e.deleted=0 AND p.anniversary!=''`
 
+// activeDates is every date of a contact that is not archived. The filter wraps the
+// whole UNION; appending it to the string would only reach the last SELECT.
+const activeDates = "SELECT u.* FROM (" + dateSelect + " UNION ALL " + builtinDates + ") u JOIN entities a ON a.id=u.entity_id WHERE a.archived=0"
+
 // Dates lists a contact's important dates, including its birthday and anniversary.
 func (s *Store) Dates(ctx context.Context, entityID string) ([]domain.ImportantDate, error) {
 	return s.dates(ctx, s.db, "SELECT * FROM ("+dateSelect+" UNION ALL "+builtinDates+") WHERE entity_id=?", entityID, -1)
@@ -113,7 +117,7 @@ func (s *Store) Dates(ctx context.Context, entityID string) ([]domain.ImportantD
 
 // UpcomingDates lists dates occurring within the next days days across all contacts.
 func (s *Store) UpcomingDates(ctx context.Context, days int) ([]domain.ImportantDate, error) {
-	return s.dates(ctx, s.db, "SELECT * FROM ("+dateSelect+" AND e.archived=0 UNION ALL "+builtinDates+" AND e.archived=0)", "", days)
+	return s.dates(ctx, s.db, activeDates, "", days)
 }
 
 func (s *Store) dates(ctx context.Context, q querier, query, entityID string, days int) ([]domain.ImportantDate, error) {

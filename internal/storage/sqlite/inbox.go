@@ -139,7 +139,7 @@ func (s *Store) candidates(ctx context.Context, q querier, cfg domain.RadarConfi
 		}
 		items = append(items, it)
 	}
-	dates, e := s.dates(ctx, q, "SELECT * FROM ("+dateSelect+" AND e.archived=0 UNION ALL "+builtinDates+" AND e.archived=0)", "", cfg.UpcomingDays)
+	dates, e := s.dates(ctx, q, activeDates, "", cfg.UpcomingDays)
 	if e != nil {
 		return nil, e
 	}
@@ -335,7 +335,7 @@ func (s *Store) Radar(ctx context.Context, cfg domain.RadarConfig) ([]domain.Sig
 			add("commitments", list)
 		}
 		if on("dates") {
-			dates, e := s.dates(ctx, tx, "SELECT * FROM ("+dateSelect+" AND e.archived=0 UNION ALL "+builtinDates+" AND e.archived=0)", "", cfg.UpcomingDays)
+			dates, e := s.dates(ctx, tx, activeDates, "", cfg.UpcomingDays)
 			if e != nil {
 				return e
 			}

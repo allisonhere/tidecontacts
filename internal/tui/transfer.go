@@ -443,7 +443,7 @@ func (m *Model) exportContacts() tea.Cmd {
 	t.working = true
 	t.message = "Collecting records and writing export..."
 	repo, ctx := m.contacts.repo, m.contacts.ctx
-	path, format, action := t.path.Value(), t.format, t.action
+	path, format, action := expandHome(t.path.Value()), t.format, t.action
 	ids := []string{}
 	switch action {
 	case "export-selected":

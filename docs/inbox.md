@@ -17,7 +17,7 @@ Insights → Inbox (workspace 8, or **Review People Inbox** in the palette) is a
 
 A task appears once: overdue beats waiting beats unprocessed. Entries are grouped Overdue, Due now, Upcoming and unprocessed, then Reviewed.
 
-Every entry shows **why it is here**, its source record, the related person, the date, and when it first appeared. Suggested follow-ups are deterministic: they come only from a cadence you configured and interactions you recorded.
+Every entry shows **why it is here**, its source record, the related person, the date, and when it first appeared. A follow-up cadence, a date and `never` replace one another, so setting one clears the others. Contacts whose schedule was cleared do not appear in Follow-ups, and archived contacts do not contribute birthdays or other dates. Suggested follow-ups are deterministic: they come only from a cadence you configured and interactions you recorded.
 
 ## Acting
 

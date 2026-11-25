@@ -24,7 +24,7 @@ Every key below is a command in one registry: the same command runs from its key
 | s | Cycle name/organization/updated/added sort |
 | Space | Mark/unmark contact for export |
 | I / E | Open Import data modal / export filtered contacts |
-| Shift+Left/Right | Shrink/grow left pane |
+| Shift+Left/Right | Resize the pane you are in. Shift+Right moves its divider right: it grows the menu or list and narrows the detail pane. Shift+Left does the reverse. Works while the menu is open |
 | Shift+Down/Up | Shrink/grow context pane |
 | q | Quit outside inputs/overlays |
 | Ctrl+C | Safe exit; cancels an active save/import before exiting |
