@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -24,6 +25,8 @@ type extFrame struct {
 	state            map[string]string
 	col, row         int
 	selID            string
+	panel            string         // focused panel
+	psel             map[string]int // remembered selection per panel; replaced, never mutated
 }
 
 type extView struct {
@@ -36,6 +39,8 @@ type extView struct {
 	err     string
 	notice  string
 	seq     uint64
+	help    bool
+	cancel  context.CancelFunc // of the render in flight
 }
 
 type (
@@ -93,8 +98,13 @@ func (m *Model) extRender(v *extView) tea.Cmd {
 	seq, mgr, ctx := v.seq, m.extensions.mgr, m.contacts.ctx
 	req := ext.ViewRequest{Workspace: v.ws, Tab: v.cur.tab, Item: v.cur.item, Query: v.cur.query, State: v.cur.state, Width: m.width, Narrow: m.width < 100}
 	id := v.ext
+	// A newer request replaces an older one: stop the extension working on it.
+	if v.cancel != nil {
+		v.cancel()
+	}
+	c, cancel := extTimeout(ctx)
+	v.cancel = cancel
 	return func() tea.Msg {
-		c, cancel := extTimeout(ctx)
 		defer cancel()
 		doc, err := mgr.RenderView(c, id, req)
 		return extViewMsg{owner: v, seq: seq, doc: doc, err: err}
@@ -109,6 +119,9 @@ type extItem struct {
 
 func (v *extView) items() []extItem {
 	var out []extItem
+	if len(v.doc.Panels) > 0 {
+		return panelItems(v.doc.Panels[v.focusedPanel()])
+	}
 	switch {
 	case v.doc.Board != nil && len(v.doc.Board.Columns) > 0:
 		col := v.doc.Board.Columns[min(v.cur.col, len(v.doc.Board.Columns)-1)]
@@ -124,7 +137,7 @@ func (v *extView) items() []extItem {
 		for _, s := range v.doc.Sections {
 			for _, l := range s.Lines {
 				if l.Target != nil {
-					out = append(out, extItem{id: l.Target.ID, target: l.Target})
+					out = append(out, extItem{id: firstNonEmptyStr(l.ID, l.Target.ID), target: l.Target})
 				}
 			}
 		}
@@ -143,6 +156,10 @@ func (v *extView) selected() (extItem, bool) {
 // settle clamps the cursor after a new document arrives and keeps the same
 // item selected when it still exists (so moving a card does not lose your place).
 func (v *extView) settle() {
+	if len(v.doc.Panels) > 0 {
+		v.settlePanels()
+		return
+	}
 	if v.doc.Board != nil && len(v.doc.Board.Columns) > 0 {
 		v.cur.col = min(max(0, v.cur.col), len(v.doc.Board.Columns)-1)
 		if v.cur.selID == "" && len(v.doc.Board.Columns[v.cur.col].Cards) == 0 {
@@ -281,9 +298,16 @@ func (m Model) extViewKey(k tea.KeyMsg) (Model, tea.Cmd) {
 		m.closeExtView()
 		return m, nil
 	}
+	if v.help { // any key closes the help
+		v.help = false
+		return m, nil
+	}
 	switch key {
 	case "esc", "q":
 		return back()
+	case "?":
+		v.help = true
+		return m, nil
 	}
 	if v.busy && v.doc.Tabs == nil {
 		return m, nil
@@ -309,7 +333,13 @@ func (m Model) extViewKey(k tea.KeyMsg) (Model, tea.Cmd) {
 	case "end":
 		move(1 << 20)
 	case "h", "left", "l", "right":
-		if v.doc.Board != nil && len(v.doc.Board.Columns) > 0 {
+		if len(v.doc.Panels) > 0 {
+			d := 1
+			if key == "h" || key == "left" {
+				d = -1
+			}
+			v.focusPanel(d)
+		} else if v.doc.Board != nil && len(v.doc.Board.Columns) > 0 {
 			d := 1
 			if key == "h" || key == "left" {
 				d = -1
@@ -322,7 +352,13 @@ func (m Model) extViewKey(k tea.KeyMsg) (Model, tea.Cmd) {
 			}
 		}
 	case "[", "]", "tab", "shift+tab":
-		if len(v.doc.Tabs) > 1 {
+		if len(v.doc.Panels) > 0 && (key == "tab" || key == "shift+tab") {
+			d := 1
+			if key == "shift+tab" {
+				d = -1
+			}
+			v.focusPanel(d)
+		} else if len(v.doc.Tabs) > 1 {
 			i := 0
 			for j, t := range v.doc.Tabs {
 				if t.ID == v.cur.tab {
@@ -335,6 +371,7 @@ func (m Model) extViewKey(k tea.KeyMsg) (Model, tea.Cmd) {
 			}
 			i = (i + d + len(v.doc.Tabs)) % len(v.doc.Tabs)
 			v.cur.tab, v.cur.row, v.cur.col, v.cur.selID = v.doc.Tabs[i].ID, 0, 0, ""
+			v.cur.panel, v.cur.psel = "", nil
 			return m, m.extRender(v)
 		}
 	case "/":
@@ -347,6 +384,11 @@ func (m Model) extViewKey(k tea.KeyMsg) (Model, tea.Cmd) {
 	case "enter":
 		sel, ok := v.selected()
 		if !ok {
+			if len(v.doc.Panels) > 0 {
+				if t := v.doc.Panels[v.focusedPanel()].Open; t != nil {
+					return m.followExtTarget(v, *t)
+				}
+			}
 			return m, nil
 		}
 		if sel.target != nil {
@@ -402,8 +444,9 @@ func (m Model) followExtTarget(v *extView, t ext.Target) (Model, tea.Cmd) {
 		if t.Action != "" {
 			return m, m.extRunAction(v, t.Action, t.ID, nil)
 		}
+		v.cur.remember()
 		v.stack = append(v.stack, v.cur)
-		v.cur = extFrame{tab: t.Tab, item: t.ID}
+		v.cur = extFrame{tab: t.Tab, item: t.ID, state: copyState(v.cur.state)}
 		return m, m.extRender(v)
 	}
 	kind := map[string]string{"contact": "person", "organization": "organization", "task": "task", "activity": "activity", "project": "project"}[t.Kind]
@@ -432,9 +475,7 @@ func (m Model) applyExtResult(v *extView, res ext.ActionResult) (Model, tea.Cmd)
 		return m.followExtTarget(v, *res.Open)
 	}
 	if len(res.State) > 0 {
-		if v.cur.state == nil {
-			v.cur.state = map[string]string{}
-		}
+		v.cur.state = copyState(v.cur.state)
 		for k, val := range res.State {
 			v.cur.state[k] = val
 		}
@@ -542,9 +583,14 @@ func (u softUI) bar(progress, width int, tone string) string {
 
 func (m Model) extViewPanel(u softUI) *tideui.Overlay {
 	v := m.extensions.view
-	width, height := m.formSize(150)
-	var head, body, foot []string
 	d := v.doc
+	width, height := m.formSize(150)
+	panels := len(d.Panels) > 0
+	if panels { // dashboards use the whole terminal
+		width, height = max(1, min(220, m.width-4)), max(1, m.height-4)
+	}
+	compact := panels && (width < twoColumnsFrom || height < 28)
+	var head, body, foot []string
 	// header: badge, tabs
 	if d.Badge != "" || v.title != "" {
 		badge := u.style(u.base, u.muted).Render(d.Badge)
@@ -561,15 +607,25 @@ func (m Model) extViewPanel(u softUI) *tideui.Overlay {
 				cur = i
 			}
 		}
-		for _, l := range u.tabs(names, cur, width-2, true) {
-			head = append(head, u.line("  "+l, width))
+		if panels && compact {
+			head = append(head, u.line("  "+u.strip(names, cur, width-4), width))
+		} else {
+			for _, l := range u.tabs(names, cur, width-2, true) {
+				head = append(head, u.line("  "+l, width))
+			}
 		}
 	}
-	head = append(head, u.blank(width))
+	if !compact {
+		head = append(head, u.blank(width))
+	}
 	// tiles
 	if len(d.Tiles) > 0 {
-		body = append(body, m.extTiles(u, d.Tiles, width)...)
-		body = append(body, u.blank(width))
+		if compact {
+			body = append(body, m.compactTiles(u, d.Tiles, width)...)
+		} else {
+			body = append(body, m.extTiles(u, d.Tiles, width)...)
+			body = append(body, u.blank(width))
+		}
 	}
 	if d.Heading != "" || d.Subheading != "" {
 		l := u.style(u.base, u.text).Bold(true).Render(d.Heading)
@@ -578,7 +634,10 @@ func (m Model) extViewPanel(u softUI) *tideui.Overlay {
 		body = append(body, u.line("  "+l+strings.Repeat(" ", gap)+r, width))
 	}
 	// footer: notices, status, hints
-	for _, n := range d.Notices {
+	for i, n := range d.Notices {
+		if compact && i > 0 {
+			break
+		}
 		mark := "• "
 		if n.Tone == "warn" || n.Tone == "danger" {
 			mark = "! "
@@ -588,12 +647,15 @@ func (m Model) extViewPanel(u softUI) *tideui.Overlay {
 	switch {
 	case v.err != "":
 		foot = append(foot, u.wrapNote(v.err, width, 2, true)...)
-	case v.busy && d.Tabs == nil && d.Board == nil && d.List == nil && len(d.Sections) == 0:
+	case v.busy && d.Tabs == nil && d.Board == nil && d.List == nil && len(d.Sections) == 0 && !panels:
 		foot = append(foot, u.note("Loading…", width, false))
 	case v.notice != "":
 		foot = append(foot, u.note(extSafe(v.notice, 160), width, false))
 	}
 	pairs := []string{}
+	if panels {
+		pairs = append(pairs, "tab", "panel", "j/k", "item", "enter", "open")
+	}
 	if d.Board != nil {
 		pairs = append(pairs, "h/l", "stage")
 	}
@@ -603,7 +665,7 @@ func (m Model) extViewPanel(u softUI) *tideui.Overlay {
 	for _, a := range d.Actions {
 		pairs = append(pairs, a.Key, strings.ToLower(a.Label))
 	}
-	if d.Open != "" || len(d.Sections) > 0 {
+	if !panels && (d.Open != "" || len(d.Sections) > 0) {
 		pairs = append(pairs, "enter", "open")
 	}
 	if len(d.Tabs) > 1 {
@@ -616,19 +678,26 @@ func (m Model) extViewPanel(u softUI) *tideui.Overlay {
 	if len(v.stack) > 0 {
 		closeLabel = "back"
 	}
+	if panels {
+		pairs = append(pairs, "?", "keys")
+	}
 	pairs = append(pairs, "esc", closeLabel)
 	foot = append(foot, u.hints(width, pairs...))
 	avail := max(3, height-len(head)-len(body)-len(foot)-1)
 	switch {
+	case v.help:
+		body = m.extHelp(u, v, width)
+	case panels:
+		body = append(body, m.extPanels(u, v, width, avail)...)
 	case d.Board != nil && len(d.Board.Columns) > 0:
 		body = append(body, m.extBoard(u, v, width, avail)...)
 	case d.List != nil:
 		body = append(body, m.extList(u, v, width, avail)...)
 	}
-	if len(d.Sections) > 0 {
+	if len(d.Sections) > 0 && !panels && !v.help {
 		body = append(body, m.extSections(u, v, width, avail)...)
 	}
-	if d.Board == nil && d.List == nil && len(d.Sections) == 0 && !v.busy && v.err == "" {
+	if !panels && d.Board == nil && d.List == nil && len(d.Sections) == 0 && !v.busy && v.err == "" {
 		body = append(body, u.note(firstNonEmptyStr(d.Empty, "Nothing to show"), width, false))
 	}
 	lines := append(append([]string{}, head...), body...)
@@ -871,6 +940,14 @@ func (m Model) extSections(u softUI, v *extView, width, avail int) []string {
 		return lines[start:end]
 	}
 	return lines[:min(len(lines), max(1, avail))]
+}
+
+func copyState(in map[string]string) map[string]string {
+	out := map[string]string{}
+	for k, v := range in {
+		out[k] = v
+	}
+	return out
 }
 
 // firstWorkspace returns the id of an extension's first workspace.

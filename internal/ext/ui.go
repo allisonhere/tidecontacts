@@ -1,9 +1,6 @@
 package ext
 
-import (
-	"regexp"
-	"strings"
-)
+import "regexp"
 
 // Declarative UI documents. An extension describes *what* to show; the host
 // decides layout, focus, theme, keys and width. Everything here is plain data:
@@ -51,6 +48,7 @@ type View struct {
 	Board      *Board    `json:"board,omitempty"`
 	List       *List     `json:"list,omitempty"`
 	Sections   []Section `json:"sections,omitempty"`
+	Panels     []Panel   `json:"panels,omitempty"`
 	Notices    []Notice  `json:"notices,omitempty"`
 	Actions    []Action  `json:"actions,omitempty"`
 	Open       string    `json:"open,omitempty"` // action id run by Enter on the selected item
@@ -124,8 +122,11 @@ type Section struct {
 
 // SLine is a section line. Target makes it selectable: Enter follows it.
 type SLine struct {
+	ID     string  `json:"id,omitempty"` // passed to item actions (default: the target id)
 	Label  string  `json:"label,omitempty"`
 	Text   string  `json:"text"`
+	Right  string  `json:"right,omitempty"` // right-aligned figure (panels)
+	Mark   string  `json:"mark,omitempty"`  // one-glyph status marker (panels)
 	Tone   string  `json:"tone,omitempty"`
 	Target *Target `json:"target,omitempty"`
 }
@@ -269,7 +270,7 @@ type Signal struct {
 }
 
 const (
-	maxTabs, maxTiles, maxColumns, maxCards, maxRows, maxSections, maxSectionLines, maxNotices, maxActions, maxFormFields, maxSignals = 8, 8, 12, 200, 500, 16, 120, 8, 24, 30, 200
+	maxTabs, maxTiles, maxColumns, maxCards, maxRows, maxSections, maxSectionLines, maxNotices, maxActions, maxFormFields, maxSignals = 16, 8, 12, 200, 500, 16, 120, 8, 24, 30, 200
 )
 
 func tone(t string) string {
@@ -381,10 +382,11 @@ func SanitizeView(v View) View {
 			if j >= maxSectionLines {
 				break
 			}
-			sec.Lines = append(sec.Lines, SLine{Label: Clean(ln.Label, 24, false), Text: Clean(ln.Text, 200, false), Tone: tone(ln.Tone), Target: sanitizeTarget(ln.Target)})
+			sec.Lines = append(sec.Lines, sanitizeLine(ln))
 		}
 		o.Sections = append(o.Sections, sec)
 	}
+	o.Panels = sanitizePanels(v.Panels)
 	for i, n := range v.Notices {
 		if i < maxNotices {
 			o.Notices = append(o.Notices, Notice{Tone: tone(n.Tone), Text: Clean(n.Text, 160, false), Target: sanitizeTarget(n.Target)})
@@ -480,6 +482,3 @@ func SanitizeSignals(in []Signal) []Signal {
 	}
 	return out
 }
-
-// strings is used by tests of key validity.
-var _ = strings.TrimSpace
