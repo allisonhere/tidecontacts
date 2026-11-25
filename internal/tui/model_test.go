@@ -174,6 +174,7 @@ func TestThemeAndFocusVisible(t *testing.T) {
 
 func TestPaneRatiosAndStartup(t *testing.T) {
 	m := sized(160, 45)
+	m.menuOpen = true // left-grow resizes the pane in focus; the menu owns the left ratio
 	for i := 0; i < 100; i++ {
 		next, _ := m.dispatch("left-grow")
 		m = next.(Model)
