@@ -30,7 +30,7 @@ permissions must never be presented as OS-level isolation.
 | Malicious extension reading/writing files, the database or the keychain directly | ✗ | Same-user process. Needs bubblewrap/Landlock/seccomp (Linux), App Sandbox (macOS) or a separate user. The database is never handed over, but it is not hidden either |
 | `network.access` | ✗ | Recorded and shown (`declared-only`); not enforceable without a sandbox. Data you grant read access to can be sent anywhere |
 | Malformed or hostile manifest | ✓ | Strict TOML (unknown keys rejected), 64 KiB cap, UTF-8, control characters rejected, id/command/capability grammars, count limits, namespace rules |
-| Oversized messages / output floods | ✓ | 1 MiB per message, 8 MiB per invocation, 8 KiB retained stderr, 200 host calls, ≤ 500-row lists |
+| Oversized messages / output floods | ✓ | 1 MiB per message, 8 MiB per invocation, 8 KiB retained stderr, 2000 host calls, ≤ 500-row lists |
 | Protocol confusion | ✓ | `api`, `type` and `request_id` checked; unknown types, wrong ids and mixed versions kill the call |
 | Command injection | ✓ | The executable is run directly with no arguments and no shell; the host never builds a command string from extension data |
 | Path traversal / symlink escape | ✓ | Directory name must equal a validated id; `command` is a clean relative path whose real (symlink-resolved) target must stay inside the directory; storage paths derive only from the validated id; storage keys are `[a-z0-9_]` |

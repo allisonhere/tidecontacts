@@ -107,7 +107,7 @@ ext  → host  {"api":1,"type":"response","request_id":"<same>","ok":true,"data"
 ```
 
 Host limits (not configurable by extensions): message ≤ 1 MiB; total output ≤ 8 MiB;
-≤ 200 host calls per request; timeout 10 s by default (hard cap 30 s); ≤ 2
+≤ 2000 host calls per request; timeout 10 s by default (hard cap 30 s); ≤ 2
 concurrent requests per extension; ≤ 16 command arguments. On timeout,
 cancellation, malformed JSON, wrong `api`, wrong `request_id`, an unknown message
 type or any limit breach the host kills the process (and its process group on
@@ -221,3 +221,101 @@ check is at the service boundary and not only in the UI. There is no license
 format, key, activation, expiry enforcement, hardware binding or network call in
 this repository; a future provider implements the interface offline. Tests use
 a small in-test provider.
+
+## 9. Rich contributions (added after Phase 3A; still API version 1, additive)
+
+These let an extension provide a full workspace, JSON CLI resources and Inbox
+signals without any new rendering or database code in the host. All are optional,
+need an explicit permission, and are invisible unless the extension is enabled.
+
+### 9.1 Workspaces and declarative views
+
+Manifest: `[[workspaces]] id, title` (needs `ui.register`; ≤ 2). The menu and
+palette list a workspace only while its extension is enabled.
+
+The host calls `view.render` `{workspace, tab, item, query, state, width, narrow}`
+and the extension answers with a **View document**: `title`, `badge`, `tabs`,
+`tab`, `heading`, `subheading`, `tiles` (label, value, note, tone), one of
+`board` (columns of cards: title, subtitle, amount, progress 0–100, left/right
+meta, badge) or `list` (rows of cells), `sections` (labelled lines, optionally
+with a `target`), `notices`, `actions` (single-key bindings), `open` (action run by
+Enter), `searchable`, `empty`, `dossier`. Tones are `ok warn danger info accent
+muted` and map to the active theme; extensions cannot set colors, positions or
+styles. Collections are bounded (e.g. ≤ 12 columns, ≤ 200 cards per column, ≤ 500
+rows) and every string is sanitized.
+
+Keys: the host owns `esc q h j k l ↑↓←→ tab [ ] / ? : space enter ctrl+*` and
+paging keys; an extension may bind a single printable ASCII character otherwise
+(duplicates and reserved keys are dropped). `action.run` `{workspace, action, tab,
+item, target, state, args}` answers with an **ActionResult**: `errors`, `notice`,
+`refresh`, `state`, `form`, `confirm`, `open` (a `target` with kind `ext`,
+`contact`, `organization`, `task`, `activity` or `project`), `close`. Destructive
+actions declare `confirm` and the host asks first. Following a core record
+leaves the workspace (its place is remembered) and opens the record with the
+existing back-navigation.
+
+`form.get` / `form.submit` use host form components: field types `text`,
+`multiline`, `select`, `contact`, `contacts`; the extension validates and answers
+with per-field `errors`. The host enforces only `required`.
+
+### 9.2 CLI resources
+
+Manifest: `[[cli]] resource, description, actions` (needs `cli.register`; names of
+built-in resources are reserved). `tidecontacts RESOURCE …` (resource first) sends
+`cli.run` `{resource, argv, stdin}` — `stdin` only for `--input -` (≤ 900 KiB; pass
+larger files by path and the extension reads them) — and receives `{data, count,
+etag, possibly_truncated, warnings}`; the host writes the standard envelope.
+`schema RESOURCE` uses `cli.schema`. Error codes map to exit codes: `usage` 2,
+`invalid_input` 3, `not_found` 4, `conflict` 5, `permission_denied` /
+`entitlement_required` 6, anything else 1.
+
+### 9.3 Signals
+
+Manifest: `signals = true` (needs `signals.provide`). `signals.list` returns
+`{key, type, title, severity (info|warn|danger), reason, facts[], date, action,
+target}`. They appear in the People Inbox under "<Extension> attention", and the
+detail pane shows reason, facts and the suggested step. `x` calls `signal.dismiss`
+and `z` calls `signal.snooze {until}` through `action.run` on the extension's first
+workspace. The host does not score or order them.
+
+### 9.4 Host calls added
+
+* `records.resolve {kind, ids[≤500]}` → minimal projections of contacts,
+  organizations, tasks, activities and projects (needs the matching read
+  permission): name, status, due, archived/deleted, `merged_into`, or
+  `missing`. Wrong-kind lookups report `missing` rather than disclosing the record.
+* `entitlement.check {capability}` → the provider's decision.
+* `events.publish {type, entity_id, revision, correlation_id}` (needs
+  `events.publish`) for types declared in `[[published_events]] type, entity_type`.
+  Identifiers only; extra fields are rejected; the host stamps
+  `source: extension:<id>`; ≤ 1000 per request. Extension-sourced events are not
+  delivered to extensions. Core event types cannot be published.
+* Host calls per request: 2000 (was 200). The request timeout is `timeout_seconds`
+  (default 10, hard cap 30).
+
+### 9.5 SQL data directory
+
+`[storage] sql = true` with `storage.sql` makes the host create
+`<data>/extension-data/<id>/` (0700) and pass it as `TIDECONTACTS_EXTENSION_DATA`.
+The extension keeps its own SQLite database there and runs its own versioned
+migrations. The host cannot restrict what is inside (same-user trust, see
+[security.md](security.md)); disabling never deletes it and `purge-data` deletes the
+directory only for a disabled extension and never one holding a manifest.
+
+### 9.6 Entitlements per capability, and development entitlements
+
+Each `pro.*` capability an extension provides is entitled independently: an
+extension holding a partial entitlement is enabled and exactly the entitled
+capabilities are available (`entitlement.check` lets it gate features itself).
+`entitlement` in the manifest still gates the extension as a whole.
+
+`TIDECONTACTS_DEV_ENTITLEMENTS` (`*` or a comma list of `pro.` ids) enables a
+development provider. It is **not a license**: no keys, signatures, expiry or
+verification; anyone can set it; every decision and every management surface says
+so. A malformed value grants nothing.
+
+### 9.7 Events added
+
+`contact.deleted` and `organization.deleted` (when a save marks the record
+deleted) and a `related_id` on `contact.merged` naming the merged-away record,
+which is also marked deleted with `merged_into` on the survivor.

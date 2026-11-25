@@ -121,3 +121,38 @@ in SQLite (the CLI would need the database open to list extensions, and the
 file is already within the same-user trust boundary).
 *Consequence.* A same-user attacker can edit it; documented in the security
 model.
+
+## ADR-9: One declarative view schema, rendered by the host (Phase 3B)
+
+*Context.* A sales workspace needs boards, tiles, dossiers and forms; extensions
+may not render terminal output (ADR-6).
+
+*Decision.* A small versioned document schema (tabs, tiles, board or list,
+sections, notices, actions) plus form definitions, all sanitized and bounded by the
+host and drawn with TideUI/softform components and theme tones. Actions round-trip
+through `action.run`; forms reuse the existing modal form and picker code.
+
+*Rejected.* A general layout language or extension-drawn ANSI (injection, theming
+and accessibility problems, and a second UI toolkit to maintain); mapping the
+extension onto the eight fixed core workspaces (they are arrays throughout the
+TUI; a menu-contributed full-screen view avoids touching that architecture).
+
+## ADR-10: An extension-owned SQLite file, not a host query API (Phase 3B)
+
+*Decision.* With `storage.sql` the host only provisions a private directory; the
+extension owns schema and migrations. Business data therefore never crosses the
+host boundary except through the API the user approved.
+
+*Rejected.* A host-mediated SQL API (large attack and maintenance surface, and
+the host would have to understand every extension's schema); shared core tables
+(ADR-4). *Consequence.* Core and extension databases cannot commit atomically:
+extensions must order writes and reconcile (see the Professional documentation).
+
+## ADR-11: Per-capability entitlements and an explicit development provider
+
+*Decision.* `pro.*` capabilities are entitled one by one; a development provider
+selected by an environment variable grants listed capabilities and labels itself
+"not a license" in every decision and banner.
+
+*Rejected.* A bundled "demo license" (could be mistaken for enforcement) or leaving
+Professional untestable.
