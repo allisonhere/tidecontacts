@@ -168,3 +168,58 @@ func TestRelationshipDigestEndToEnd(t *testing.T) {
 		t.Fatalf("core data changed: %d", got.Meta.Count)
 	}
 }
+
+// scriptExt installs a shell extension contributing the "deals" CLI resource.
+func scriptExt(t *testing.T, script string) {
+	t.Helper()
+	if runtime.GOOS == "windows" {
+		t.Skip("shell-script extensions are Unix only")
+	}
+	dest := filepath.Join(os.Getenv("XDG_CONFIG_HOME"), "tidecontacts", "extensions", "deals-ext")
+	_ = os.MkdirAll(dest, 0o755)
+	_ = os.WriteFile(filepath.Join(dest, "extension.toml"), []byte("id = \"deals-ext\"\nname = \"Deals\"\nversion = \"1.0.0\"\napi = 1\ncommand = \"run.sh\"\npermissions = [\"cli.register\"]\n[[cli]]\nresource = \"deals\"\nactions = [\"list\"]\n"), 0o644)
+	_ = os.WriteFile(filepath.Join(dest, "run.sh"), []byte("#!/bin/sh\n"+script), 0o755)
+}
+
+const respond = "read line\nid=$(printf '%s' \"$line\" | sed 's/.*\"request_id\":\"\\([^\"]*\\)\".*/\\1/')\n"
+
+func TestExtensionContributedCLIResource(t *testing.T) {
+	h := setup(t)
+	scriptExt(t, respond+"case \"$line\" in\n*cli.schema*) printf '{\"api\":1,\"type\":\"response\",\"request_id\":\"%s\",\"ok\":true,\"data\":{\"type\":\"object\"}}\\n' \"$id\";;\n*'\"argv\":[\"bad\"'*) printf '{\"api\":1,\"type\":\"response\",\"request_id\":\"%s\",\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"nope\"}}\\n' \"$id\";;\n*'\"argv\":[\"stale\"'*) printf '{\"api\":1,\"type\":\"response\",\"request_id\":\"%s\",\"ok\":false,\"error\":{\"code\":\"conflict\",\"message\":\"changed\"}}\\n' \"$id\";;\n*) printf '{\"api\":1,\"type\":\"response\",\"request_id\":\"%s\",\"ok\":true,\"data\":{\"data\":[{\"id\":\"d1\"}],\"count\":1,\"etag\":\"abc\"}}\\n' \"$id\";;\nesac\n")
+	// Not enabled yet: the resource does not exist, exactly like any unknown resource.
+	h.run(2, "", "deals", "list")
+	h.run(0, "", "extensions", "enable", "deals-ext", "--yes")
+	got := h.run(0, "", "deals", "list", "--limit", "5")
+	if got.Meta.Resource != "deals" || got.Meta.Action != "list" || got.Meta.Count != 1 || got.ETag != "abc" || !strings.Contains(string(got.Data), `"d1"`) {
+		t.Fatalf("%+v %s", got.Meta, got.Data)
+	}
+	h.run(2, "", "deals", "bad")
+	h.run(5, "", "deals", "stale")
+	var schema struct{ Type string }
+	_ = json.Unmarshal(h.run(0, "", "schema", "deals").Data, &schema)
+	if schema.Type != "object" {
+		t.Fatalf("schema: %+v", schema)
+	}
+	// Built-in resources are never routed to extensions, and the host's own flags still work.
+	if n := h.run(0, "", "contacts", "list").Meta.Count; n != 0 {
+		t.Fatal("unexpected contacts")
+	}
+	h.run(0, "", "extensions", "disable", "deals-ext")
+	h.run(2, "", "deals", "list")
+}
+
+func TestExtensionResourceNeedsEntitlementWhenDeclared(t *testing.T) {
+	h := setup(t)
+	scriptExt(t, respond+"printf '{\"api\":1,\"type\":\"response\",\"request_id\":\"%s\",\"ok\":true,\"data\":{\"data\":[]}}\\n' \"$id\"\n")
+	dir := filepath.Join(os.Getenv("XDG_CONFIG_HOME"), "tidecontacts", "extensions", "deals-ext")
+	b, _ := os.ReadFile(filepath.Join(dir, "extension.toml"))
+	_ = os.WriteFile(filepath.Join(dir, "extension.toml"), append([]byte("entitlement = \"pro.deals\"\n"), b...), 0o644)
+	// Entitlement is a top-level key, so it must precede tables; rewrite properly.
+	_ = os.WriteFile(filepath.Join(dir, "extension.toml"), []byte("id = \"deals-ext\"\nname = \"Deals\"\nversion = \"1.0.0\"\napi = 1\ncommand = \"run.sh\"\nentitlement = \"pro.deals\"\npermissions = [\"cli.register\"]\n[[cli]]\nresource = \"deals\"\n"), 0o644)
+	h.run(1, "", "extensions", "enable", "deals-ext", "--yes") // community provider denies pro.deals
+	t.Setenv("TIDECONTACTS_DEV_ENTITLEMENTS", "pro.deals")
+	h.run(0, "", "extensions", "enable", "deals-ext", "--yes")
+	h.run(0, "", "deals", "list")
+	t.Setenv("TIDECONTACTS_DEV_ENTITLEMENTS", "")
+	h.run(2, "", "deals", "list") // entitlement gone: the resource is no longer offered, data untouched
+}

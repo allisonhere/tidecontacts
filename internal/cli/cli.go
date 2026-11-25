@@ -126,6 +126,15 @@ func Run(ctx context.Context, args []string, in io.Reader, out, stderr io.Writer
 			result = e
 		}
 	}()
+	if len(args) > 0 && !strings.HasPrefix(args[0], "-") && !resources[args[0]] {
+		rest, demoMode, database, gerr := globalFlags(args)
+		if gerr != nil {
+			return gerr
+		}
+		if handled, herr := runExtensionResource(ctx, rest, in, out, demoMode, database); handled {
+			return herr
+		}
+	}
 	o, pos, err := parse(args)
 	if err != nil {
 		return err
@@ -150,6 +159,14 @@ func Run(ctx context.Context, args []string, in io.Reader, out, stderr io.Writer
 			name = pos[1]
 		}
 		data, err := schema(name)
+		if err != nil && name != "" && !resources[name] {
+			if raw, ok, xerr := extensionSchema(ctx, name, o.demo, o.database); ok {
+				if xerr != nil {
+					return extensionExit(xerr)
+				}
+				return json.NewEncoder(out).Encode(envelope{Version: 1, Data: raw})
+			}
+		}
 		if err != nil {
 			return err
 		}

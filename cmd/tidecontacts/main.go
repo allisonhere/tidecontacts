@@ -171,7 +171,8 @@ func run() (result error) {
 		bus := ext.NewBus()
 		observed := observe.Wrap(store, bus, "ui")
 		dir, data, state := ext.PathsFor(paths.Config, paths.Database)
-		extensions = ext.New(ext.Options{Dir: dir, DataDir: data, StateFile: state, Repo: observed, Bus: bus, Logger: logger})
+		prov, notice := ext.ProviderFromEnv()
+		extensions = ext.New(ext.Options{Dir: dir, DataDir: data, StateFile: state, Repo: observed, Bus: bus, Logger: logger, Entitlements: prov, Notice: notice})
 		if e = extensions.Discover(ctx); e != nil {
 			logger.Warn("extension discovery failed", "error", e)
 		} else {
