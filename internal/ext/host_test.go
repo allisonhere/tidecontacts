@@ -157,3 +157,25 @@ func TestProjectsSaveNeedsWriteAndValidates(t *testing.T) {
 		t.Fatalf("%s %v", out, e)
 	}
 }
+
+func TestActivitiesSavePassesCommunityValidationAndTagsTheSource(t *testing.T) {
+	store := newStore(t)
+	p := domain.NewContact("person")
+	p.DisplayName = "Ada Fictional"
+	saved, err := store.SaveContacts(context.Background(), []domain.Contact{p}, "test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	w := &Session{ID: "act-ext", Repo: store, Granted: NewPermissionSet("activities.write", "activities.read")}
+	out, e := call(t, w, "activities.save", map[string]any{"Type": "note", "Title": "Logged by an extension", "Entities": []map[string]string{{"kind": "person", "id": saved[0].ID, "name": "Ada Fictional"}}})
+	if e != nil {
+		t.Fatalf("a valid activity was refused: %v", e)
+	}
+	var a domain.Activity
+	if err := json.Unmarshal(out, &a); err != nil {
+		t.Fatal(err)
+	}
+	if a.Provenance != domain.Local || a.SourceApp != "extension:act-ext" || a.ID == "" || len(a.Entities) != 1 {
+		t.Fatalf("%+v", a)
+	}
+}

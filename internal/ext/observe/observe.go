@@ -113,8 +113,8 @@ func (s *Store) SaveActivity(ctx context.Context, a domain.Activity) (domain.Act
 			typ = "activity.created"
 		}
 		source := s.src
-		if a.SourceApp != "" && a.Provenance == "extension" {
-			source = ext.ExtensionSource + a.SourceApp
+		if strings.HasPrefix(a.SourceApp, ext.ExtensionSource) {
+			source = a.SourceApp
 		}
 		s.emit(typ, out.ID, out.Revision, source, "")
 	}

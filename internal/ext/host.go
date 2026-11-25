@@ -235,7 +235,7 @@ func (s *Session) Call(ctx context.Context, method string, data json.RawMessage)
 		if e := decode(data, &a); e != nil {
 			return nil, e
 		}
-		a.Provenance, a.SourceApp = "extension", s.ID
+		a.Provenance, a.SourceApp = domain.Local, ExtensionSource+s.ID // editable in Community; the source app records who wrote it
 		out, err := s.Repo.SaveActivity(ctx, a)
 		if err != nil {
 			return nil, mapErr(err)
