@@ -12,6 +12,8 @@ import (
 	"github.com/allisonhere/tidecontacts/internal/demo"
 	"github.com/allisonhere/tidecontacts/internal/diagnostics"
 	"github.com/allisonhere/tidecontacts/internal/domain"
+	"github.com/allisonhere/tidecontacts/internal/ext"
+	"github.com/allisonhere/tidecontacts/internal/ext/observe"
 	"github.com/allisonhere/tidecontacts/internal/storage/sqlite"
 	"github.com/allisonhere/tidecontacts/internal/tui"
 	tea "github.com/charmbracelet/bubbletea"
@@ -123,6 +125,7 @@ func run() (result error) {
 	defer cancel()
 	var wg sync.WaitGroup
 	var store *sqlite.Store
+	var extensions *ext.Manager
 	var logFile *os.File
 	var logger *slog.Logger
 	load := func() tea.Msg {
@@ -163,7 +166,18 @@ func run() (result error) {
 				return tui.Ready{Err: e}
 			}
 		}
-		return tui.Ready{Config: c, Repo: store, Context: ctx}
+		// Extensions are optional. Discovery only reads manifests; enabled
+		// extensions are activated in the background and can never block startup.
+		bus := ext.NewBus()
+		observed := observe.Wrap(store, bus, "ui")
+		dir, data, state := ext.PathsFor(paths.Config, paths.Database)
+		extensions = ext.New(ext.Options{Dir: dir, DataDir: data, StateFile: state, Repo: observed, Bus: bus, Logger: logger})
+		if e = extensions.Discover(ctx); e != nil {
+			logger.Warn("extension discovery failed", "error", e)
+		} else {
+			extensions.Start()
+		}
+		return tui.Ready{Config: c, Repo: observed, Context: ctx, Extensions: extensions}
 	}
 	wg.Add(1)
 	// Start once before Run: quitting during initialization still joins and closes resources.
@@ -172,6 +186,9 @@ func run() (result error) {
 	defer func() {
 		cancel()
 		wg.Wait()
+		if extensions != nil {
+			extensions.Close() // reaps extension processes before the store closes
+		}
 		if store != nil {
 			result = errors.Join(result, store.Close())
 		}
