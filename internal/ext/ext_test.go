@@ -2,7 +2,9 @@ package ext
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -582,5 +584,34 @@ func TestDataRootNeverCollidesWithPrograms(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(prog, "run.sh")); err != nil {
 		t.Fatal("purge deleted a program file")
+	}
+}
+
+func TestHostCallBudget(t *testing.T) {
+	f := newFixture(t)
+	loop := func(n int) string {
+		// Reads the request, then makes n config.get calls, then answers.
+		return `read line
+id=$(printf '%s' "$line" | sed 's/.*"request_id":"\([^"]*\)".*/\1/')
+i=0
+while [ $i -lt ` + fmt.Sprint(n) + ` ]; do
+  printf '{"api":1,"type":"host_call","call_id":"%s","method":"config.get"}\n' "$i"
+  read reply
+  i=$((i+1))
+done
+printf '{"api":1,"type":"response","request_id":"%s","ok":true,"data":{}}\n' "$id"
+`
+	}
+	host := func(ctx context.Context, method string, data json.RawMessage) (any, *ProtocolError) {
+		return map[string]any{}, nil
+	}
+	dir := f.add("calls-ext", basic, loop(1500))
+	res, err := Invoke(context.Background(), dir, "run.sh", "calls-ext", "x", nil, 25*time.Second, host)
+	if err != nil || res.HostCall != 1500 {
+		t.Fatalf("a request needing 1,500 host calls (an import) must work: %d %v", res.HostCall, err)
+	}
+	dir = f.add("flood-ext", basic, loop(2500))
+	if _, err := Invoke(context.Background(), dir, "run.sh", "flood-ext", "x", nil, 25*time.Second, host); err == nil || !strings.Contains(err.Error(), "2000 host calls") {
+		t.Fatalf("the budget was not enforced: %v", err)
 	}
 }

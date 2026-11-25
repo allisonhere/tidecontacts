@@ -22,7 +22,7 @@ const (
 	maxLineBytes     = 1 << 20 // one protocol message
 	maxTotalBytes    = 8 << 20 // all output of one invocation
 	maxStderrBytes   = 8 << 10 // retained diagnostic text
-	maxHostCalls     = 200     // host_call messages per invocation
+	maxHostCalls     = 2000    // host_call messages per invocation
 	DefaultTimeout   = 10 * time.Second
 	MaxTimeout       = 30 * time.Second
 	killGrace        = 500 * time.Millisecond
