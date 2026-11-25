@@ -1,0 +1,54 @@
+# Relationship Digest: a small, read-only demonstration extension.
+id = "relationship-digest"
+name = "Relationship Digest"
+version = "0.1.0"
+api = 1
+description = "Summarizes recent contact activity. Read-only demo of the TideContacts extension API."
+author = "TideContacts"
+command = "relationship-digest"
+min_host = "0.3.0"
+
+requires = ["core.contacts", "core.activities"]
+permissions = [
+  "contacts.read",
+  "activities.read",
+  "events.subscribe",
+  "commands.register",
+  "ui.register",
+  "storage.extension",
+]
+
+[[provides]]
+id = "relationship-digest.summary"
+version = 1
+
+[[commands]]
+id = "digest"
+title = "Show relationship digest"
+description = "People you have not been in touch with recently."
+
+[[commands]]
+id = "probe"
+title = "Show permission check"
+description = "Tries an operation this extension was not granted, to show the host refusing it."
+
+[[panels]]
+id = "contact-summary"
+title = "Digest"
+slot = "contact.dossier"
+
+[events]
+subscribe = ["activity.created", "contact.created"]
+
+[[config]]
+key = "window_days"
+label = "Quiet window (days)"
+type = "integer"
+default = 30
+min = 1
+max = 365
+help = "People without logged activity in this many days are listed."
+
+[storage]
+required = true
+max_kb = 16

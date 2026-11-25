@@ -40,6 +40,16 @@ tidemail-demo-build: plugin
 smoke-cli: build
 	python3 scripts/cli_smoke.py
 
+.PHONY: extension-demo
+extension-demo:
+	mkdir -p bin/extensions/relationship-digest
+	go build -buildvcs=false -o bin/extensions/relationship-digest/relationship-digest ./examples/extensions/relationship-digest
+	cp examples/extensions/relationship-digest/extension.toml bin/extensions/relationship-digest/
+
+.PHONY: smoke-extensions
+smoke-extensions: build
+	python3 scripts/extensions_smoke.py
+
 .PHONY: smoke-mail-clients
 smoke-mail-clients: build
 	python3 scripts/mail_clients_smoke.py
