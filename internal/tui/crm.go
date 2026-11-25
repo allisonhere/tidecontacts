@@ -617,10 +617,11 @@ func (m *Model) loadDossier() tea.Cmd {
 		c.dossier, c.dossierCursor = nil, 0
 	}
 	seq, repo, ctx, timeline, today := c.dossierSeq, c.repo, m.contacts.ctx, m.contacts.view == 8, domain.Day(clock())
-	return func() tea.Msg {
+	load := func() tea.Msg {
 		d, e := repo.Dossier(ctx, id)
 		return dossierMsg{seq: seq, id: id, rows: dossierRows(d, timeline, today), err: e}
 	}
+	return tea.Batch(load, m.loadExtPanels(seq, id))
 }
 
 func (m *Model) pushNav() {

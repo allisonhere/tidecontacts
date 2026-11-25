@@ -222,6 +222,8 @@ func (m Model) overlayPanel(r tideui.Renderer) *tideui.Overlay {
 	u := newSoftUI(r)
 	width, height := m.formSize(72)
 	switch {
+	case m.extensions.modal != nil:
+		return m.extensionsPanel(u)
 	case c.confirm != nil:
 		body := u.wrapNote(c.confirm.text, width, max(1, height-3), false)
 		body = append(body, u.blank(width), u.hints(width, "y", "confirm", "esc", "cancel"))

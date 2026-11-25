@@ -50,7 +50,7 @@ func deliver(m Model, cmd tea.Cmd) Model {
 		}
 		switch msg.(type) {
 		case directoryBooksResult, directoryPreparedResult, directoryRefreshResult, listResult, detailResult, saveResult, searchTick, fileResult, previewResult, exportResult, importProgress,
-			directoryResult, archiveReadResult, archiveImportResult, crmListMsg, crmDetailMsg, crmDoneMsg, dossierMsg, pickerResult, editMsg, crmSearchTick, dueMsg:
+			directoryResult, archiveReadResult, archiveImportResult, crmListMsg, crmDetailMsg, crmDoneMsg, dossierMsg, pickerResult, editMsg, crmSearchTick, dueMsg, extLoadedMsg, extDoneMsg, extResultMsg, extPanelMsg:
 		default:
 			return m
 		}

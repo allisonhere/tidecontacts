@@ -499,6 +499,7 @@ func (m Model) contactPanes(r tideui.Renderer) [3]tideui.Pane {
 	if c.view >= 7 && c.contact.ID != "" {
 		// Dossier and Timeline are link lists: the cursor follows records instead of scrolling text.
 		rows := append([]crmRow{txt(c.contact.DisplayName)}, m.crm.dossier...)
+		rows = append(rows, m.extPanelRows(c.contact.ID)...)
 		if m.crm.dossierFor != c.contact.ID {
 			rows = append(rows[:1], dim("Loading…"))
 		}

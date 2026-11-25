@@ -6,6 +6,7 @@ import (
 	"github.com/allisonhere/tidecontacts/internal/app"
 	"github.com/allisonhere/tidecontacts/internal/config"
 	"github.com/allisonhere/tidecontacts/internal/domain"
+	"github.com/allisonhere/tidecontacts/internal/ext"
 	"github.com/allisonhere/tideui"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -15,10 +16,12 @@ import (
 )
 
 type Ready struct {
-	Repo    app.Contacts
-	Context context.Context
-	Config  config.Config
-	Err     error
+	// Extensions is optional; nil means the extension system is not in use.
+	Extensions *ext.Manager
+	Repo       app.Contacts
+	Context    context.Context
+	Config     config.Config
+	Err        error
 }
 type overlay int
 
@@ -50,6 +53,7 @@ type Model struct {
 	Err                                                         error
 	left, right                                                 tideui.PaneRatio
 	feedback                                                    string
+	extensions                                                  extState
 }
 
 func New(load tea.Cmd) Model {
@@ -100,6 +104,9 @@ func (m Model) focusCount() int {
 	return 3
 }
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if next, cmd, handled := m.updateExtensions(msg); handled {
+		return next, cmd
+	}
 	if next, cmd, handled := m.updateDirectories(msg); handled {
 		return next, cmd
 	}
@@ -134,6 +141,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		n := NewReady(v.Config)
 		n.width, n.height = m.width, m.height
 		n.contacts.repo = v.Repo
+		n.extensions.mgr = v.Extensions
 		n.contacts.ctx = v.Context
 		if n.contacts.ctx == nil {
 			n.contacts.ctx = context.Background()
@@ -174,13 +182,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.prompt.Blur()
 				return m, nil
 			case "down", "ctrl+n":
-				m.paletteSelected = min(m.paletteSelected+1, max(0, len(m.registry.Filter(m.prompt.Value()))-1))
+				m.paletteSelected = min(m.paletteSelected+1, max(0, len(m.paletteMatches())-1))
 				return m, nil
 			case "up", "ctrl+p":
 				m.paletteSelected = max(0, m.paletteSelected-1)
 				return m, nil
 			case "enter":
-				matches := m.registry.Filter(m.prompt.Value())
+				matches := m.paletteMatches()
 				if len(matches) > 0 {
 					m.overlay = none
 					m.prompt.Blur()
@@ -299,6 +307,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 func (m Model) dispatch(id string) (tea.Model, tea.Cmd) {
+	if id == "extensions-manage" || strings.HasPrefix(id, "ext:") {
+		return m.extDispatch(id)
+	}
 	if id == "refresh-address-books" {
 		return m, m.refreshDirectories(nil)
 	}
@@ -621,7 +632,7 @@ func (m Model) View() string {
 			prompt.Width = max(1, inner-3)
 			prompt.TextStyle = r.Styles.DetailBody
 			lines = append(lines, prompt.View(), "")
-			matches := m.registry.Filter(m.prompt.Value())
+			matches := m.paletteMatches()
 			visible := max(1, m.height-10)
 			start := max(0, m.paletteSelected-visible+1)
 			for i := start; i < min(len(matches), start+visible); i++ {
