@@ -201,6 +201,40 @@ profile. Unit tests cover every core resource, partial updates, links, duplicate
 commands, invalid JSON, revision conflicts, pipeline tokens, archive handling,
 external-activity ownership and profile isolation.
 
+## Extensions and capabilities
+
+Optional extensions are managed through the same JSON envelope. See the
+[extension guide](extensions/README.md). Nothing here runs unless you enable an
+extension.
+
+```sh
+tidecontacts capabilities list                       # core and extension capabilities, with availability
+tidecontacts extensions list                         # discovered extensions and status
+tidecontacts extensions inspect ID                   # manifest facts, health, settings
+tidecontacts extensions permissions ID               # requested vs granted, with enforcement labels
+tidecontacts extensions enable ID --yes              # --yes means you approved the permissions
+tidecontacts extensions disable ID
+tidecontacts extensions commands [ID]                # declared commands and availability
+tidecontacts extensions run ID COMMAND [--input args.json]   # args: JSON object of strings
+tidecontacts extensions config ID [--set KEY=VALUE]
+tidecontacts extensions health ID
+tidecontacts extensions purge-data ID --yes          # deletes the extension's private data (must be disabled)
+```
+
+Data is in `.data`; list commands include `meta.count`. `extensions run` uses
+the same permission checks, validation and revision rules as the TUI, and
+writes by extensions are tagged `source: extension:ID` in events. An unreadable
+state file is reported in `.warnings`.
+
+**Exit code 6** (new) means denied: the JSON error `code` is `approval_required`
+(enable without `--yes`, or an update asked for more permissions),
+`permission_denied` or `entitlement_required`. Codes 0–5 are unchanged, and
+existing commands, envelopes and fields are unchanged.
+
+`TIDECONTACTS_EXTENSIONS_DIR` (absolute path) overrides where extensions are
+discovered. `make smoke-extensions` tests the real binary with the demonstration
+extension.
+
 ## Mail-client recipient lookup
 
 `contacts query [TEXT]` provides the minimal email/name/organization projection.

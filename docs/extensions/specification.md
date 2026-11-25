@@ -1,0 +1,223 @@
+# Extension API specification (version 1)
+
+## 1. Package layout
+
+An extension is a directory whose name equals its id:
+
+```text
+<extensions dir>/relationship-digest/
+  extension.toml        manifest (required, ≤ 64 KiB, strict: unknown keys are errors)
+  relationship-digest   executable named by `command`
+```
+
+The directory must not be a symlink. The executable is resolved with symlinks
+followed and must remain inside the directory, be a regular file, be marked
+executable, and be ≤ 256 MiB. It is run directly (never through a shell) with
+no arguments, working directory = the extension directory.
+
+## 2. Manifest (`extension.toml`)
+
+| Key | Type | Required | Notes |
+|---|---|---|---|
+| `id` | string | yes | `^[a-z][a-z0-9]*(-[a-z0-9]+)*$`, 3–48 chars; must equal the directory name |
+| `name` | string | yes | ≤ 60 chars, no control characters |
+| `version` | string | yes | `major.minor[.patch]` |
+| `api` | int | yes | Extension API major version. This host: `1` |
+| `description`, `author` | string | no | ≤ 400 / 80 chars |
+| `command` | string | yes | Clean relative path inside the directory (no `..`, `\`, absolute) |
+| `min_host` | string | no | Minimum TideContacts extension-host version (this host: `0.3.0`) |
+| `requires` | [string] | no | Capability ids that must be available |
+| `optional` | [string] | no | Capability ids used if present |
+| `permissions` | [string] | no | Requested permissions (§4) |
+| `entitlement` | string | no | Capability id the entitlement provider must allow; re-checked on every host call |
+| `provides` | [[table]] | no | `id`, `version ≥ 1`; id must start with `<extension id>.` or `pro.` |
+| `commands` | [[table]] | no | `id`, `title`, `description`; ≤ 16; needs `commands.register` |
+| `panels` | [[table]] | no | `id`, `title`, `slot`; ≤ 4; needs `ui.register`; slot ∈ {`contact.dossier`} |
+| `events.subscribe` | [string] | no | Event types (§6); needs `events.subscribe` and the entity's read permission |
+| `config` | [[table]] | no | `key`, `label`, `type` (`string`,`integer`,`boolean`,`enum`), `default`, `options`, `min`, `max`, `help`; ≤ 16 |
+| `storage` | table | no | `required`, `max_kb` (≤ 1024, default 256); needs `storage.extension` |
+
+Validation never executes anything. A valid manifest is a *request*, not a
+proof of trust or authorization (see [security.md](security.md)).
+
+Complete example: [`examples/extensions/relationship-digest/extension.toml`](../../examples/extensions/relationship-digest/extension.toml).
+
+## 3. Capabilities
+
+A capability is a discoverable feature with a provider and an integer version.
+
+| Id | Provider | Notes |
+|---|---|---|
+| `core.contacts`, `core.organizations`, `core.relationships`, `core.activities`, `core.tasks`, `core.projects`, `core.pipelines`, `core.insights`, `core.events` | core | Always available. Version 1. |
+| `<extension-id>.<name>` | that extension | Available only while the extension is enabled and its requirements hold |
+| `pro.*` | reserved | Reserved for future commercial extensions. Always unavailable under the Community entitlement provider. **Nothing in `pro.*` is implemented in this repository.** |
+
+Rules enforced by the registry: `core.*` can never be provided by an extension;
+a capability id has exactly one provider (second claimant is `conflict`);
+requirements resolve to a fixed point, so a chain of dependencies settles and a
+cycle never becomes available; disabled providers' capabilities report
+`available: false` with a reason. List them with `tidecontacts capabilities list`.
+
+## 4. Permissions
+
+Default deny. The host checks the permission on every call, at the service
+boundary (`ext.Session`), before touching the repository.
+
+| Permission | Enforcement | Grants |
+|---|---|---|
+| `contacts.read` / `contacts.write` | host-api | `contacts.list`, `contacts.get` / `contacts.save` for people |
+| `organizations.read` / `organizations.write` | host-api | the same calls for organizations |
+| `relationships.read` | host-api | `contacts.connections` (plus a contact/organization read grant) |
+| `activities.read` / `activities.write` | host-api | `activities.list` / `activities.save` |
+| `tasks.read` / `tasks.write` | host-api | `tasks.list` / `tasks.save` |
+| `projects.read` | host-api | `projects.list` |
+| `pipelines.read` | host-api | `pipelines.list` |
+| `events.subscribe` | host-api | Receive subscribed events |
+| `commands.register` | host-api | Palette/CLI commands are only offered if granted |
+| `ui.register` | host-api | Panels are only rendered if granted |
+| `storage.extension` | host-api | `storage.*` |
+| `network.access` | **declared-only** | Recorded and shown. The host cannot stop a same-user process using the network. |
+| `relationships.write`, `projects.write`, `pipelines.write` | reserved | Valid names; no host API yet |
+
+* Approval is explicit: `enable` shows the list; the CLI needs `--yes`.
+* The user's grant is exactly the set requested at approval time. If an update
+  requests more, the extension becomes `needs-approval` and is not executed.
+  Requesting fewer never triggers a prompt.
+* All writes go through the same repository used by the UI, so domain
+  validation, directory read-only ownership and optimistic revision checks
+  apply. A stale revision returns `conflict`.
+* Read results for `contacts.get` are checked *after* the read against the
+  contact's kind, and denied before the read if neither read permission is held,
+  so error differences cannot be used to probe ids.
+
+## 5. Wire protocol
+
+Transport: the host starts the executable once per request. Messages are single
+JSON objects, one per line (UTF-8, `\n`), on stdin (host → extension) and stdout
+(extension → host). stderr is captured (first 8 KiB), sanitized and shown only
+as a diagnostic. Every message has `"api": 1` and a `type`.
+
+```text
+host → ext   {"api":1,"type":"request","request_id":"<hex>","method":"command.run","data":{…}}
+ext  → host  {"api":1,"type":"host_call","call_id":"1","method":"contacts.list","data":{…}}     (zero or more)
+host → ext   {"api":1,"type":"host_response","call_id":"1","ok":true,"data":…}
+             or {"api":1,"type":"host_response","call_id":"1","ok":false,"error":{"code":"permission_denied","message":"…"}}
+ext  → host  {"api":1,"type":"response","request_id":"<same>","ok":true,"data":{…}}            (exactly one, last)
+             or {"api":1,"type":"response","request_id":"<same>","ok":false,"error":{"code":"…","message":"…"}}
+```
+
+Host limits (not configurable by extensions): message ≤ 1 MiB; total output ≤ 8 MiB;
+≤ 200 host calls per request; timeout 10 s by default (hard cap 30 s); ≤ 2
+concurrent requests per extension; ≤ 16 command arguments. On timeout,
+cancellation, malformed JSON, wrong `api`, wrong `request_id`, an unknown message
+type or any limit breach the host kills the process (and its process group on
+Unix), reaps it, records a failure and carries on. A `response` with `ok:false`
+is a clean application error and does not count as a crash.
+
+Environment: `PATH=/usr/bin:/bin`, `LANG=C.UTF-8`, `TIDECONTACTS_EXTENSION_ID`,
+`TIDECONTACTS_EXTENSION_API`. Nothing else is inherited; no `HOME`, no secrets.
+
+### Host → extension methods
+
+| Method | `data` | Expected `response.data` |
+|---|---|---|
+| `activate` | `{host_api, host_version}` | `{}` — called at enable and at startup; failure disables/fails the extension |
+| `deactivate` | `{}` | `{}` — best effort, 3 s |
+| `health` | `{}` | `{"ok":bool,"message":string}` |
+| `command.run` | `{command, args:{string:string}}` | Content (below) |
+| `panel.render` | `{panel, entity_id}` | Content |
+| `event.deliver` | `{event: Event}` | `{}` |
+
+### Extension → host calls
+
+`config.get`, `contacts.list {query, kind, limit}`, `contacts.get {id}`,
+`contacts.connections {id}`, `contacts.save {Contact}`, `activities.list
+{entity_id, query, before, limit}`, `activities.save {Activity}`, `tasks.list
+{view, entity_id, limit}`, `tasks.save {Task}`, `projects.list {status}`,
+`pipelines.list`, `storage.get|put|delete|keys {key, value}`. Arguments are
+decoded strictly: unknown fields are `invalid_input`. Record shapes are the
+domain types used by the CLI (`tidecontacts schema`). Lists are capped (default
+100, maximum 500). Error codes: `permission_denied`, `unknown_method`,
+`invalid_input`, `not_found`, `conflict`, `entitlement_required`,
+`quota_exceeded`, `internal`.
+
+### Content (host-rendered UI)
+
+```json
+{"title":"Relationship digest","lines":[{"label":"People","text":"12","level":"info"}]}
+```
+
+`level` ∈ `info` (default), `ok`, `warn`. The host bounds (≤ 40 lines; label ≤ 24,
+text ≤ 160, title ≤ 60 runes), strips ANSI/OSC/control characters and
+bidirectional overrides, and renders with the active theme. There is no way to
+emit styling, positioning or key handling.
+
+## 6. Events
+
+Envelope (version 1):
+
+```json
+{"id":"a1b2…","type":"task.completed","schema_version":1,"time":"2026-11-25T18:04:05.123Z",
+ "entity_type":"task","entity_id":"<uuid>","revision":3,"source":"ui","correlation_id":""}
+```
+
+Events carry identifiers only: never names, addresses, notes or message content.
+`source` is `ui`, `cli`, `import` or `extension:<id>`. `correlation_id` groups a
+multi-record write such as an import batch.
+
+| Type | Emitted | Needs read permission |
+|---|---|---|
+| `contact.created/updated/archived/merged` | yes | `contacts.read` |
+| `organization.created/updated` | yes | `organizations.read` |
+| `activity.created/updated/deleted` | yes | `activities.read` |
+| `task.created/updated/completed/reopened` | yes | `tasks.read` |
+| `project.created/updated` | yes | `projects.read` |
+| `pipeline.created/updated`, `pipeline.item_created/item_moved` | yes | `pipelines.read` |
+| `project.status_changed`, `followup.due`, `reminder.due` | **reserved, not emitted** | |
+
+Semantics:
+
+* Emitted **only after the write returned without error** (after commit). A
+  stale revision, a validation failure or a rolled-back batch emits nothing.
+* "Created" means the caller supplied revision 0 (or no id, for pipelines and
+  items); everything else is "updated". Demo seeding emits nothing.
+* **Best-effort, in-memory delivery.** Publishing never blocks. Each extension
+  has a queue of 64; a full queue drops the new event and increments
+  `events_dropped` (visible in health). Nothing is replayed after a restart.
+  There is no durable outbox; an extension that must not miss changes should
+  reconcile by reading state.
+* Events whose source is an extension are never delivered to extensions, so
+  extensions cannot trigger each other in a loop.
+* A failing delivery counts toward the failure breaker; cancellation stops
+  delivery immediately at shutdown.
+
+## 7. Storage
+
+Each extension has a private key-value store at `<data>/extension-data/<id>/store.json`,
+reachable only through `storage.*` host calls (permission `storage.extension`).
+Keys `[a-z][a-z0-9_]{0,39}`, values ≤ 64 KiB, ≤ 256 keys, total ≤ `storage.max_kb`
+(≤ 1 MiB). The path is derived from the validated id, so one extension cannot
+name another's data, and the file records its owner. Writes are atomic
+(temp file + rename). Extensions reference core records by UUID only; there are
+no foreign keys into the core database, so a tombstoned or merged contact can
+leave a dangling reference that the extension must tolerate.
+
+No tables are added to the SQLite database, and extensions cannot modify core
+tables. Schema migrations for extension data are the extension's own concern
+(store a version key); the host does not run extension migrations in Phase 3A.
+
+## 8. Entitlements
+
+```go
+type EntitlementProvider interface {
+    Check(ctx context.Context, capability string) (EntitlementDecision, error)
+}
+```
+
+`CommunityEntitlements` allows everything except `pro.*`. A decision error is a
+denial. Checks happen when an extension is resolved (`entitlement-required`) and
+again on **every host call** for extensions that declare `entitlement`, so the
+check is at the service boundary and not only in the UI. There is no license
+format, key, activation, expiry enforcement, hardware binding or network call in
+this repository; a future provider implements the interface offline. Tests use
+a small in-test provider.

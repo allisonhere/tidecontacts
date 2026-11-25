@@ -2,6 +2,23 @@
 
 Current state: November 20, 2026. This replaces the old Phase 3 handoff. Use [STATUS.md](STATUS.md) for the current feature inventory and [README.md](README.md) for setup.
 
+## Phase 3A: extension architecture (November 25, 2026)
+
+Branch `feat/phase3a-extension-architecture`; not merged, no release. Licensing is unchanged and still pending ([COMMERCIAL-LICENSING.md](COMMERCIAL-LICENSING.md), [checklist](docs/licensing-checklist.md)); [docs/extensions/licensing-boundary.md](docs/extensions/licensing-boundary.md) lists the open questions for counsel. Nothing commercial was implemented.
+
+Code map:
+
+- `internal/ext`: `manifest.go` (strict TOML + validation), `permissions.go`, `capability.go` (registry), `entitlement.go` (interface + Community provider), `events.go` (typed events, bounded bus), `host.go` (`Session`: permission-checked host API, the only door extensions get), `process.go` (+`process_unix/windows.go`: subprocess runner, limits, group kill), `storage.go`, `state.go`, `manager.go` (discovery, approval, lifecycle, health, event routing), `sanitize.go`.
+- `internal/ext/observe`: wraps `*sqlite.Store`; publishes events after successful writes only. `cmd/tidecontacts/main.go` wires store → observe → manager and closes the manager before the store.
+- `internal/cli/extensions.go`: `extensions …`, `capabilities list`, exit code 6.
+- `internal/tui/extensions.go`: management modal, palette entries (`paletteMatches`), dossier panel rows. Only hooks in existing files: `Update` (first line), `dispatch`, `overlayPanel`, `loadDossier`, palette matching.
+- `examples/extensions/relationship-digest`: demonstration extension. `make extension-demo`, `make smoke-extensions`.
+- Docs: `docs/extensions/*`, `docs/adr/phase3a-extensions.md`.
+
+Behavior to remember: schema is unchanged (4); no extension → no process, no files. Extension programs live in `<config>/tidecontacts/extensions/<id>/`, approvals in `<data>/tidecontacts/extensions.json`, private data in `<data>/tidecontacts/extension-data/<id>/` (deliberately a different name than the program directory). `TIDECONTACTS_EXTENSIONS_DIR` overrides the program directory.
+
+Remaining (Phase 3B candidates): optional OS sandbox launcher and CPU/memory limits; durable event outbox and events for folder/Google refresh and TideMail sync; `project.status_changed`, `followup.due`, `reminder.due`; write permissions for relationships/projects/pipelines; more UI slots (navigation, dashboard, settings, search providers) once the host renders them; long-lived extension mode if call latency matters; migration runner for extension data; extension install/verify/update flow and signing; a local API server reusing `ext.Session`; counsel's answers on the licensing boundary. The existing `internal/tui` suite takes ~100 s on `main` too (pre-existing).
+
 ## Delivered
 
 TideContacts has eight CRM workspaces, the TideMail activity connector, a shared TideMail contacts plugin, a JSON scripting CLI, read-only aerc/NeoMutt recipient output, and the import modal. The merged import sources are CSV, vCard, CRM JSON, Mutt/NeoMutt aliases and khard/vdirsyncer folders. Enabled sources automatically sort above the nine dimmed planned providers.

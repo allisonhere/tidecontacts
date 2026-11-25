@@ -225,6 +225,19 @@ Wide terminals show three panes; medium terminals show list/profile; narrow term
 
 SQLite migrations are append-only; the current schema is version 4 and adds directory ownership tables while preserving existing contacts and CRM data (see [migration and backup](docs/migration-backup.md)). Foreign keys, WAL, busy timeout, transactions, optimistic revisions and tombstones protect local data. Back up the database using SQLite's backup API, or copy it after the app has closed; do not copy only the main file while WAL writes are active. JSON logs currently append without rotation.
 
+## Extensions (optional)
+
+TideContacts can be extended by separately installed programs that use a small,
+versioned, permission-checked host API. Extensions are off by default, nothing
+runs until you explicitly approve its permissions, and the Community app works
+fully without any. Manage them from the palette (**Manage extensions…**) or the
+JSON CLI (`extensions list`, `capabilities list`). Permissions control what the
+host API returns; they are **not** an operating-system sandbox, so only install
+extensions you trust. Start with the [extension guide](docs/extensions/README.md),
+the [API specification](docs/extensions/specification.md) and the
+[security model](docs/extensions/security.md). `make extension-demo` builds the
+read-only *Relationship Digest* example.
+
 ## Development
 
 ```sh
@@ -232,6 +245,8 @@ make check # formatting, build, vet, race tests
 make smoke # real PTY lifecycle, contact and CRM workflow tests (Python 3, Unix)
 make smoke-directories # folder connection and plugin-only refresh in an isolated profile
 make smoke-cli # versioned JSON command workflows
+make smoke-extensions # extension discovery, approval, host API limits and failure isolation
+make extension-demo # build the Relationship Digest example into bin/extensions
 make smoke-mail-clients # aerc/NeoMutt output and shell argument checks
 go test ./... # includes a 10,000-contact scale test; add -short to skip it
 UPDATE_GOLDEN=1 go test ./internal/tui # intentionally regenerate reviewed frames

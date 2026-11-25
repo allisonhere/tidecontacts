@@ -15,9 +15,13 @@ TideContacts is a standalone, offline-first terminal CRM with a shared TideMail 
 - **aerc / NeoMutt:** read-only recipient queries and explicit sender capture. NeoMutt supports searched completion; the safe aerc configuration returns a candidate list because upstream substitutes query text into a shell without quoting. These commands query cached contacts and never refresh folders. [Mail-client guide](docs/mail-clients.md)
 - **Forms:** creation/edit forms keep the same vertical height with footer hints at the bottom, shrinking for short terminals; input rows are single-spaced across contacts/organizations, tasks, activities, projects and pipelines. Up/Down moves between single-line inputs; Left/Right edits text or changes choices. Contact-editor hints label F5 as previous section and F6 as next section.
 - **Navigation and appearance:** three columns at 120 columns, menu/modal navigation, TideUI help browser, searchable themes with live preview and Match TideMail for supported installed palettes.
+- **Extensions (Phase 3A):** optional subprocess extensions with validated manifests, explicit permission approval, default-deny host API, capability registry, best-effort typed events, private extension storage, host-rendered palette commands and dossier panels, a management modal (palette → *Manage extensions…*), and `extensions`/`capabilities` JSON CLI commands. Includes the read-only *Relationship Digest* example. Permissions are API authorization, not an OS sandbox. No commercial functionality, licensing or entitlements beyond the Community provider exist. [Guide](docs/extensions/README.md) · [Spec](docs/extensions/specification.md) · [Security](docs/extensions/security.md) · [ADRs](docs/adr/phase3a-extensions.md)
 - **Demo:** isolated fictional contacts/CRM, paired TideMail demo, reset support. Live activity sync, folder connections and desktop notifications are disabled.
 
 ## Remaining limits
+
+Extensions: no OS sandbox or CPU/memory limits, no signing/installer/marketplace, in-process best-effort events (not emitted for folder/Google refresh or TideMail sync, nor across processes), one UI slot, `project.status_changed`/`followup.due`/`reminder.due` and the `relationships/projects/pipelines.write` permissions reserved but not implemented. See [extension limitations](docs/extensions/README.md#known-limitations-phase-3a).
+
 
 Direct CardDAV/server synchronization is implemented only for Google; every other provider still goes through vdirsyncer or a local vCard folder. Calling khard as a query command, provider-specific importers shown as coming soon, iCalendar import, durable CRM undo, ASCII-only glyph mode and AI remain deferred. Mouse support focuses panes only; density is session-only; logs do not rotate.
 
@@ -25,6 +29,6 @@ Direct CardDAV/server synchronization is implemented only for Google; every othe
 
 Unit, integration and race tests cover domain/storage/CLI/TUI/bridge behavior, migrations, optimistic conflicts, directory ownership, updates, deletions, disconnect/reconnect and failed scans. Golden frames and bounded-render tests cover terminal layouts. Real terminal and executable smoke scripts cover CRM, imports, scripting, recipient formats and folder refresh with TideContacts stopped.
 
-`make check` runs formatting, build, vet and short race tests. `make smoke`, `make smoke-directories`, `make smoke-cli` and `make smoke-mail-clients` exercise isolated profiles. The TideMail integration has its own focused tests in that repository. See [architecture](docs/architecture.md) and [migration/backup](docs/migration-backup.md).
+`make check` runs formatting, build, vet and short race tests. `make smoke-extensions` exercises discovery, approval, host API denial, capability discovery and hung-extension isolation with the real binary. `make smoke`, `make smoke-directories`, `make smoke-cli` and `make smoke-mail-clients` exercise isolated profiles. The TideMail integration has its own focused tests in that repository. See [architecture](docs/architecture.md) and [migration/backup](docs/migration-backup.md).
 
 The current features are built and installed locally. Importer, directory and form updates are prepared on a dedicated feature branch for PR review; local availability does not imply a published release.
