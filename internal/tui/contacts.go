@@ -388,20 +388,22 @@ func (m Model) contactAction(id string) (Model, tea.Cmd, bool) {
 }
 func (m Model) contactPanes(r tideui.Renderer) [3]tideui.Pane {
 	c := m.contacts
-	navWidth := max(1, int(float64(m.width)*m.left.Value())-4)
-	detailWidth := max(1, int(float64(m.width)*(1-m.left.Value()-m.right.Value()))-4)
-	if m.mode() == tideui.SidebarOnly {
-		detailWidth = max(1, m.width-int(float64(m.width)*m.left.Value())-4)
+	navWidth, detailWidth := m.width, m.width
+	left, middle := m.ratios()
+	switch m.mode() {
+	case tideui.SidebarOnly:
+		sidebar := int(float64(m.width) * left)
+		navWidth, detailWidth = sidebar-2, m.width-sidebar-2
+	case tideui.ThreeColumn:
+		// TideUI reserves a cell per pane, divides the remaining cells by
+		// ratio, and gives the last pane the rounding remainder.
+		available := m.width - 3
+		total := left + middle + (1 - left - middle)
+		menu := 1 + int(float64(available)*left/total)
+		list := 1 + int(float64(available)*middle/total)
+		navWidth, detailWidth = list-2, m.width-menu-list-2
 	}
-	if m.mode() == tideui.Tabbed {
-		navWidth = max(1, m.width-4)
-		detailWidth = navWidth
-	}
-	if m.mode() == tideui.ThreeColumn {
-		left, right := m.ratios()
-		navWidth = max(1, int(float64(m.width)*right)-4)
-		detailWidth = max(1, int(float64(m.width)*(1-left-right))-4)
-	}
+	navWidth, detailWidth = max(1, navWidth), max(1, detailWidth)
 	rows := []string{}
 	input := m.search
 	input.Width = max(1, navWidth-3)
@@ -439,13 +441,7 @@ func (m Model) contactPanes(r tideui.Renderer) [3]tideui.Pane {
 			text += " · " + domain.SafeText(suffix)
 		}
 		selected := i == c.selected && m.focus == 0
-		band := r.Styles.Theme.Bg
-		if i%2 == 1 {
-			band = r.Styles.Theme.Overlay
-			if band == r.Styles.Theme.Bg && r.Styles.Theme.Name == "contrast" {
-				band = "#202020"
-			}
-		}
+		band := contactBand(r.Styles.Theme, i)
 		rowRenderer := r
 		nameColor := r.Styles.Theme.Fg
 		switch {

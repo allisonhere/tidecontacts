@@ -51,6 +51,7 @@ const Help = `TideContacts scripting CLI (JSON API version 1)
 
   contacts|organizations list|get|create|update|delete|restore|history|dossier|connections
   contacts query [TEXT]   recipient lookup: --format json|aerc|neomutt
+  contacts capture-sender  save the From address of a message on stdin
   tasks                  list|get|create|update|delete|restore|complete|reopen|duplicate
   activities             list|get|create|update|delete|restore
   projects               list|get|create|update|delete|restore
@@ -216,6 +217,9 @@ func Run(ctx context.Context, args []string, in io.Reader, out, stderr io.Writer
 		if err := demo.Seed(ctx, s); err != nil {
 			return err
 		}
+	}
+	if resource == "contacts" && action == "capture-sender" {
+		return captureSender(ctx, s, in, out, o.present["json"])
 	}
 	data, limit, err := execute(ctx, s, resource, action, id, o, input)
 	if err != nil {

@@ -44,11 +44,12 @@ func (m Model) helpSections() []tideui.HelpSection {
 		tideui.HelpEntry{Key: "Quick capture", Description: "One-line task syntax is optional: choose Quick capture task (one line) from Commands."},
 	)
 	groups[9].Entries = append(groups[9].Entries,
-		tideui.HelpEntry{Key: "Import sources", Description: "CSV, vCard, CRM JSON, Mutt aliases and khard/vdirsyncer folders are active; dimmed coming-soon sources are disabled."},
+		tideui.HelpEntry{Key: "Import sources", Description: "CSV, vCard, CRM JSON, Mutt aliases, khard/vdirsyncer folders and Google Contacts are active; dimmed coming-soon sources are disabled."},
 		tideui.HelpEntry{Key: "File browser", Description: "Enter opens folders/files; Left or Backspace goes up; p enters a path; b returns to sources; . toggles hidden files/folders (initially off)."},
 		tideui.HelpEntry{Key: "Connect folder", Description: "Choose khard/vdirsyncer; n browses, s selects the current folder, p enters a path; preview then Enter and y confirms."},
-		tideui.HelpEntry{Key: "Folder controls", Description: "r refreshes all connections; x then y disconnects the selected folder. Edit source vCards to change read-only contacts."},
-		tideui.HelpEntry{Key: "TideMail", Description: "People r and recipient Ctrl+T refresh connected folders; TideContacts need not run. Failed scans keep cached contacts."},
+		tideui.HelpEntry{Key: "Connect Google", Description: "Choose Google Contacts; n opens the email + app password form; Tab switches fields; preview then Enter and y confirms."},
+		tideui.HelpEntry{Key: "Folder controls", Description: "r refreshes all connections; x then y disconnects the selected book. Edit source vCards, or the Google contact, to change read-only records."},
+		tideui.HelpEntry{Key: "TideMail", Description: "People r and recipient Ctrl+T refresh connected folders and Google accounts; TideContacts need not run. Failed scans keep cached contacts."},
 	)
 	groups[0].Entries = append(groups[0].Entries, tideui.HelpEntry{Key: "Current workspace", Description: domain.Workspaces()[m.state.Active].Description})
 	return groups

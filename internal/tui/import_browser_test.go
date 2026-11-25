@@ -195,7 +195,7 @@ func TestDirectoryConnectionRefreshAndDisconnectInModal(t *testing.T) {
 		t.Fatal(err)
 	}
 	m, _, _ = m.startTransfer("import-contacts")
-	m.contacts.transfer.source = 4
+	m.contacts.transfer.source = 5 // khard / vdirsyncer, after Google Contacts was enabled
 	m, cmd := press(m, tea.KeyEnter)
 	m = deliver(m, cmd)
 	if m.contacts.transfer.stage != "directory-books" {
@@ -235,7 +235,7 @@ func TestDirectoryConnectionRefreshAndDisconnectInModal(t *testing.T) {
 		t.Fatal(contact, err)
 	}
 	m, _, _ = m.startTransfer("import-contacts")
-	m.contacts.transfer.source = 4
+	m.contacts.transfer.source = 5 // khard / vdirsyncer
 	m, cmd = press(m, tea.KeyEnter)
 	m = deliver(m, cmd)
 	m, _ = key(m, "x")

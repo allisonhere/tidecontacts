@@ -2,8 +2,23 @@
 
 TideContacts can provide recipient candidates to both clients. It uses the same
 address book as the standalone app and TideMail plugin; none needs to be running.
-This version provides recipient completion, not a replacement contacts manager,
-mail-history synchronization or automatic sender capture.
+Both clients can also save the sender of a selected message.
+
+## Save a sender
+
+Merge the [aerc bindings](../contrib/mail-clients/binds.conf) into the matching
+sections of `binds.conf`, or source the [NeoMutt fragment](../contrib/mail-clients/neomuttrc).
+With a single message selected or open, press **,cs** (comma, c, s).
+The command prints **Saved** for a new person or **Already saved** for an existing
+address. It compares email addresses case-insensitively, including secondary
+addresses, archived contacts, and cached directory contacts. Existing records keep
+their name and fields.
+
+The binding pipes the message into `tidecontacts contacts capture-sender`.
+Only the single From mailbox supplies contact data. A missing or ambiguous From
+header produces an error. For a standalone check, run
+`tidecontacts --demo contacts capture-sender < message.eml`. Add `--json` for
+the contact ID and a boolean indicating whether the command created a record.
 
 ## Try the output first
 
@@ -105,7 +120,6 @@ These fragments are examples; they do not overwrite your mail-client
 configuration or configure accounts. Neither client is installed in this workspace,
 so verification covers their documented wire formats, subprocess invocation,
 read-only access and shell quoting simulations, rather than an interactive client
-session. Editing and explicit sender capture can be layered on the existing CLI
-in a later step.
+session.
 
 Connected vCard-folder contacts are included in the cached address book. Recipient queries do not scan or refresh those folders; refresh through TideContacts or TideMail first when needed. To bring existing Mutt aliases into TideContacts, use [Import data… → Mutt / NeoMutt aliases](import-export.md#mutt--neomutt-aliases). [Connect vdirsyncer folders](vcard-directories.md) for repeatable updates.

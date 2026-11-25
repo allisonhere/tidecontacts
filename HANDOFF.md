@@ -1,12 +1,12 @@
 # TideContacts handoff
 
-Current state: November 16, 2026. This replaces the old Phase 3 handoff. Use [STATUS.md](STATUS.md) for the current feature inventory and [README.md](README.md) for setup.
+Current state: November 20, 2026. This replaces the old Phase 3 handoff. Use [STATUS.md](STATUS.md) for the current feature inventory and [README.md](README.md) for setup.
 
 ## Delivered
 
-TideContacts has eight CRM workspaces, the TideMail activity connector, a shared TideMail contacts plugin, a JSON scripting CLI, read-only aerc/NeoMutt recipient output, and the import modal. Active import sources are CSV, vCard, CRM JSON, Mutt/NeoMutt aliases and khard/vdirsyncer folders. Enabled sources automatically sort above the nine dimmed planned providers.
+TideContacts has eight CRM workspaces, the TideMail activity connector, a shared TideMail contacts plugin, a JSON scripting CLI, read-only aerc/NeoMutt recipient output, and the import modal. The merged import sources are CSV, vCard, CRM JSON, Mutt/NeoMutt aliases and khard/vdirsyncer folders. Enabled sources automatically sort above the nine dimmed planned providers.
 
-Connected folders keep stable contact identities by UID, refresh at startup or explicitly, and refresh through TideMail’s contacts.list/search path while TideContacts is stopped. Complete scans apply atomically; failed scans preserve the cache. Directory contacts are read-only at the storage boundary. Disconnect hides the records and retains mappings for reconnect. No source files are written and no direct CardDAV or external khard command is implemented. [Full behavior](docs/vcard-directories.md).
+Connected folders keep stable contact identities by UID, refresh at startup or explicitly, and refresh through TideMail’s contacts.list/search path while TideContacts is stopped. Complete scans apply atomically; failed scans preserve the cache. Directory contacts are read-only at the storage boundary. Disconnect hides the records and retains mappings for reconnect. Folder connections read local vCards. The working tree also includes a direct Google Contacts connector. [Full behavior](docs/vcard-directories.md).
 
 ## Code map
 
@@ -32,10 +32,10 @@ People marks folder contacts read-only, supports `r` refresh and shows last-good
 - `make smoke-cli` and `make smoke-mail-clients`: executable protocol checks.
 - The sibling TideMail repo has focused Contacts/TideContacts/PluginSettings and SimpleContacts tests.
 
-Golden frames were updated for the Import/Refresh menu entries. Current builds are installed in `~/.local/bin` and the matching TideContacts plugin bundle in `~/.config/tidemail/plugins/tidecontacts`. Tests use temporary profiles. No live address-book connection was added during development.
+Golden frames were updated for the Import/Refresh menu entries. Current builds are installed in `~/.local/bin` and the matching TideContacts plugin bundle in `~/.config/tidemail/plugins/tidecontacts`. Tests use temporary profiles. On November 20, the user reported successfully syncing a live Google Contacts account.
 
 ## Pending / limits
 
-Importer/directory/form work is on a dedicated TideContacts feature branch. The TideMail integration is being prepared separately in `/tmp/tidemail-tidecontacts-pr` from current origin/main, using only the contact integration commit. Do not claim a release has shipped. Inspect both working trees before committing and preserve unrelated work. The current request authorizes committing/pushing these feature branches and opening PRs, while preserving the original TideMail checkout and its independent work. It does not authorize merging or tagging releases.
+TideContacts PR #1 merged as `811391a`, and TideMail PR #141 merged as `e1c53ae`. The contact display and selection updates are in local commit `30b8fc5`. The Google Contacts changes are still in the working tree. Next, run `make check`, `make smoke`, and `make smoke-directories` against those changes and commit them separately.
 
-Direct server sync, calling khard as a query command, the remaining provider-specific importers, iCalendar import, durable CRM undo, ASCII-only glyph mode and AI remain deferred. [Migration and backup](docs/migration-backup.md) covers schema 4 and shared-database precautions. The GitHub wiki repository was unavailable when checked; no wiki update was published.
+Direct server sync for other providers, calling khard as a query command, the remaining provider-specific importers, iCalendar import, durable CRM undo, ASCII-only glyph mode and AI remain deferred. [Migration and backup](docs/migration-backup.md) covers schema 4 and shared-database precautions. The GitHub wiki repository was unavailable when checked; no wiki update was published.

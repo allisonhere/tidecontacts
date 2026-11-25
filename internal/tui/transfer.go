@@ -32,7 +32,21 @@ type transferUI struct {
 	books                          []domain.ContactDirectory
 	directorySnapshot              domain.DirectorySnapshot
 	directoryRevision              int
+	googleEmail, googlePassword    textinput.Model
+	googleFocus                    int
 }
+
+// focusGoogleField blurs both Google-credential inputs and focuses the one
+// named by googleFocus (0 = email, 1 = app password).
+func (t *transferUI) focusGoogleField() tea.Cmd {
+	t.googleEmail.Blur()
+	t.googlePassword.Blur()
+	if t.googleFocus == 0 {
+		return t.googleEmail.Focus()
+	}
+	return t.googlePassword.Focus()
+}
+
 type importProgress struct{ done, total int }
 type progressWriter interface {
 	SaveContactsWithProgress(context.Context, []domain.Contact, string, func(int, int)) ([]domain.Contact, error)
@@ -57,6 +71,13 @@ func (m Model) startTransfer(action string) (Model, tea.Cmd, bool) {
 	t.path = textinput.New()
 	t.path.CharLimit = 4096
 	t.path.Prompt = "Path: "
+	t.googleEmail = textinput.New()
+	t.googleEmail.CharLimit = 256
+	t.googleEmail.Placeholder = "you@gmail.com"
+	t.googlePassword = textinput.New()
+	t.googlePassword.CharLimit = 64
+	t.googlePassword.Placeholder = "16-character app password"
+	t.googlePassword.EchoMode = textinput.EchoPassword
 	m.contacts.err = ""
 	m.contacts.transfer = t
 	if action == "import-contacts" {
@@ -228,6 +249,31 @@ func (m Model) updateTransfer(msg tea.Msg) (Model, tea.Cmd, bool) {
 				}
 			}
 			return m, nil, true
+		case "google-credentials":
+			switch key {
+			case "tab", "shift+tab", "down", "up":
+				t.googleFocus = (t.googleFocus + 1) % 2
+				return m, t.focusGoogleField(), true
+			case "enter":
+				email := strings.TrimSpace(t.googleEmail.Value())
+				password := t.googlePassword.Value()
+				if !strings.Contains(email, "@") {
+					t.message = "Enter the Google account email"
+					return m, nil, true
+				}
+				if password == "" {
+					t.message = "Enter an app password"
+					return m, nil, true
+				}
+				return m, m.connectGoogle(email, password), true
+			}
+			var cmd tea.Cmd
+			if t.googleFocus == 0 {
+				t.googleEmail, cmd = t.googleEmail.Update(msg)
+			} else {
+				t.googlePassword, cmd = t.googlePassword.Update(msg)
+			}
+			return m, cmd, true
 		case "archive-preview":
 			if key == "enter" {
 				t.stage = "archive-confirm"
@@ -556,6 +602,9 @@ func (m Model) transferPanel(r tideui.Renderer) *tideui.Overlay {
 	}
 	if m.contacts.transfer.stage == "source" {
 		return m.importSourcesPanel(r)
+	}
+	if m.contacts.transfer.stage == "google-credentials" {
+		return m.googleCredentialsPanel(r)
 	}
 	w, h := m.formSize(86)
 	inner := m

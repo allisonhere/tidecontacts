@@ -3,3 +3,4 @@
 set query_command = "tidecontacts contacts query --format neomutt -- %s"
 # Ctrl+T already invokes complete-query by default. Optional Tab override:
 # bind editor <Tab> complete-query
+macro index,pager ,cs "<pipe-message>tidecontacts contacts capture-sender<enter>" "Save sender to TideContacts"

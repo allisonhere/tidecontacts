@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Check the client wire formats and shell invocation with isolated demo data."""
+from concurrent.futures import ThreadPoolExecutor
 import json
 import os
 import pathlib
@@ -58,5 +59,31 @@ with tempfile.TemporaryDirectory(prefix='tidecontacts-mail-') as tmp:
     command = command.replace('tidecontacts ', shlex.quote(str(binary)) + ' --demo ', 1)
     result = subprocess.run(['sh', '-c', command], env=env, text=True, capture_output=True)
     assert result.returncode == 0 and result.stdout == aerc.stdout
+    capture = [str(binary), '--demo', 'contacts', 'capture-sender']
+    def send(message):
+        return subprocess.run(capture, input=message, env=env, text=True, capture_output=True)
+
+    first = send("From bounce@example.org Sat Jan  1 12:00:00 2022\n"
+                 "From: =?utf-8?q?Ren=C3=A9e?=\n <writer@example.org>\n"
+                 "Reply-To: other@example.org\n\nprivate message body")
+    assert first.returncode == 0 and first.stdout == 'Saved: writer@example.org\n', first.stderr
+    second = send("From: Different Name <WRITER@example.org>\n\n")
+    assert second.returncode == 0 and second.stdout.startswith('Already saved:'), second.stderr
+    assert lookup('aerc', 'writer@example.org').stdout == 'writer@example.org\tRenée\n'
+    # Use the same initialized book from independent CLI processes.
+    db = pathlib.Path(tmp) / 'concurrent.db'
+    args = [str(binary), '--database', str(db), 'contacts', 'capture-sender', '--json']
+    def capture_json(address):
+        result = subprocess.run(args, input=f"From: {address}\n\n", text=True,
+                                env=env, capture_output=True, check=True)
+        return json.loads(result.stdout)['data']
+    capture_json('seed@example.org')
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        results = list(pool.map(capture_json, ['parallel@example.org'] * 4))
+    assert sum(row['created'] for row in results) == 1
+    assert len({row['contact_id'] for row in results}) == 1
+    for headers in ['Subject: Missing sender', 'From: broken', 'From: a@x, b@y',
+                    'From: a@x\nFrom: b@y']:
+        assert send(headers + '\n\n').returncode == 3
     assert not (pathlib.Path(tmp) / 'data/tidecontacts/tidecontacts.db').exists()
-print('PASS: aerc/NeoMutt wire formats, no-match status, safe shell arguments and demo isolation')
+print('PASS: aerc/NeoMutt wire formats, no-match status, safe shell arguments, sender capture and demo isolation')

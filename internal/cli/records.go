@@ -19,7 +19,7 @@ import (
 )
 
 var actions = map[string]string{
-	"contacts":      "list get create update delete restore history dossier connections query",
+	"contacts":      "list get create update delete restore history dossier connections query capture-sender",
 	"organizations": "list get create update delete restore history dossier connections",
 	"tasks":         "list get create update delete restore complete reopen duplicate",
 	"activities":    "list get create update delete restore",
@@ -90,7 +90,7 @@ func validateCommand(resource, action, id string, o options) error {
 	if !supported {
 		return usage("unsupported action " + resource + " " + action)
 	}
-	needsID := action != "query" && action != "list" && action != "create" && action != "export" && action != "import"
+	needsID := action != "capture-sender" && action != "query" && action != "list" && action != "create" && action != "export" && action != "import"
 	if needsID && id == "" {
 		return usage("this action requires an ID")
 	}

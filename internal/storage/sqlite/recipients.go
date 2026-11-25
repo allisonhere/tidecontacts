@@ -5,7 +5,9 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/allisonhere/tidecontacts/internal/domain"
+	"net/mail"
 	"net/url"
+	"strings"
 )
 
 // OpenReadOnly never creates a database or applies migrations. Completion must
@@ -48,4 +50,56 @@ func (s *Store) EmailRecipients(ctx context.Context, kind string) ([]domain.Reci
 		return err
 	})
 	return out, err
+}
+
+// CaptureSender checks existing email methods and saves a new local contact atomically.
+func (s *Store) CaptureSender(ctx context.Context, from *mail.Address) (string, bool, error) {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return "", false, err
+	}
+	defer func() { _ = tx.Rollback() }()
+	// Acquire SQLite's writer lock before the lookup so concurrent captures see each other.
+	if _, err = tx.ExecContext(ctx, "UPDATE entities SET revision=revision WHERE 0"); err != nil {
+		return "", false, err
+	}
+	var existing string
+	err = each(ctx, tx, `SELECT e.id,m.value FROM methods m JOIN entities e ON e.id=m.entity_id
+ WHERE m.kind='email' AND e.deleted=0 ORDER BY e.archived,e.id`, nil, func(rows *sql.Rows) error {
+		var id, value string
+		if err := rows.Scan(&id, &value); err != nil {
+			return err
+		}
+		if address, err := mail.ParseAddress(value); existing == "" && err == nil && strings.EqualFold(address.Address, from.Address) {
+			existing = id
+		}
+		return nil
+	})
+	if err != nil {
+		return "", false, err
+	}
+	if existing != "" {
+		return existing, false, nil
+	}
+	c := domain.NewContact("person")
+	c.DisplayName = from.Name
+	if c.DisplayName == "" {
+		c.DisplayName = from.Address
+	}
+	value := from.Address
+	if _, err := mail.ParseAddress(value); err != nil {
+		value = (&mail.Address{Address: value}).String()
+	}
+	c.Methods = []domain.Method{{Kind: "email", Value: value, Preferred: true}}
+	c.Normalize()
+	if err = c.Validate(); err != nil {
+		return "", false, err
+	}
+	if err = saveContact(ctx, tx, &c, "capture sender"); err != nil {
+		return "", false, err
+	}
+	if err = reindex(ctx, tx, c.ID); err != nil {
+		return "", false, err
+	}
+	return c.ID, true, tx.Commit()
 }

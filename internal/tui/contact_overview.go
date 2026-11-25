@@ -28,32 +28,42 @@ func contactOverview(r tideui.Renderer, c domain.Contact, width int) string {
 		lines = append(lines, meta.Render(strings.Join(status, " · ")))
 	}
 
-	labelStyle := r.Styles.DetailBody.Foreground(tideui.Legible(r.Styles.Theme.BorderFocus, r.Styles.Theme.Bg, 4.5))
-	var fields []string
+	theme := r.Styles.Theme
+	entryIndex := 0
+	type overviewField struct {
+		label, value string
+		muted        bool
+	}
+	var fields []overviewField
 	field := func(label, value string) {
-		value = domain.SafeText(value)
-		if strings.TrimSpace(value) == "" {
-			return
-		}
-		label = domain.SafeText(label)
-		const labelWidth = 15
-		switch {
-		case label == "":
-			fields = append(fields, body.Render(value))
-		case width < 40 || lipgloss.Width(label) > labelWidth:
-			fields = append(fields, labelStyle.Width(width).Render(label), body.Render(value))
-		default:
-			fields = append(fields, lipgloss.JoinHorizontal(lipgloss.Top,
-				labelStyle.Width(labelWidth).Render(label), "  ",
-				body.Width(width-labelWidth-2).Render(value)))
+		if text := domain.SafeText(value); strings.TrimSpace(text) != "" {
+			fields = append(fields, overviewField{label: domain.SafeText(label), value: text})
 		}
 	}
 	section := func(title string) {
 		if len(fields) == 0 {
 			return
 		}
-		lines = append(lines, "", r.RenderSectionDivider(tideui.SectionDivider{Label: title, Width: width}, r.Styles.Theme.Bg))
-		lines = append(lines, fields...)
+		lines = append(lines, "", r.RenderSectionDivider(tideui.SectionDivider{Label: title, Width: width}, theme.Bg))
+		const labelWidth = 15
+		for _, f := range fields {
+			bg := contactBand(theme, entryIndex)
+			entryIndex++
+			base := body.Background(bg).Foreground(tideui.Legible(theme.Fg, bg, 4.5))
+			labelStyle := base.Foreground(tideui.Legible(theme.BorderFocus, bg, 4.5))
+			switch {
+			case f.muted:
+				lines = append(lines, meta.Background(bg).Foreground(tideui.Legible(theme.Dimmed, bg, 4.5)).Render(f.value))
+			case f.label == "":
+				lines = append(lines, base.Render(f.value))
+			case width < 40 || lipgloss.Width(f.label) > labelWidth:
+				lines = append(lines, labelStyle.Render(f.label), base.Render(f.value))
+			default:
+				value := base.Width(width - labelWidth - 2).Render(f.value)
+				label := labelStyle.Width(labelWidth + 2).Height(lipgloss.Height(value)).Render(f.label)
+				lines = append(lines, lipgloss.JoinHorizontal(lipgloss.Top, label, value))
+			}
+		}
 		fields = nil
 	}
 	for _, v := range c.Methods {
@@ -103,7 +113,7 @@ func contactOverview(r tideui.Renderer, c domain.Contact, width int) string {
 	}
 	field("Updated", updated)
 	field("UUID", c.ID)
-	fields = append(fields, meta.Render(fmt.Sprintf("%d relationships · %d custom fields", len(c.Relationships)+len(c.Incoming), len(c.Fields))))
+	fields = append(fields, overviewField{value: fmt.Sprintf("%d relationships · %d custom fields", len(c.Relationships)+len(c.Incoming), len(c.Fields)), muted: true})
 	section("Record details")
 	return strings.Join(lines, "\n")
 }

@@ -90,6 +90,7 @@ func (c *Contact) Normalize() {
 	if c.DisplayName == "" && len(c.Methods) > 0 {
 		c.DisplayName = c.Methods[0].Value
 	}
+	c.Website = normalizeWebsite(c.Website)
 	seen := map[string]bool{}
 	tags := []string{}
 	for _, t := range c.Tags {
@@ -110,6 +111,9 @@ func (c *Contact) Normalize() {
 			if a, e := mail.ParseAddress(m.Value); e == nil {
 				m.Value = a.Address
 			}
+		}
+		if m.Kind == "website" {
+			m.Value = normalizeWebsite(m.Value)
 		}
 		if m.Verification == "" {
 			m.Verification = "unknown"
@@ -140,6 +144,21 @@ func DateValid(s string) bool {
 func URLValid(s string) bool {
 	u, e := url.Parse(s)
 	return e == nil && (u.Scheme == "https" || u.Scheme == "http") && u.Host != ""
+}
+
+// normalizeWebsite adds a "https://" scheme to a bare domain/path such as
+// "example.com", which Google Contacts and other sources commonly store in
+// a URL field without one. A value that already has some scheme (including
+// a non-http one, which Validate rejects on its own) is left untouched.
+func normalizeWebsite(s string) string {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return s
+	}
+	if u, e := url.Parse(s); e == nil && u.Scheme == "" {
+		return "https://" + s
+	}
+	return s
 }
 func (c Contact) Validate() error {
 	if _, e := uuid.Parse(c.ID); e != nil {

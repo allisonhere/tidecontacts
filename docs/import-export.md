@@ -1,12 +1,12 @@
 # Import/export behavior
 
-Open **Import data…** from the menu or press `I`. The import modal offers CSV contacts, vCard address books, TideContacts CRM archives, Mutt/NeoMutt aliases and khard/vdirsyncer folders. Active sources stay above dimmed, disabled planned sources. Choose a source with ↑/↓ and Enter, then browse folders and supported files. Enter opens a folder or selects a file; ←/Backspace goes to its parent; `p` opens direct path entry (`~/` supported); `b` returns to sources. `.` toggles hidden files and folders, initially off. Esc closes the modal. Mapping, preview, confirmation and results stay in the modal over your workspace. Nothing is written before confirmation.
+Open **Import data…** from the menu or press `I`. The import modal offers CSV contacts, vCard address books, TideContacts CRM archives, Mutt/NeoMutt aliases, khard/vdirsyncer folders, and Google Contacts. Active sources stay above dimmed, disabled planned sources. Choose a source with ↑/↓ and Enter, then browse folders and supported files. Enter opens a folder or selects a file; ←/Backspace goes to its parent; `p` opens direct path entry (`~/` supported); `b` returns to sources. `.` toggles hidden files and folders, initially off. Esc closes the modal. Mapping, preview, confirmation and results stay in the modal over your workspace. Nothing is written before confirmation.
 
 One-time contact import is preview-first and insert-only. Connected folders instead maintain their own read-only records; see [folder synchronization](vcard-directories.md). Every imported entity receives a new UUID; intra-batch references are remapped. Existing contacts are never updated by matching an email, name or foreign UID. Matching names/emails/normalized phones are warnings, including duplicates within the incoming file. They are initially unchecked. Space explicitly permits a separate duplicate record.
 
 ## Workflow
 
-1. Press `I`, choose CSV, vCard or Mutt/NeoMutt aliases, then browse to a file or press `p` to enter its path. Select the CRM source for the [archive workflow](export-import.md), or khard/vdirsyncer for a [folder connection](vcard-directories.md).
+1. Press `I`, choose CSV, vCard or Mutt/NeoMutt aliases, then browse to a file or press `p` to enter its path. Select the CRM source for the [archive workflow](export-import.md), or khard/vdirsyncer/Google Contacts for a [connected address book](vcard-directories.md).
 2. CSV: review header detection (`h`), choose columns with Up/Down, and change mappings with Left/Right. Enter builds the dry-run preview.
 3. Preview: inspect validation errors and duplicates. Space toggles valid rows. `b` returns to CSV mapping. Esc cancels with no changes.
 4. Enter opens the final confirmation. `y` imports the selected records; `n` returns to review.
@@ -48,8 +48,8 @@ Syntax reference: [NeoMutt alias configuration](https://neomutt.org/guide/config
 
 ## Planned sources
 
-The source chooser also lists Google Contacts, Microsoft Outlook / 365, Mozilla Thunderbird, Apple Contacts / iCloud, Fastmail, Proton Contacts, Nextcloud Contacts, Android Contacts, and Evolution / KDE Kontact. These entries are greyed out and marked **coming soon**. They cannot open files or start an import; each will be enabled when its dedicated importer is implemented. The existing generic CSV and vCard importers remain available.
+The source chooser also lists Microsoft Outlook / 365, Mozilla Thunderbird, Apple Contacts / iCloud, Fastmail, Proton Contacts, Nextcloud Contacts, Android Contacts, and Evolution / KDE Kontact. These entries are greyed out and marked **coming soon**. They cannot open files or start an import; each will be enabled when its dedicated importer is implemented. The existing generic CSV and vCard importers remain available.
 
-## Connected vCard folders
+## Connected vCard folders and Google Contacts
 
-**khard / vdirsyncer** is now enabled. It connects a folder as a read-only source with repeatable refresh, rather than creating an independent one-time import. See [connected vCard address books](vcard-directories.md) for setup, refresh, failure recovery and disconnect.
+**khard / vdirsyncer** and **Google Contacts** are enabled. Both connect an address book as a read-only source with repeatable refresh, rather than creating an independent one-time import. khard/vdirsyncer connects a local folder; Google Contacts connects a Google account over CardDAV with an email and an app password. See [connected address books](vcard-directories.md) for setup, refresh, failure recovery and disconnect.

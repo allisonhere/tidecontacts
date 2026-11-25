@@ -20,6 +20,7 @@ type importSource struct {
 	formats    string
 	disabled   bool
 	directory  bool
+	google     bool
 }
 
 var importSources = activeImportSources([]importSource{
@@ -27,7 +28,7 @@ var importSources = activeImportSources([]importSource{
 	{label: "vCard address book", extensions: []string{".vcf", ".vcard"}, formats: "vCard file"},
 	{label: "TideContacts CRM archive", extensions: []string{".json"}, formats: "TideContacts JSON archive"},
 	{label: "Mutt / NeoMutt aliases", formats: "Alias file or inline aliases in .muttrc"},
-	{label: "Google Contacts", formats: "Google CSV, vCard", disabled: true},
+	{label: "Google Contacts", formats: "Email + app password · read-only CardDAV sync", directory: true, google: true},
 	{label: "Microsoft Outlook / 365", formats: "Outlook CSV", disabled: true},
 	{label: "Mozilla Thunderbird", formats: "CSV, LDIF, local address-book database", disabled: true},
 	{label: "Apple Contacts / iCloud", formats: "vCard", disabled: true},

@@ -182,10 +182,11 @@ Press **I** or choose **Menu → Import data…** to open the import modal. Acti
 | TideContacts CRM archive | Browse a `.json`, review its counts and confirm |
 | Mutt / NeoMutt aliases | Read literal alias definitions, then preview and review duplicates |
 | khard / vdirsyncer | Connect a local vCard folder as a read-only, refreshable address book |
+| Google Contacts | Connect a Google account (email + app password) as a read-only, refreshable address book over CardDAV |
 
 Use ↑/↓ and Enter to choose a source. Enter opens folders or selects files, ←/Backspace goes to the parent, `p` opens direct path entry (`~/` works), and `.` toggles hidden files/folders (off initially). Mapping, preview, confirmation and results stay in the modal. Esc closes it before writing. One-time contact imports show invalid rows and leave duplicates unchecked; Space explicitly includes them as new contacts. The confirmed batch commits atomically without overwriting existing contacts. [Formats and limitations](docs/import-export.md).
 
-For **khard / vdirsyncer**, press `n` to browse and `s` to select the current folder, or `p` to enter its path. Preview and confirm the connection. Folders refresh at TideContacts startup, from **Refresh address books** in the menu, and when the TideMail plugin loads or refreshes contacts or handles Ctrl+T lookup. TideContacts need not be running for the plugin to refresh them. A failed refresh keeps the previous snapshot; a successful one updates changed cards and hides removed cards. Local contacts stay separate. vdirsyncer continues to own remote CardDAV sync. [Folder setup and recovery](docs/vcard-directories.md).
+For **khard / vdirsyncer**, press `n` to browse and `s` to select the current folder, or `p` to enter its path. Preview and confirm the connection. For **Google Contacts**, press `n` and enter the account email and an [app password](https://myaccount.google.com/apppasswords) (requires 2-Step Verification); the password is saved to the OS keychain, never to the database or a config file. Both refresh at TideContacts startup, from **Refresh address books** in the menu, and when the TideMail plugin loads or refreshes contacts or handles Ctrl+T lookup. TideContacts need not be running for the plugin to refresh them. A failed refresh keeps the previous snapshot; a successful one updates changed cards and hides removed cards. Local contacts stay separate. vdirsyncer continues to own remote CardDAV sync for folders it manages; TideContacts performs the CardDAV sync itself for a connected Google account. [Address book setup and recovery](docs/vcard-directories.md).
 
 CSV header detection can be toggled. Left/Right changes a column's mapping; repeated email/phone columns are supported. Common export headers have defaults. `b` returns from preview to mapping. Input files are limited to 50 MiB per batch.
 
@@ -247,7 +248,7 @@ Nix). The one manual edit: when `go.mod` moves to a new Go minor version (e.g.
 
 See [architecture](docs/architecture.md), [keys](docs/keybindings.md), [search grammar](docs/search.md), the [CRM guide](docs/crm-guide.md) and [Phase 3 decisions](docs/phase3-decisions.md).
 
-Deferred: direct CardDAV/network sync, calling khard as an external query command, additional provider-specific importers, and AI. See [Phase 3 decisions](docs/phase3-decisions.md) for known limitations.
+Deferred: direct CardDAV/network sync for providers other than Google, calling khard as an external query command, additional provider-specific importers, and AI. See [Phase 3 decisions](docs/phase3-decisions.md) for known limitations.
 
 ## TideMail contacts plugin
 
@@ -265,6 +266,6 @@ including when you open Advanced CRM.
 `contacts query --format aerc|neomutt` supplies recipient candidates from the
 shared address book without a running app. NeoMutt supports searched completion;
 the safe aerc configuration provides a candidate list without shell-interpolated
-query text. See [setup, limits and examples](docs/mail-clients.md).
+query text. Both clients can save the current sender with the supplied `,cs` binding. See [setup, limits and examples](docs/mail-clients.md).
 
 Recipient commands read the cached address book without refreshing external folders. Refresh in TideContacts or TideMail before querying changed folder contacts. [Mutt alias import](docs/import-export.md#mutt--neomutt-aliases) is a separate workflow.

@@ -27,6 +27,35 @@ func TestReadDirectoryUIDsMultiCardAndNoEmail(t *testing.T) {
 		t.Fatal("duplicate UIDs accepted")
 	}
 }
+
+// TestReadDirectoryDropsUnusableWebsiteInsteadOfRejectingCard guards against
+// one external, unfixable field (here an ftp:// link, which a bare-domain
+// scheme fix can't repair) blocking an entire connected directory's sync —
+// the source account, not this app, owns the data, so the field drops
+// silently rather than failing the whole card.
+func TestReadDirectoryDropsUnusableWebsiteInsteadOfRejectingCard(t *testing.T) {
+	folder := t.TempDir()
+	text := "BEGIN:VCARD\nVERSION:3.0\nUID:one\nFN:One\nEMAIL:one@example.org\nURL:ftp://files.example.org/\nURL:example.com\nEND:VCARD\n"
+	if err := os.WriteFile(filepath.Join(folder, "card.vcf"), []byte(text), 0600); err != nil {
+		t.Fatal(err)
+	}
+	snapshot, err := ReadDirectory(context.Background(), folder)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(snapshot.Cards) != 1 {
+		t.Fatalf("expected 1 card, got %d", len(snapshot.Cards))
+	}
+	var websites []string
+	for _, m := range snapshot.Cards[0].Contact.Methods {
+		if m.Kind == "website" {
+			websites = append(websites, m.Value)
+		}
+	}
+	if len(websites) != 1 || websites[0] != "https://example.com" {
+		t.Fatalf("expected only the fixable website to survive, got %v", websites)
+	}
+}
 func TestReadDirectoryDoesNotFollowCardSymlinks(t *testing.T) {
 	folder := t.TempDir()
 	path := filepath.Join(t.TempDir(), "outside.vcf")

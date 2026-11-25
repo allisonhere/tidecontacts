@@ -25,3 +25,23 @@ func TestValidation(t *testing.T) {
 		}
 	}
 }
+
+// TestNormalizeWebsiteAddsScheme guards against sources such as Google
+// Contacts that store a website as a bare domain with no "http(s)" scheme,
+// which otherwise fails Validate and rejects the whole import.
+func TestNormalizeWebsiteAddsScheme(t *testing.T) {
+	c := NewContact("person")
+	c.Nickname = "Handle"
+	c.Website = "example.com"
+	c.Methods = append(c.Methods, Method{Kind: "website", Value: "www.example.org/profile"})
+	c.Normalize()
+	if c.Website != "https://example.com" {
+		t.Fatalf("website scheme not added: %q", c.Website)
+	}
+	if c.Methods[0].Value != "https://www.example.org/profile" {
+		t.Fatalf("method website scheme not added: %q", c.Methods[0].Value)
+	}
+	if e := c.Validate(); e != nil {
+		t.Fatal(e)
+	}
+}
