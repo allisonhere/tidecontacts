@@ -261,3 +261,20 @@ func TestSignalsAppearInInboxWithoutDisturbingIt(t *testing.T) {
 		t.Fatal("signal survived disabling")
 	}
 }
+
+func TestBoardOpensOnTheFirstColumnWithCards(t *testing.T) {
+	v := &extView{doc: ext.View{Board: &ext.Board{Columns: []ext.Column{{ID: "a", Title: "Empty"}, {ID: "b", Title: "Empty too"}, {ID: "c", Cards: []ext.Card{{ID: "x", Title: "X"}}}}}}}
+	v.settle()
+	if v.cur.col != 2 {
+		t.Fatalf("cursor on an empty column: %d", v.cur.col)
+	}
+	if sel, ok := v.selected(); !ok || sel.id != "x" {
+		t.Fatalf("%+v %v", sel, ok)
+	}
+	// An explicit choice is respected even if that column is empty.
+	v = &extView{cur: extFrame{col: 1, selID: "keep"}, doc: v.doc}
+	v.settle()
+	if v.cur.col != 1 {
+		t.Fatalf("a deliberate cursor was moved: %d", v.cur.col)
+	}
+}

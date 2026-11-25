@@ -145,6 +145,15 @@ func (v *extView) selected() (extItem, bool) {
 func (v *extView) settle() {
 	if v.doc.Board != nil && len(v.doc.Board.Columns) > 0 {
 		v.cur.col = min(max(0, v.cur.col), len(v.doc.Board.Columns)-1)
+		if v.cur.selID == "" && len(v.doc.Board.Columns[v.cur.col].Cards) == 0 {
+			// Open on the first column that has something to select.
+			for i, c := range v.doc.Board.Columns {
+				if len(c.Cards) > 0 {
+					v.cur.col, v.cur.row = i, 0
+					break
+				}
+			}
+		}
 		if v.cur.selID != "" {
 			for ci, c := range v.doc.Board.Columns {
 				for ri, cd := range c.Cards {
