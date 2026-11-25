@@ -33,7 +33,7 @@ func fail(code int, kind, message string) error { return &Error{code, kind, mess
 func usage(message string) error                { return fail(2, "usage", message) }
 func invalid(message string) error              { return fail(3, "invalid_input", message) }
 
-var resources = map[string]bool{"contacts": true, "organizations": true, "tasks": true, "activities": true, "projects": true, "pipelines": true, "items": true, "crm": true, "schema": true}
+var resources = map[string]bool{"contacts": true, "organizations": true, "tasks": true, "activities": true, "projects": true, "pipelines": true, "items": true, "crm": true, "schema": true, "extensions": true, "capabilities": true}
 
 func Handles(args []string) bool {
 	if len(args) > 0 && !strings.HasPrefix(args[0], "-") {
@@ -58,6 +58,8 @@ const Help = `TideContacts scripting CLI (JSON API version 1)
   pipelines              list|get|create|update|archive
   items                  list|get|create|update|delete|restore|move
   crm                    export|import
+  extensions             list|inspect|permissions|commands|config|health|enable|disable|run|purge-data
+  capabilities           list
   schema                 [RESOURCE]
 
 Options (before or after subcommands):
@@ -74,7 +76,8 @@ Options (before or after subcommands):
   --entity ID            person/organization whose tasks/activities to list
   --stage ID             destination stage for items move
   --if-match ETAG        required for pipeline update/archive; from get's etag
-  --yes                  required for delete/archive/restore
+  --yes                  required for delete/archive/restore, and to approve an extension's permissions
+  --set KEY=VALUE        extensions config: change one extension setting
   --json                 explicit JSON output (already the default)
   --help                 show this help without opening a database
 
@@ -82,20 +85,23 @@ Record JSON uses existing domain names, such as ID, Revision, DisplayName and Ti
 Update input is a partial object and must include the current Revision, except
 pipelines, which require --if-match. Omitted fields are preserved; arrays replace.
 Read data at .data; pipeline concurrency token is .etag. See schema and docs/cli.md.
-Exit codes: 0 success; 1 runtime; 2 usage; 3 invalid input; 4 not found; 5 conflict.
+Exit codes: 0 success; 1 runtime; 2 usage; 3 invalid input; 4 not found; 5 conflict;
+6 denied (extension permission, approval or entitlement missing).
 `
 
 type options struct {
-	present                                                                            map[string]bool
-	demo, json, yes, help, full                                                        bool
-	database, input, query, kind, view, status, pipeline, entity, stage, match, format string
-	limit                                                                              int
+	present                                                                                 map[string]bool
+	demo, json, yes, help, full                                                             bool
+	database, input, query, kind, view, status, pipeline, entity, stage, match, format, set string
+	limit                                                                                   int
 }
 type envelope struct {
 	Version int       `json:"schema_version"`
 	Data    any       `json:"data"`
 	ETag    string    `json:"etag,omitempty"`
 	Meta    *metadata `json:"meta,omitempty"`
+	// Warnings carries non-fatal notes, such as an unreadable extension state file.
+	Warnings []string `json:"warnings,omitempty"`
 }
 type metadata struct {
 	Resource          string `json:"resource"`
@@ -161,6 +167,9 @@ func Run(ctx context.Context, args []string, in io.Reader, out, stderr io.Writer
 			o.query = strings.Join(pos[2:], " ")
 			pos = pos[:2]
 		}
+	}
+	if len(pos) >= 1 && (pos[0] == "extensions" || pos[0] == "capabilities") {
+		return runExtensionsCommand(ctx, pos, o, in, out)
 	}
 	if len(pos) < 2 || len(pos) > 3 {
 		return usage("expected RESOURCE ACTION [ID]; use --help")
@@ -269,6 +278,7 @@ func parse(args []string) (options, []string, error) {
 	fs.StringVar(&o.entity, "entity", "", "")
 	fs.StringVar(&o.stage, "stage", "", "")
 	fs.StringVar(&o.match, "if-match", "", "")
+	fs.StringVar(&o.set, "set", "", "")
 	fs.IntVar(&o.limit, "limit", 200, "")
 	flags, pos := []string{}, []string{}
 	for i := 0; i < len(args); i++ {
@@ -334,4 +344,46 @@ func pipelineETag(p domain.Pipeline) string {
 	raw, _ := json.Marshal(p)
 	sum := sha256.Sum256(raw)
 	return hex.EncodeToString(sum[:])
+}
+
+// runExtensionsCommand resolves paths (honouring --database and --demo) and
+// delegates; it never opens the contacts database unless a command needs it.
+func runExtensionsCommand(ctx context.Context, pos []string, o options, in io.Reader, out io.Writer) error {
+	if len(pos) < 2 || len(pos) > 4 {
+		return usage("expected extensions ACTION [ID] [COMMAND]; use --help")
+	}
+	var input []byte
+	var err error
+	if o.input != "" {
+		if input, err = readInput(o.input, in); err != nil {
+			return err
+		}
+	}
+	paths, err := config.Resolve()
+	if err != nil {
+		return err
+	}
+	if o.database != "" {
+		if o.demo {
+			return usage("--database and --demo cannot be combined")
+		}
+		if !filepath.IsAbs(o.database) {
+			return usage("--database must be absolute")
+		}
+		paths.Database = o.database
+	}
+	if o.demo {
+		paths = demo.Paths(paths)
+	}
+	id, command := "", ""
+	if len(pos) > 2 {
+		id = pos[2]
+	}
+	if len(pos) > 3 {
+		command = pos[3]
+	}
+	if len(pos) == 4 && pos[1] != "run" {
+		return usage("too many arguments")
+	}
+	return runExtensions(ctx, pos[0], pos[1], id, command, o, input, paths, out)
 }
