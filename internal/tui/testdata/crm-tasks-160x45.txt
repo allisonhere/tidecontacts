@@ -1,23 +1,23 @@
  TideContacts / Tasks  |  local                                                                                                                                 
 ┌───────────────────────────────────┐┌──────────────────────────────────────────────┐┌─────────────────────────────────────────────────────────────────────────┐
 │  Menu                             ││  Tasks · Today 3/13                          ││> Task 02 👩‍💻 xxxxxx                                                      │
-│  People                       1   ││/                                             ││[>] scheduled · priority medium                                          │
-│  Organizations                2   ││─ Overdue ──────────────────────────────────  ││Due 2026-11-03  (10d overdue)                                            │
-│  Relationships                3   ││  [?] Task 00 👩‍💻 · Alex Rivera   12d overdue  ││─ People and organizations ────────────────────────────────────────────  │
-│  Activities                   4   ││  [ ] Task 01 👩‍💻 xxx · Alex Ri ! 11d overdue  ││> who Alex Rivera                                                        │
-│> Tasks                        5   ││> [>] Task 02 👩‍💻 xxxxxx · Ale !! 10d overdue  ││─ Projects ────────────────────────────────────────────────────────────  │
-│  Projects                     6   ││  [w] Task 03 👩‍💻 xxxxxxxxx ·  !!! 9d overdue  ││  proj Harbor 界 redesign with a very long name that must be clipped     │
-│  Pipelines                    7   ││  [?] Task 04 👩‍💻 xxxxxxxxxxxx · A 8d overdue  ││                                                                         │
-│  Insights                     8   ││  [ ] Task 05 👩‍💻 xxxxxxxxxxxxxx ! 7d overdue  ││Created 2026-11-13 12:00 UTC · updated 2026-11-13 12:00 UTC              │
+│  People                         1 ││/                                             ││[>] scheduled · priority medium                                          │
+│  Organizations                  2 ││─ Overdue ──────────────────────────────────  ││Due 2026-11-03  (10d overdue)                                            │
+│  Relationships                  3 ││  [?] Task 00 👩‍💻 · Alex Rivera   12d overdue  ││─ People and organizations ────────────────────────────────────────────  │
+│  Activities                     4 ││  [ ] Task 01 👩‍💻 xxx · Alex Ri ! 11d overdue  ││> who Alex Rivera                                                        │
+│> Tasks                          5 ││> [>] Task 02 👩‍💻 xxxxxx · Ale !! 10d overdue  ││─ Projects ────────────────────────────────────────────────────────────  │
+│  Projects                       6 ││  [w] Task 03 👩‍💻 xxxxxxxxx ·  !!! 9d overdue  ││  proj Harbor 界 redesign with a very long name that must be clipped     │
+│  Pipelines                      7 ││  [?] Task 04 👩‍💻 xxxxxxxxxxxx · A 8d overdue  ││                                                                         │
+│  Insights                       8 ││  [ ] Task 05 👩‍💻 xxxxxxxxxxxxxx ! 7d overdue  ││Created 2026-11-13 12:00 UTC · updated 2026-11-13 12:00 UTC              │
 │                                   ││  [>] Task 06 👩‍💻 xxxxxxxxxxxxx !! 6d overdue  ││                                                                         │
 │Actions                            ││  [w] Task 07 👩‍💻 xxxxxxxxxxxx !!! 5d overdue  ││                                                                         │
-│  New task                     T   ││  [?] Task 08 👩‍💻 xxxxxxxxxxxxxxxx 4d overdue  ││                                                                         │
-│  Complete task, milestone or  c   ││  [ ] Task 09 👩‍💻 xxxxxxxxxxxxxx ! 3d overdue  ││                                                                         │
-│  Import data…                 I   ││  [>] Task 10 👩‍💻 xxxxxxxxxxxxx !! 2d overdue  ││                                                                         │
+│  New task                       T ││  [?] Task 08 👩‍💻 xxxxxxxxxxxxxxxx 4d overdue  ││                                                                         │
+│  Complete task, milestone or in c ││  [ ] Task 09 👩‍💻 xxxxxxxxxxxxxx ! 3d overdue  ││                                                                         │
+│  Import data…                   I ││  [>] Task 10 👩‍💻 xxxxxxxxxxxxx !! 2d overdue  ││                                                                         │
 │  Refresh address books            ││  [w] Task 11 👩‍💻 xxxxxxxxxxxxx !!! yesterday  ││                                                                         │
 │  Themes                           ││─ Today ────────────────────────────────────  ││                                                                         │
-│  All actions                  :   ││  [?] Task 12 👩‍💻 xxxxxxxxxxxxxxxxxxxxx today  ││                                                                         │
-│  Help                         ?   ││                                              ││                                                                         │
+│  All actions                    : ││  [?] Task 12 👩‍💻 xxxxxxxxxxxxxxxxxxxxx today  ││                                                                         │
+│  Help                           ? ││                                              ││                                                                         │
 │                                   ││                                              ││                                                                         │
 │                                   ││                                              ││                                                                         │
 │                                   ││                                              ││                                                                         │

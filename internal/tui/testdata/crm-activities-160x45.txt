@@ -1,23 +1,23 @@
  TideContacts / Activities  |  local                                                                                                                            
 ┌───────────────────────────────────┐┌──────────────────────────────────────────────┐┌─────────────────────────────────────────────────────────────────────────┐
 │  Menu                             ││  Activities · All 3/40                       ││> Activity 02                                                            │
-│  People                       1   ││/                                             ││meeting · Thu 2026-11-12 22:00 UTC                                       │
-│  Organizations                2   ││─ Fri 2026-11-13 · today ───────────────────  ││Recorded here · private                                                  │
-│  Relationships                3   ││  12:00 mail Activity 00 · Alex Rivera, Sam   ││─ Notes ───────────────────────────────────────────────────────────────  │
-│> Activities                   4   ││  05:00 call Activity 01 · Alex Rivera, Sam   ││body text body text                                                      │
-│  Tasks                        5   ││─ Thu 2026-11-12 · yesterday ───────────────  ││─ People and organizations ────────────────────────────────────────────  │
-│  Projects                     6   ││> 22:00 mtg Activity 02 · Alex Rivera, Sam L  ││> who Alex Rivera                                                        │
-│  Pipelines                    7   ││  15:00 conv Activity 03 · Alex Rivera, Sam   ││  who Sam Lee                                                            │
-│  Insights                     8   ││  08:00 msg Activity 04 · Alex Rivera, Sam L  ││─ Projects ────────────────────────────────────────────────────────────  │
+│  People                         1 ││/                                             ││meeting · Thu 2026-11-12 22:00 UTC                                       │
+│  Organizations                  2 ││─ Fri 2026-11-13 · today ───────────────────  ││Recorded here · private                                                  │
+│  Relationships                  3 ││  12:00 mail Activity 00 · Alex Rivera, Sam   ││─ Notes ───────────────────────────────────────────────────────────────  │
+│> Activities                     4 ││  05:00 call Activity 01 · Alex Rivera, Sam   ││body text body text                                                      │
+│  Tasks                          5 ││─ Thu 2026-11-12 · yesterday ───────────────  ││─ People and organizations ────────────────────────────────────────────  │
+│  Projects                       6 ││> 22:00 mtg Activity 02 · Alex Rivera, Sam L  ││> who Alex Rivera                                                        │
+│  Pipelines                      7 ││  15:00 conv Activity 03 · Alex Rivera, Sam   ││  who Sam Lee                                                            │
+│  Insights                       8 ││  08:00 msg Activity 04 · Alex Rivera, Sam L  ││─ Projects ────────────────────────────────────────────────────────────  │
 │                                   ││  01:00 note Activity 05 · Alex Rivera, Sam   ││  proj Harbor 界 redesign with a very long name that must be clipped     │
 │Actions                            ││─ Wed 2026-11-11 ───────────────────────────  ││                                                                         │
-│  New activity                 A   ││  18:00 evnt Activity 06 · Alex Rivera, Sam   ││Created 2026-11-13 12:00 UTC · updated 2026-11-13 12:00 UTC              │
+│  New activity                   A ││  18:00 evnt Activity 06 · Alex Rivera, Sam   ││Created 2026-11-13 12:00 UTC · updated 2026-11-13 12:00 UTC              │
 │  Sync TideMail                    ││  11:00 mail Activity 07 · Alex Rivera, Sam   ││                                                                         │
-│  Import data…                 I   ││  04:00 call Activity 08 · Alex Rivera, Sam   ││                                                                         │
+│  Import data…                   I ││  04:00 call Activity 08 · Alex Rivera, Sam   ││                                                                         │
 │  Refresh address books            ││─ Tue 2026-11-10 ───────────────────────────  ││                                                                         │
 │  Themes                           ││  21:00 mtg Activity 09 · Alex Rivera, Sam L  ││                                                                         │
-│  All actions                  :   ││  14:00 conv Activity 10 · Alex Rivera, Sam   ││                                                                         │
-│  Help                         ?   ││  07:00 msg Activity 11 · Alex Rivera, Sam L  ││                                                                         │
+│  All actions                    : ││  14:00 conv Activity 10 · Alex Rivera, Sam   ││                                                                         │
+│  Help                           ? ││  07:00 msg Activity 11 · Alex Rivera, Sam L  ││                                                                         │
 │                                   ││  00:00 note Activity 12 · Alex Rivera, Sam   ││                                                                         │
 │                                   ││─ Mon 2026-11-09 ───────────────────────────  ││                                                                         │
 │                                   ││  17:00 evnt Activity 13 · Alex Rivera, Sam   ││                                                                         │

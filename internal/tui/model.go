@@ -394,10 +394,10 @@ func (m Model) dispatch(id string) (tea.Model, tea.Cmd) {
 		m.overlay = help
 
 	case "left-grow":
-		m.left.Grow()
+		m.resizeFocused(true)
 		m.feedback = "Layout changed; saved on exit"
 	case "left-shrink":
-		m.left.Shrink()
+		m.resizeFocused(false)
 		m.feedback = "Layout changed; saved on exit"
 	case "right-grow":
 		m.right.Grow()
@@ -658,4 +658,38 @@ func (m Model) View() string {
 		layout.Modal = m.transferPanel(r)
 	}
 	return lipgloss.JoinVertical(lipgloss.Left, header, r.Render(layout))
+}
+
+// resizeFocused widens or narrows the pane you are in. In three columns the
+// menu owns the left ratio, the list owns the right ratio, and the detail pane
+// takes whatever is left; its edge moves with the arrow key.
+func (m *Model) resizeFocused(grow bool) {
+	switch {
+	case m.mode() != tideui.ThreeColumn:
+		if grow {
+			m.left.Grow()
+		} else {
+			m.left.Shrink()
+		}
+	case m.menuOpen:
+		if grow {
+			m.left.Grow()
+		} else {
+			m.left.Shrink()
+		}
+	case m.focus == 0:
+		if grow {
+			m.right.Grow()
+		} else {
+			m.right.Shrink()
+		}
+	default:
+		// The detail pane's left edge is the list's right edge, so the arrow
+		// moves that edge: right narrows the detail, left widens it.
+		if grow {
+			m.right.Grow()
+		} else {
+			m.right.Shrink()
+		}
+	}
 }

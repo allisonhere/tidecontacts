@@ -88,7 +88,7 @@ func window(lines []string, at, height int) []string {
 func (m Model) ratios() (float64, float64) {
 	left, right := m.left.Value(), m.right.Value()
 	if m.mode() == tideui.ThreeColumn {
-		return min(left, .23), max(right, .30)
+		return left, right
 	}
 	if m.isCRM() {
 		if m.state.Active == wsPipelines {

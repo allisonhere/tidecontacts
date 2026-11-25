@@ -61,7 +61,9 @@ func (m Model) menuPane() tideui.Pane {
 	lines := []string{}
 	r := tideui.NewRenderer(m.theme(), tideui.StyleOptions{Density: tideui.Compact})
 	left, _ := m.ratios()
-	width := max(1, int(float64(m.width)*left)-4)
+	// The pane frame leaves two more columns than other panes use; fill them so
+	// rows span the same width as the "Menu" header.
+	width := max(1, int(float64(m.width)*left)-2)
 	if m.mode() != tideui.ThreeColumn {
 		width = max(1, min(54, m.width-4)-4)
 	}
@@ -127,6 +129,8 @@ func (m Model) updateMenu(k tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "back":
 		m.menuOpen = false
 		return m, nil
+	case "left-grow", "left-shrink", "right-grow", "right-shrink":
+		return m.dispatch(id)
 	case "next", "new-contact", "reminder-add", "quit":
 	default:
 		available := false

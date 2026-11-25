@@ -1,23 +1,23 @@
  TideContacts / Relationships  |  local                                                                                                                         
 ┌───────────────────────────────────┐┌──────────────────────────────────────────────┐┌─────────────────────────────────────────────────────────────────────────┐
 │  Menu                             ││  Relationships 2/3                           ││> Tree · Sam Lee                                                         │
-│  People                       1   ││/                                             ││Sam Lee                                                                  │
-│  Organizations                2   ││  who Alex Rivera           Riverside Studio  ││> └─ mentor → Alex Rivera                                                │
-│> Relationships                3   ││> who Sam Lee                                 ││                                                                         │
-│  Activities                   4   ││  org Riverside Studio                        ││                                                                         │
-│  Tasks                        5   ││                                              ││                                                                         │
-│  Projects                     6   ││                                              ││                                                                         │
-│  Pipelines                    7   ││                                              ││                                                                         │
-│  Insights                     8   ││                                              ││                                                                         │
+│  People                         1 ││/                                             ││Sam Lee                                                                  │
+│  Organizations                  2 ││  who Alex Rivera           Riverside Studio  ││> └─ mentor → Alex Rivera                                                │
+│> Relationships                  3 ││> who Sam Lee                                 ││                                                                         │
+│  Activities                     4 ││  org Riverside Studio                        ││                                                                         │
+│  Tasks                          5 ││                                              ││                                                                         │
+│  Projects                       6 ││                                              ││                                                                         │
+│  Pipelines                      7 ││                                              ││                                                                         │
+│  Insights                       8 ││                                              ││                                                                         │
 │                                   ││                                              ││                                                                         │
 │Actions                            ││                                              ││                                                                         │
-│  Add relationship             r   ││                                              ││                                                                         │
-│  Set follow-up schedule       F   ││                                              ││                                                                         │
-│  Import data…                 I   ││                                              ││                                                                         │
+│  Add relationship               r ││                                              ││                                                                         │
+│  Set follow-up schedule         F ││                                              ││                                                                         │
+│  Import data…                   I ││                                              ││                                                                         │
 │  Refresh address books            ││                                              ││                                                                         │
 │  Themes                           ││                                              ││                                                                         │
-│  All actions                  :   ││                                              ││                                                                         │
-│  Help                         ?   ││                                              ││                                                                         │
+│  All actions                    : ││                                              ││                                                                         │
+│  Help                           ? ││                                              ││                                                                         │
 │                                   ││                                              ││                                                                         │
 │                                   ││                                              ││                                                                         │
 │                                   ││                                              ││                                                                         │

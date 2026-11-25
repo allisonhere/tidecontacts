@@ -1,22 +1,22 @@
  TideContacts / Insights  |  local                                                                                                                              
 ┌───────────────────────────────────┐┌──────────────────────────────────────────────┐┌─────────────────────────────────────────────────────────────────────────┐
 │  Menu                             ││  Insights · Inbox 3/22                       ││> Task 02 👩‍💻 xxxxxx                                                      │
-│  People                       1   ││/                                             ││Overdue commitment                                                       │
-│  Organizations                2   ││─ Overdue ──────────────────────────────────  ││─ Why this is here ────────────────────────────────────────────────────  │
-│  Relationships                3   ││  late Task 00 👩‍💻         Overdue commitment  ││Due 2026-11-03, 10 days overdue; involves Alex Rivera                    │
-│  Activities                   4   ││  late Task 01 👩‍💻 xxx     Overdue commitment  ││Date: 2026-11-03 (10d overdue)                                           │
-│  Tasks                        5   ││> late Task 02 👩‍💻 xxxxxx  Overdue commitment  ││─ Source ──────────────────────────────────────────────────────────────  │
-│  Projects                     6   ││  late Task 03 👩‍💻 xxxxxxx Overdue commitment  ││> task Task 02 👩‍💻 xxxxxx                                                 │
-│  Pipelines                    7   ││  late Task 04 👩‍💻 xxxxxxx Overdue commitment  ││  who Alex Rivera                                                        │
-│> Insights                     8   ││  late Task 05 👩‍💻 xxxxxxx Overdue commitment  ││                                                                         │
+│  People                         1 ││/                                             ││Overdue commitment                                                       │
+│  Organizations                  2 ││─ Overdue ──────────────────────────────────  ││─ Why this is here ────────────────────────────────────────────────────  │
+│  Relationships                  3 ││  late Task 00 👩‍💻         Overdue commitment  ││Due 2026-11-03, 10 days overdue; involves Alex Rivera                    │
+│  Activities                     4 ││  late Task 01 👩‍💻 xxx     Overdue commitment  ││Date: 2026-11-03 (10d overdue)                                           │
+│  Tasks                          5 ││> late Task 02 👩‍💻 xxxxxx  Overdue commitment  ││─ Source ──────────────────────────────────────────────────────────────  │
+│  Projects                       6 ││  late Task 03 👩‍💻 xxxxxxx Overdue commitment  ││> task Task 02 👩‍💻 xxxxxx                                                 │
+│  Pipelines                      7 ││  late Task 04 👩‍💻 xxxxxxx Overdue commitment  ││  who Alex Rivera                                                        │
+│> Insights                       8 ││  late Task 05 👩‍💻 xxxxxxx Overdue commitment  ││                                                                         │
 │                                   ││  late Task 06 👩‍💻 xxxxxxx Overdue commitment  ││In inbox since 2026-11-13 12:00 UTC · open                               │
 │Actions                            ││  late Task 07 👩‍💻 xxxxxxx Overdue commitment  ││─ Actions ─────────────────────────────────────────────────────────────  │
-│  Add reminder                 b   ││  late Task 08 👩‍💻 xxxxxxx Overdue commitment  ││Enter open source   c complete   t create/open task                      │
-│  Import data…                 I   ││  late Task 09 👩‍💻 xxxxxxx Overdue commitment  ││z snooze   x dismiss   v mark reviewed   S change schedule               │
+│  Add reminder                   b ││  late Task 08 👩‍💻 xxxxxxx Overdue commitment  ││Enter open source   c complete   t create/open task                      │
+│  Import data…                   I ││  late Task 09 👩‍💻 xxxxxxx Overdue commitment  ││z snooze   x dismiss   v mark reviewed   S change schedule               │
 │  Refresh address books            ││  late Task 10 👩‍💻 xxxxxxx Overdue commitment  ││                                                                         │
 │  Themes                           ││  late Task 11 👩‍💻 xxxxxxx Overdue commitment  ││                                                                         │
-│  All actions                  :   ││─ Due now ──────────────────────────────────  ││                                                                         │
-│  Help                         ?   ││  f/up Sam Lee                 Follow-up due  ││                                                                         │
+│  All actions                    : ││─ Due now ──────────────────────────────────  ││                                                                         │
+│  Help                           ? ││  f/up Sam Lee                 Follow-up due  ││                                                                         │
 │                                   ││  bell Ping                     Reminder due  ││                                                                         │
 │                                   ││─ Upcoming and unprocessed ─────────────────  ││                                                                         │
 │                                   ││  new Task 12 👩‍💻 xxxxxxxxxx Unprocessed task  ││                                                                         │
