@@ -232,3 +232,5 @@ func TestExtensionDossierPanelRows(t *testing.T) {
 		t.Fatal("stale panel result applied")
 	}
 }
+
+func ctxBackground() context.Context { return context.Background() }

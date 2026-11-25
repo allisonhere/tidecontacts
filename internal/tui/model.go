@@ -307,7 +307,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 func (m Model) dispatch(id string) (tea.Model, tea.Cmd) {
-	if id == "extensions-manage" || strings.HasPrefix(id, "ext:") {
+	if id == "extensions-manage" || strings.HasPrefix(id, "ext:") || strings.HasPrefix(id, "ext-ws:") {
 		return m.extDispatch(id)
 	}
 	if id == "refresh-address-books" {

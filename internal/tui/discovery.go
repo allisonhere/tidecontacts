@@ -46,6 +46,7 @@ func (m Model) menuCommands() []app.Command {
 	for _, w := range domain.Workspaces() {
 		out = append(out, app.Command{ID: "workspace-" + w.ID, Label: w.Name})
 	}
+	out = append(out, m.extWorkspaceEntries()...)
 	ids := [][]string{{"new-contact", "tidemail-sync"}, {"new-contact"}, {"relationship-add", "followup-schedule"}, {"activity-log", "tidemail-sync"}, {"task-new", "complete"}, {"project-new"}, {"pipeline-new", "item-new"}, {"reminder-add"}}
 	for _, id := range ids[m.state.Active] {
 		for _, c := range m.registry.Commands() {
@@ -76,7 +77,7 @@ func (m Model) menuPane() tideui.Pane {
 		if selected {
 			prefix = "> "
 		}
-		if i == 8 {
+		if i == 8+len(m.extWorkspaceEntries()) {
 			lines = append(lines, "", "Actions")
 		}
 		label := c.Label

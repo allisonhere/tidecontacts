@@ -9,6 +9,7 @@ import (
 
 	"github.com/allisonhere/tidecontacts/internal/app"
 	"github.com/allisonhere/tidecontacts/internal/domain"
+	"github.com/allisonhere/tidecontacts/internal/ext"
 	"github.com/allisonhere/tidecontacts/internal/search"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -275,6 +276,7 @@ func (m *Model) loadCRM() tea.Cmd {
 	filter, order := projectFilters[m.crm.projectFilter], taskSorts[m.crm.taskSort]
 	pipeline := m.crm.pipeline
 	pinned := m.pinnedTaskViews()
+	extMgr := m.extensions.mgr
 	return func() tea.Msg {
 		msg := crmListMsg{ws: ws, seq: seq, pipeline: pipeline}
 		switch ws {
@@ -353,6 +355,9 @@ func (m *Model) loadCRM() tea.Cmd {
 			case 0:
 				items, e := repo.Inbox(ctx)
 				msg.rows, msg.err = inboxRows(items), e
+				if e == nil {
+					msg.rows = append(msg.rows, loadExtSignals(ctx, extMgr)...)
+				}
 			case 1:
 				cfg, e := repo.RadarConfig(ctx)
 				if e == nil {
@@ -528,6 +533,8 @@ func (m *Model) loadCRMDetail() tea.Cmd {
 		case "person", "organization":
 			conn, e := repo.Connections(ctx, row.id)
 			msg.rows, msg.err = connectionsDetail(conn, sub, today), e
+		case "extsignal":
+			msg.rows = extSignalDetail(row.data.(ext.SignalRef))
 		case "inbox":
 			it := row.data.(domain.InboxItem)
 			msg.rows = []crmRow{txt(domain.InboxKinds[it.Kind]), head("Why this is here"), txt(it.Reason)}

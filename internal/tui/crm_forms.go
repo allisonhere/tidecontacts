@@ -261,6 +261,8 @@ func (m Model) overlayPanel(r tideui.Renderer) *tideui.Overlay {
 		return m.editorPanel(u)
 	case c.form != nil:
 		return m.formPanel(u)
+	case m.extensions.view != nil:
+		return m.extViewPanel(u)
 	}
 	return nil
 }

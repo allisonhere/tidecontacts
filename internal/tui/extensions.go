@@ -21,6 +21,8 @@ const extPanelSlot = ext.SlotContactDossier
 
 type extState struct {
 	mgr       *ext.Manager
+	view      *extView
+	resume    map[string]*extView
 	modal     *extModal
 	panelFor  string
 	panelRows []crmRow
@@ -47,10 +49,11 @@ type (
 		err  error
 	}
 	extResultMsg struct {
-		owner   *extModal
-		title   string
-		content ext.Content
-		err     error
+		owner *extModal
+		ext   string
+		title string
+		res   ext.ActionResult
+		err   error
 	}
 	extPanelMsg struct {
 		seq  uint64
@@ -76,12 +79,16 @@ func (m Model) paletteMatches() []app.Command {
 		return matches
 	}
 	refs := m.extensions.mgr.Commands()
-	if len(refs) == 0 {
+	spaces := m.extWorkspaceEntries()
+	if len(refs) == 0 && len(spaces) == 0 {
 		return matches
 	}
 	r := app.Registry{}
 	for _, c := range m.registry.Commands() {
 		_ = r.Register(c)
+	}
+	for _, w := range spaces {
+		_ = r.Register(app.Command{ID: w.ID, Label: "Open " + w.Label})
 	}
 	for _, c := range refs {
 		_ = r.Register(app.Command{ID: "ext:" + c.Extension + ":" + c.ID, Label: extSafe(c.ExtensionName, 40) + ": " + extSafe(c.Title, 60)})
@@ -100,6 +107,13 @@ func (m Model) extDispatch(id string) (tea.Model, tea.Cmd) {
 		m.extensions.modal = &extModal{mode: "list", busy: true}
 		return m, m.extLoad()
 	}
+	if strings.HasPrefix(id, "ext-ws:") {
+		p := strings.SplitN(strings.TrimPrefix(id, "ext-ws:"), ":", 2)
+		if len(p) == 2 {
+			return m.openExtWorkspace(p[0], p[1])
+		}
+		return m, nil
+	}
 	parts := strings.SplitN(strings.TrimPrefix(id, "ext:"), ":", 2)
 	if len(parts) != 2 {
 		return m, nil
@@ -111,12 +125,17 @@ func (m Model) extDispatch(id string) (tea.Model, tea.Cmd) {
 		}
 	}
 	m.extensions.modal = modal
+	args := map[string]string{}
+	// Context for commands that act on the selection (read-only facts: an id and a kind).
+	if m.isContacts() && m.contacts.contact.ID != "" {
+		args["context_contact"], args["context_kind"] = m.contacts.contact.ID, m.contacts.contact.Kind
+	}
 	ctx := m.contacts.ctx
 	return m, func() tea.Msg {
 		c, cancel := extTimeout(ctx)
 		defer cancel()
-		content, err := mgr.RunCommand(c, parts[0], parts[1], nil)
-		return extResultMsg{owner: modal, title: modal.title, content: content, err: err}
+		res, err := mgr.RunCommandResult(c, parts[0], parts[1], args)
+		return extResultMsg{owner: modal, ext: parts[0], title: modal.title, res: res, err: err}
 	}
 }
 
@@ -164,13 +183,22 @@ func (m Model) updateExtensions(msg tea.Msg) (Model, tea.Cmd, bool) {
 		}
 		return m, m.extLoad(), true
 	case extResultMsg:
-		if e.modal == v.owner && e.modal != nil {
-			e.modal.busy = false
-			if v.err != nil {
-				e.modal.err = extSafe(v.err.Error(), 240)
-			} else {
-				e.modal.content = v.content
-			}
+		if e.modal != v.owner || e.modal == nil {
+			return m, nil, true
+		}
+		e.modal.busy = false
+		if v.err != nil {
+			e.modal.err = extSafe(v.err.Error(), 240)
+			return m, nil, true
+		}
+		if v.res.Form != nil || v.res.Open != nil {
+			e.modal = nil
+			next, cmd := m.applyExtCommandResult(v.ext, v.res)
+			return next, cmd, true
+		}
+		e.modal.content = ext.Content{Title: v.res.Title, Lines: v.res.Lines}
+		if v.res.Notice != "" {
+			e.modal.content.Lines = append(e.modal.content.Lines, ext.Line{Text: v.res.Notice})
 		}
 		return m, nil, true
 	case extPanelMsg:
@@ -180,10 +208,12 @@ func (m Model) updateExtensions(msg tea.Msg) (Model, tea.Cmd, bool) {
 		return m, nil, true
 	case tea.KeyMsg:
 		if e.modal == nil {
-			return m, nil, false
+			return m.updateExtView(msg)
 		}
 		next, cmd := m.extKey(v)
 		return next, cmd, true
+	case extViewMsg, extActionMsg, extSubmitMsg:
+		return m.updateExtView(msg)
 	}
 	return m, nil, false
 }
@@ -474,4 +504,81 @@ func (m Model) extPanelRows(id string) []crmRow {
 		return nil
 	}
 	return m.extensions.panelRows
+}
+
+// ---- signals in the People Inbox ----
+
+// extSignalRows turns contributed signals into Inbox rows under a heading per
+// extension. They sit after the core entries and never reorder them.
+func extSignalRows(signals []ext.SignalRef, names map[string]string) []crmRow {
+	var rows []crmRow
+	group := ""
+	tags := map[string]string{"danger": "!!", "warn": "! ", "info": "· "}
+	for _, s := range signals {
+		if s.Extension != group {
+			group = s.Extension
+			rows = append(rows, head(extSafe(firstNonEmptyStr(names[s.Extension], s.Extension), 40)+" attention"))
+		}
+		rows = append(rows, crmRow{kind: "extsignal", id: s.Extension + "/" + s.Key, tag: tags[s.Severity], text: s.Title, meta: s.Type, data: s})
+	}
+	return rows
+}
+
+// loadExtSignals fetches signals with a short budget: a slow or failing
+// extension contributes nothing and never delays the built-in Inbox for long.
+func loadExtSignals(ctx context.Context, mgr *ext.Manager) []crmRow {
+	if mgr == nil {
+		return nil
+	}
+	c, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+	list := mgr.Signals(c)
+	if len(list) == 0 {
+		return nil
+	}
+	names := map[string]string{}
+	for _, s := range list {
+		if info, err := mgr.Inspect(s.Extension); err == nil {
+			names[s.Extension] = info.Name
+		}
+	}
+	return extSignalRows(list, names)
+}
+
+func extSignalDetail(s ext.SignalRef) []crmRow {
+	rows := []crmRow{txt(extSafe(s.Type, 40)), head("Why this is here"), txt(s.Reason)}
+	if len(s.Facts) > 0 {
+		rows = append(rows, head("Recorded facts"))
+		for _, f := range s.Facts {
+			rows = append(rows, txt("· "+f))
+		}
+	}
+	if s.Date != "" {
+		rows = append(rows, txt("Date: "+s.Date))
+	}
+	if s.Action != "" {
+		rows = append(rows, head("Suggested next step"), txt(s.Action))
+	}
+	return rows
+}
+
+// extSignalAction asks the owning extension to dismiss or snooze a signal.
+func extSignalAction(ctx context.Context, mgr *ext.Manager, s ext.SignalRef, action string, args map[string]string) error {
+	if mgr == nil {
+		return fmt.Errorf("extensions are unavailable")
+	}
+	ws := ""
+	for _, w := range mgr.Workspaces() {
+		if w.Extension == s.Extension {
+			ws = w.ID
+		}
+	}
+	res, err := mgr.RunAction(ctx, s.Extension, ext.ActionRequest{Workspace: ws, Action: action, Target: s.Key, Args: args})
+	if err != nil {
+		return err
+	}
+	for _, e := range res.Errors {
+		return fmt.Errorf("%s", e)
+	}
+	return nil
 }

@@ -13,6 +13,7 @@ import (
 
 	"github.com/allisonhere/tidecontacts/internal/connector/tidemail"
 	"github.com/allisonhere/tidecontacts/internal/domain"
+	"github.com/allisonhere/tidecontacts/internal/ext"
 	"github.com/allisonhere/tidecontacts/internal/transfer"
 	"github.com/allisonhere/tideui"
 	tea "github.com/charmbracelet/bubbletea"
@@ -657,6 +658,11 @@ func (m Model) crmAction(id string) (Model, tea.Cmd, bool) {
 				next, cmd := m.follow(it.Source)
 				return next, cmd, true
 			}
+		case "extsignal":
+			if sig := row.data.(ext.SignalRef); sig.Target != nil {
+				next, cmd := m.applyExtCommandResult(sig.Extension, ext.ActionResult{Open: sig.Target})
+				return next, cmd, true
+			}
 		case "signal", "followup":
 			next, cmd := m.follow(row.ref)
 			return next, cmd, true
@@ -903,6 +909,11 @@ func (m Model) crmAction(id string) (Model, tea.Cmd, bool) {
 				}
 				return nil
 			}), true
+		case "extsignal":
+			sig, mgr := row.data.(ext.SignalRef), m.extensions.mgr
+			return m, m.crmDo("Dismissed until something changes", func(ctx context.Context) (string, error) {
+				return "", extSignalAction(ctx, mgr, sig, "signal.dismiss", nil)
+			}), true
 		case "reminder":
 			return m, m.crmDo("Reminder dismissed", func(ctx context.Context) (string, error) { return "", repo.DismissReminder(ctx, row.id) }), true
 		case "inbox":
@@ -952,6 +963,11 @@ func (m Model) crmAction(id string) (Model, tea.Cmd, bool) {
 					return repo.SnoozeReminder(ctx, strings.TrimPrefix(it.Key, "reminder:"), morning(day))
 				}
 				return repo.InboxAct(ctx, it.Key, "snooze", day)
+			})
+		case "extsignal":
+			sig, mgr := row.data.(ext.SignalRef), m.extensions.mgr
+			return ask("Snooze “"+sig.Title+"”", func(ctx context.Context, day string) error {
+				return extSignalAction(ctx, mgr, sig, "signal.snooze", map[string]string{"until": day})
 			})
 		case "reminder":
 			return ask("Snooze reminder", func(ctx context.Context, day string) error { return repo.SnoozeReminder(ctx, row.id, morning(day)) })
