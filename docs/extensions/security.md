@@ -47,6 +47,18 @@ permissions must never be presented as OS-level isolation.
 | Data loss when disabling | ✓ | Disable never deletes; purge is explicit, separate and refuses while enabled |
 | Confused-deputy via entitlements | ◐ | Checked at resolution and every host call for extensions that declare one. No production licensing exists; do not treat the interface as enforcement |
 
+## Added in Phase 3B
+
+| Surface | Control |
+|---|---|
+| `storage.sql` | The host creates the data directory `0700` and tells **only** extensions holding the permission where it is; contents are not restricted (same-user trust) and `purge-data` refuses a directory holding a manifest |
+| Declarative views | Every string is sanitised and bounded; keys cannot hijack reserved bindings; collections are capped; actions that declare `confirm` are confirmed by the host; core-record links use fixed kinds and token ids |
+| `cli.register` | Built-in resource names are reserved; arguments are passed as data; stdin is size-limited |
+| `signals.provide` | Capped, sanitised, ordered by the extension's own severity only; the host does not score |
+| `events.publish` | Declared types only, identifier payloads only (extra fields rejected), host-stamped source, ≤ 1 000 per request, never delivered back to extensions |
+| `records.resolve` | Read permission per kind; ≤ 500 ids; minimal projection; a wrong-kind id looks like a missing one |
+| Development entitlements | Opt-in by environment variable, labelled in every decision and banner, malformed value grants nothing |
+
 ## Limitations
 
 * No OS sandbox (see above). A future phase should add an optional sandbox

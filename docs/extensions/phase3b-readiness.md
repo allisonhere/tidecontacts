@@ -1,6 +1,8 @@
 # Phase 3B readiness: what a Professional sales extension needs from the host
 
-> Status: analysis, written against the Phase 3A source. It contains **no
+> Status: **the gaps below are now addressed** by the Phase 3B host changes
+> (see [specification §9](specification.md#9-rich-contributions-added-after-phase-3a-still-api-version-1-additive)
+> and ADR-9 to ADR-11). The analysis is kept as the record of why. Originally: analysis, written against the Phase 3A source. It contains **no
 > Professional business logic** and does not change any license. Professional
 > implementation is blocked until a separate private repository exists (see
 > [licensing-boundary.md](licensing-boundary.md) and
@@ -108,3 +110,19 @@ implemented.
 Until the private repository exists and licensing clearance is resolved, no
 Professional functionality should be committed here and nothing should be
 distributed as a combined commercial product.
+
+
+## Resolution (Phase 3B, community side)
+
+| Gap | Resolution |
+|---|---|
+| 1 UI contributions | Declarative views/forms/actions; menu workspace; host-rendered with theme tones (ADR-9) |
+| 2 Storage | `storage.sql` provisions a private directory; the extension owns its database (ADR-10) |
+| 3 Merge/delete events | `contact.deleted`, `organization.deleted`, `related_id` on `contact.merged`; `records.resolve` reports `merged_into` |
+| 4 Publishing events | `events.publish` with declared, identifier-only types; not delivered to extensions yet |
+| 5 CLI resources | `[[cli]]` resources routed through `cli.run`/`cli.schema`; `--demo` and `--database` may precede them |
+| 6 Per-call latency | Measured ≈ 26 ms per request; long-lived mode still deferred |
+| 7 Inbox/Radar | `signals.provide` contributes explained signals to the People Inbox (dismiss/snooze via `action.run`) |
+| 8 Links to extension records | Kept extension-side; contact dossier panel; `records.resolve` for batch lookups; `projects.save` added |
+| 9 Dev entitlements | `TIDECONTACTS_DEV_ENTITLEMENTS`, labelled "not a license"; per-capability entitlement |
+| 10 Distribution | Unchanged: manual install, executable digest re-approval; no registry |

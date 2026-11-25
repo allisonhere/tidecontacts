@@ -2,6 +2,12 @@
 
 Current state: November 20, 2026. This replaces the old Phase 3 handoff. Use [STATUS.md](STATUS.md) for the current feature inventory and [README.md](README.md) for setup.
 
+## Phase 3B: host contributions for a Professional extension (November 25, 2026)
+
+Branch `feat/phase3b-host-extension-points`, stacked on the 3A branch; not merged or pushed. Adds, in separate commits: UI documents (`internal/ext/ui.go`), manifest contributions, new permissions (`cli.register`, `signals.provide`, `events.publish`, `storage.sql`, `projects.write` enforced), host calls (`records.resolve`, `entitlement.check`, `events.publish`, `projects.save`), per-capability and development entitlements, CLI resource routing (`internal/cli/extensions.go`), the TUI workspace (`internal/tui/extview.go`) and Inbox signals (`internal/tui/extensions.go`). Spec: `docs/extensions/specification.md` §9; decisions ADR-9 to ADR-11; readiness analysis and its resolution: `docs/extensions/phase3b-readiness.md`. Professional business logic lives only in the private `tidecontacts-pro` repository.
+
+Verify: `make check`, `make smoke-extensions`, `make smoke`. Seven Phase 3A commits (`git log origin/main..`) still carry a Claude `Co-Authored-By` trailer that the user asked not to add; strip with an interactive rebase before pushing if wanted.
+
 ## Phase 3A: extension architecture (November 25, 2026)
 
 Branch `feat/phase3a-extension-architecture`; not merged, no release. Licensing is unchanged and still pending ([COMMERCIAL-LICENSING.md](COMMERCIAL-LICENSING.md), [checklist](docs/licensing-checklist.md)); [docs/extensions/licensing-boundary.md](docs/extensions/licensing-boundary.md) lists the open questions for counsel. Nothing commercial was implemented.
