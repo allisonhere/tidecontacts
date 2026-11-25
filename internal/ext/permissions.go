@@ -41,6 +41,8 @@ var permissionTable = []Permission{
 	{"ui.register", "Contribute host-rendered panels", EnforcedByHost, false},
 	{"commands.register", "Add command-palette actions", EnforcedByHost, false},
 	{"storage.extension", "Use the extension's private key-value storage", EnforcedByHost, false},
+	{"attention.read", "Read the People Inbox (needs contacts.read and tasks.read too)", EnforcedByHost, true},
+	{"attention.write", "Dismiss, review and snooze People Inbox entries", EnforcedByHost, true},
 	{"cli.register", "Add top-level JSON CLI resources", EnforcedByHost, false},
 	{"signals.provide", "Contribute attention signals to the People Inbox", EnforcedByHost, false},
 	{"events.publish", "Publish extension-namespaced events (identifiers only)", EnforcedByHost, false},

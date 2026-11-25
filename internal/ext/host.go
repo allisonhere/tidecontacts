@@ -110,6 +110,8 @@ func (s *Session) Call(ctx context.Context, method string, data json.RawMessage)
 			d = EntitlementDecision{Capability: a.Capability, Reason: "decision unavailable", Source: "error"}
 		}
 		return d, nil
+	case "attention.list", "attention.act", "tasks.complete", "contacts.engagement":
+		return s.attention(ctx, method, data)
 	case "events.publish":
 		return s.publish(data)
 	case "records.resolve":
