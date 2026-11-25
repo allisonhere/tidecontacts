@@ -17,4 +17,4 @@ UTC
                                                             
                                                             
                                                             
- TASKS / Today  n new  / filter  : commands  ? help  ctrl+g 
+ TASKS / Today          n new  / filter  : commands  ? help 

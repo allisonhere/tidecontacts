@@ -123,30 +123,29 @@ func (u softUI) note(text string, width int, isErr bool) string {
 }
 
 // tabs renders a section strip with the current section accented and marked.
-func (u softUI) tabs(names []string, current, width int) string {
-	parts := []string{}
-	for i, n := range names {
-		n = strings.ToLower(n)
+func (u softUI) tabs(names []string, current, width int, focused bool) []string {
+	var lines []string
+	line := ""
+	for i, name := range names {
+		label := strings.ToLower(name)
+		style := u.style(u.base, u.muted)
 		if i == current {
-			parts = append(parts, u.style(u.base, u.accent).Bold(true).Underline(true).Render(n))
-		} else {
-			parts = append(parts, u.style(u.base, u.muted).Render(n))
+			style = u.style(u.base, u.accent).Bold(true).Underline(true)
+			if focused {
+				label = "[" + label + "]"
+			}
 		}
+		tab := style.Render(label)
+		if line != "" && lipgloss.Width(line)+2+lipgloss.Width(tab) > width {
+			lines = append(lines, u.line(line, width))
+			line = ""
+		}
+		if line != "" {
+			line += "  "
+		}
+		line += tab
 	}
-	gap := u.style(u.base, u.muted).Render("  ")
-	line := strings.Join(parts, gap)
-	if lipgloss.Width(line)+2 > width {
-		// Too narrow for every tab: show position and the current name instead.
-		line = u.style(u.base, u.accent).Bold(true).Render(strings.ToLower(names[current])) + u.style(u.base, u.muted).Render(" ("+itoa(current+1)+"/"+itoa(len(names))+")")
-	}
-	return u.line(u.style(u.base, u.muted).Render("  ")+line, width)
-}
-
-func itoa(n int) string {
-	if n < 10 {
-		return string(rune('0' + n))
-	}
-	return itoa(n/10) + string(rune('0'+n%10))
+	return append(lines, u.line(line, width))
 }
 
 // hints renders the footer. When it does not fit, pairs are dropped from the

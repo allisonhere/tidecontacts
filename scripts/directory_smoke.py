@@ -29,6 +29,8 @@ with tempfile.TemporaryDirectory(prefix='tidecontacts-directory-') as root:
                         '\nEMAIL:one@example.org\nEMAIL:two@example.org\nEND:VCARD\n')
 
     write('Folder Person')
+    postal = folder / 'postal'
+    postal.write_text('BEGIN:VCARD\nVERSION:3.0\nUID:postal\nADR:;;42 Example Street;Example City;;;\nEND:VCARD\n')
     master, slave = pty.openpty()
     fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack('HHHH', 32, 120, 0, 0))
     process = subprocess.Popen([str(binary)], stdin=slave, stdout=slave, stderr=slave, env=env)
@@ -67,7 +69,7 @@ with tempfile.TemporaryDirectory(prefix='tidecontacts-directory-') as root:
     try:
         drain(0.7)
         send('I')
-        for _ in range(4):
+        for _ in range(5):
             send(b'\x1b[B', 0.04)
         send(b'\r')
         assert b'Connected vCard folders' in transcript, bytes(transcript[-3000:])
@@ -77,7 +79,7 @@ with tempfile.TemporaryDirectory(prefix='tidecontacts-directory-') as root:
         assert rows("SELECT count(*) FROM entities") == [(0,)], 'Preview wrote contacts'
         send(b'\r')
         send('y', 0.5)
-        assert rows("SELECT display_name FROM entities WHERE kind='person' AND deleted=0") == [('Folder Person',)]
+        assert rows("SELECT display_name FROM entities WHERE kind='person' AND deleted=0 ORDER BY display_name") == [('42 Example Street, Example City',), ('Folder Person',)]
         send(b'\x1b')
         send('q', 0.3)
         process.wait(timeout=5)
@@ -96,6 +98,7 @@ with tempfile.TemporaryDirectory(prefix='tidecontacts-directory-') as root:
         assert result['warning'] and result['contacts'], result
         (folder / 'broken.vcf').unlink()
         (folder / 'renamed.vcf').unlink()
+        postal.unlink()
         assert call('contacts.list', {'query': 'Changed'})['contacts'] == []
         print('PASS: modal folder connect, preview, plugin-only refresh, all emails, stable UID, read-only marker, failure recovery and removal')
     finally:

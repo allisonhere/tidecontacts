@@ -617,7 +617,7 @@ func (m Model) crmAction(id string) (Model, tea.Cmd, bool) {
 				c.col = next
 				return reloadDetail()
 			}
-			if delta < 0 && m.mode() != tideui.Tabbed {
+			if delta < 0 {
 				m.focus = 0
 			} else if delta > 0 && m.mode() == tideui.ThreeColumn {
 				m.focus = 2

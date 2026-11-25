@@ -8,7 +8,7 @@ TideContacts can connect to local address-book folders maintained by vdirsyncer,
 2. Press `n` to browse. Open your address-book folder and press `s` to select the current folder. Press `.` in the browser to show hidden folders such as `~/.contacts` or `~/.config`. Alternatively, press `p` in the folder manager and enter a path (`~/` works).
 3. Review the number of cards, press Enter, then `y` to connect.
 
-Connect each address-book folder separately. The reader accepts `.vcf` and `.vcard` files in that folder, including hidden filenames and files containing several cards. It does not search subfolders. Contacts without email addresses remain available in TideContacts; only contacts with email appear in TideMail’s People view or recipient lookup.
+Connect each address-book folder separately. The reader accepts `.vcf` and `.vcard` files in that folder, including hidden filenames and files containing several cards. Extensionless files beginning with a vCard header are also recognized. Select a folder containing cards for the first connection. It does not search subfolders. Contacts without email addresses remain available in TideContacts; only contacts with email appear in TideMail’s People view or recipient lookup.
 
 ## Connect a Google account
 

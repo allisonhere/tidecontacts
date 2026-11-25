@@ -304,3 +304,49 @@ func TestTransferWorkflowMappingDryRunAndMarkedExport(t *testing.T) {
 		t.Fatal(string(data), e)
 	}
 }
+
+func TestBasicContactMethodsPreserveOtherEntries(t *testing.T) {
+	c := domain.NewContact("person")
+	c.Methods = []domain.Method{{Kind: "email", Value: "other@example.org"}, {Kind: "email", Value: "primary@example.org", Preferred: true, Label: "Work", Notes: "Office", ID: "work-id"}}
+	e := newEditor(c)
+	if e.fields[0][1].input.Value() != c.Methods[1].Value {
+		t.Fatal("preferred email missing")
+	}
+	e.fields[0][1].input.SetValue("updated@example.org")
+	e.fields[0][2].input.SetValue("555-0101")
+	if err := e.flush(); err != nil {
+		t.Fatal(err)
+	}
+	want := c.Methods[1]
+	want.Value = "updated@example.org"
+	if len(e.draft.Methods) != 3 || e.draft.Methods[0] != c.Methods[0] || e.draft.Methods[1] != want || e.draft.Methods[2].Value != "555-0101" {
+		t.Fatal(e.draft.Methods)
+	}
+	e.rebuild()
+	e.fields[0][1].input.SetValue("")
+	if err := e.flush(); err != nil {
+		t.Fatal(err)
+	}
+	e.rebuild()
+	if len(e.draft.Methods) != 2 || e.fields[0][1].input.Value() != c.Methods[0].Value {
+		t.Fatal(e.draft.Methods)
+	}
+}
+
+func TestEditorSectionTabArrows(t *testing.T) {
+	m, _ := browser(t)
+	m, _ = key(m, "n")
+	m, _ = key(m, "Ada")
+	m, _ = press(m, tea.KeyUp)
+	m, _ = press(m, tea.KeyRight)
+	e := m.contacts.editor
+	if !e.tabsFocused || e.section != 1 || e.draft.DisplayName != "Ada" {
+		t.Fatal("section switch lost focus or draft")
+	}
+	m, _ = press(m, tea.KeyLeft)
+	m, _ = press(m, tea.KeyDown)
+	m, _ = press(m, tea.KeyLeft)
+	if e.tabsFocused || e.section != 0 || !e.fields[0][0].input.Focused() {
+		t.Fatal("field cursor did not regain focus")
+	}
+}

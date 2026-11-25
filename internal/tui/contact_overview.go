@@ -1,9 +1,7 @@
 package tui
 
 import (
-	"fmt"
 	"strings"
-	"time"
 
 	"github.com/allisonhere/tidecontacts/internal/domain"
 	"github.com/allisonhere/tideui"
@@ -106,15 +104,6 @@ func contactOverview(r tideui.Renderer, c domain.Contact, width int) string {
 	section("Biography")
 	field("", clip(c.Notes, 400))
 	section("Private notes")
-	field("Source", c.Source)
-	updated := c.UpdatedAt
-	if at, err := time.Parse(time.RFC3339, updated); err == nil {
-		updated = at.UTC().Format("Jan 2, 2006 · 15:04 UTC")
-	}
-	field("Updated", updated)
-	field("UUID", c.ID)
-	fields = append(fields, overviewField{value: fmt.Sprintf("%d relationships · %d custom fields", len(c.Relationships)+len(c.Incoming), len(c.Fields)), muted: true})
-	section("Record details")
 	return strings.Join(lines, "\n")
 }
 

@@ -98,19 +98,52 @@ func (m Model) menuPane() tideui.Pane {
 	return tideui.Pane{Title: "Menu", Content: strings.Join(lines, "\n"), Focused: m.menuOpen, ScrollOffset: max(0, m.menuSelected-max(1, m.height-9))}
 }
 
-// newFromMenu creates in the highlighted workspace, just as New does in its list.
-func (m Model) newFromMenu() (tea.Model, tea.Cmd) {
-	commands := m.menuCommands()
-	selected := commands[min(max(0, m.menuSelected), len(commands)-1)]
-	m.menuOpen = false
-	var navigate tea.Cmd
-	if strings.HasPrefix(selected.ID, "workspace-") {
-		next, cmd := m.dispatch(selected.ID)
-		m, navigate = next.(Model), cmd
+// updateMenu keeps focus in the menu while workspace highlights load their records.
+func (m Model) updateMenu(k tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if k.Paste {
+		return m, nil
 	}
-	// New in the workspace menu creates the workspace's primary record. In the
-	// pipeline board, list/detail focus otherwise changes New into a new item.
+	if k.String() == "ctrl+c" {
+		return m, tea.Quit
+	}
+	id := m.registry.Key(k.String())
+	commands := m.menuCommands()
+	switch id {
+	case "up", "down":
+		step := 1
+		if id == "up" {
+			step = -1
+		}
+		m.menuSelected = min(max(0, m.menuSelected+step), len(commands)-1)
+		if m.menuSelected < len(domain.Workspaces()) && m.menuSelected != m.state.Active {
+			return m.dispatch(commands[m.menuSelected].ID)
+		}
+		return m, nil
+	case "activate":
+		id = commands[m.menuSelected].ID
+		if strings.HasPrefix(id, "workspace-") {
+			id = "next"
+		}
+	case "back":
+		m.menuOpen = false
+		return m, nil
+	case "next", "new-contact", "reminder-add", "quit":
+	default:
+		available := false
+		for _, c := range commands {
+			if c.ID == id {
+				available = true
+				break
+			}
+		}
+		if !available {
+			return m, nil
+		}
+	}
+	m.menuOpen = false
 	m.focus = 0
-	next, create := m.dispatch("new-contact")
-	return next, tea.Batch(navigate, create)
+	if id == "next" {
+		return m, nil
+	}
+	return m.dispatch(id)
 }

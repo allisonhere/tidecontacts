@@ -142,7 +142,10 @@ func (m Model) updateDirectories(msg tea.Msg) (Model, tea.Cmd, bool) {
 		t := v.owner
 		t.working = false
 		if v.err != nil {
-			t.message = v.err.Error()
+			if !importSources[t.source].google {
+				t.stage = "result"
+			}
+			t.message = "Address book was not updated.\n" + v.err.Error()
 			return m, nil, true
 		}
 		t.directorySnapshot = v.snapshot
@@ -152,7 +155,7 @@ func (m Model) updateDirectories(msg tea.Msg) (Model, tea.Cmd, bool) {
 		if googlecontacts.IsAccount(v.snapshot.Path) {
 			unchanged = "Nothing is written back to Google."
 		}
-		t.message = fmt.Sprintf("%d cards validated. No contacts written. %s", len(v.snapshot.Cards), unchanged)
+		t.message = fmt.Sprintf("%d cards found. Press Enter, then y to connect. %s", len(v.snapshot.Cards), unchanged)
 		return m, nil, true
 	case directoryRefreshResult:
 		note := v.note

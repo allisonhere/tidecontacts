@@ -202,3 +202,37 @@ func TestDirectorySnapshotRollbackOnInvalidContact(t *testing.T) {
 		t.Fatal("failed snapshot connected a book", books, err)
 	}
 }
+
+func TestMixedVdirItems(t *testing.T) {
+	ctx := context.Background()
+	store, err := sqlite.Open(ctx, filepath.Join(t.TempDir(), "contacts.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	dir := t.TempDir()
+	if _, err := Sync(ctx, dir, store); err == nil {
+		t.Fatal("connected an empty new folder")
+	}
+	for filename, field := range map[string]string{"postal": "ADR:;;42 Example Street;Springfield;;;", "phone.VCF": "TEL:555-0150", "email.vcard": "EMAIL:sample@example.org", "mixed.vcf": "TEL:555-0101\nEMAIL:mixed@example.org\nADR:;;1 Example Street;;;;"} {
+		data := "BEGIN:VCARD\nVERSION:3.0\nUID:" + filename + "\n" + field + "\nEND:VCARD\n"
+		if err := os.WriteFile(filepath.Join(dir, filename), []byte(data), 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.WriteFile(filepath.Join(dir, "displayname"), []byte("Contacts"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	report, err := Sync(ctx, dir, store)
+	if err != nil || report.Added != 4 {
+		t.Fatal(report, err)
+	}
+	books, err := store.ContactDirectories(ctx)
+	if err != nil || len(books) != 1 || books[0].Contacts != 4 {
+		t.Fatal(books, err)
+	}
+	report, err = Sync(ctx, dir, store)
+	if err != nil || report.Unchanged != 4 {
+		t.Fatal(report, err)
+	}
+}

@@ -50,7 +50,14 @@ func ReadDirectory(ctx context.Context, path string) (domain.DirectorySnapshot, 
 			return snapshot, err
 		}
 		ext := strings.ToLower(filepath.Ext(entry.Name()))
-		if ext != ".vcf" && ext != ".vcard" {
+		candidate := ext == ".vcf" || ext == ".vcard"
+		if ext == "" && entry.Type().IsRegular() {
+			candidate, err = hasVCardHeader(filepath.Join(absolute, entry.Name()))
+			if err != nil {
+				return snapshot, err
+			}
+		}
+		if !candidate {
 			if entry.IsDir() {
 				subdirs++
 			} else {
@@ -61,8 +68,8 @@ func ReadDirectory(ctx context.Context, path string) (domain.DirectorySnapshot, 
 		if entry.Type()&os.ModeSymlink != 0 {
 			return snapshot, fmt.Errorf("%s: symlinked vCards are unsupported", entry.Name())
 		}
-		if entry.IsDir() {
-			continue
+		if !entry.Type().IsRegular() {
+			return snapshot, fmt.Errorf("%s: expected a regular vCard file", entry.Name())
 		}
 		data, err := readLocalFile(filepath.Join(absolute, entry.Name()))
 		if err != nil {
@@ -82,9 +89,24 @@ func ReadDirectory(ctx context.Context, path string) (domain.DirectorySnapshot, 
 		snapshot.Cards = append(snapshot.Cards, cards...)
 	}
 	if len(snapshot.Cards) == 0 && len(entries) > 0 {
-		return snapshot, fmt.Errorf("no .vcf or .vcard files found directly in %s (%d subfolders and %d other files skipped; subfolders are not scanned, so choose the folder that holds the cards)", absolute, subdirs, skippedFiles)
+		return snapshot, fmt.Errorf("no vCard files found directly in %s (%d subfolders and %d other files skipped; subfolders are not scanned, so choose the folder that holds the cards)", absolute, subdirs, skippedFiles)
 	}
 	return snapshot, nil
+}
+
+// Extensionless vdir items can be recognized without loading unrelated files.
+func hasVCardHeader(path string) (bool, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return false, err
+	}
+	defer func() { _ = f.Close() }()
+	prefix, err := io.ReadAll(io.LimitReader(f, 32))
+	if err != nil {
+		return false, err
+	}
+	first, _, _ := bytes.Cut(bytes.TrimPrefix(prefix, []byte{239, 187, 191}), []byte("\n"))
+	return bytes.EqualFold(bytes.TrimSpace(first), []byte("BEGIN:VCARD")), nil
 }
 
 // DecodeVCards parses one vCard-format blob — a local file's bytes, or one

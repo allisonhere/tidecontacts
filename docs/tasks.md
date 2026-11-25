@@ -49,7 +49,7 @@ Press `n` in Tasks or `T` anywhere to open **New task** in the same modal style 
 
 On **People & orgs** or **Projects**, press Space or Ctrl+O to search existing records. Enter selects or removes a link and returns to the form; Ctrl+D removes the last link from the focused field. The selected record’s identity is preserved even if names are duplicated. Starting from a contact or project preselects that link. Creating a task from an activity or inbox entry opens the form with its title/context filled in.
 
-Enter, F2 or Ctrl+S saves; use Ctrl+S while editing the multiline Description. Esc asks before discarding a changed draft. A title-only task defaults to Inbox. Other fields are optional.
+Enter advances a field. F2 or Ctrl+S saves; use Ctrl+S while editing the multiline Description. Esc asks before discarding a changed draft. A title-only task defaults to Inbox. Other fields are optional.
 
 For the old one-line syntax, choose **Quick capture task (one line)** from the command palette. It remains optional for users who prefer `due:`, `pri:` and other tokens.
 

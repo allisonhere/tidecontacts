@@ -17,4 +17,4 @@ UTC
                                                             
                                                             
                                                             
- ACTIVITIES / All  n new  / filter  : commands  ? help  ctr 
+ ACTIVITIES / All       n new  / filter  : commands  ? help 

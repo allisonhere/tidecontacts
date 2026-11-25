@@ -2,7 +2,7 @@
 ┌───────────────────────┐┌───────────────────────────────────────────────────────────────────────────────────┐
 │  People 1/1           ││> Overview                                                                         │
 │/                      ││Renée Rivera                                                                       │
-│> Renée Rivera         ││                                                                                   │
+│> Renée Rivera · renee@││                                                                                   │
 │                       ││─ Contact details ─────────────────────────────────────────────────────────────────│
 │                       ││email            renee@example.com                                                 │
 │                       ││                                                                                   │
@@ -10,11 +10,11 @@
 │                       ││Private notes                                                                      │
 │                       ││Second line                                                                        │
 │                       ││                                                                                   │
-│                       ││─ Record details ──────────────────────────────────────────────────────────────────│
-│                       ││Source           manual                                                            │
-│                       ││Updated          Jan 1, 2000 · 00:00 UTC                                           │
-│                       ││UUID             00000000-0000-0000-0000-000000000000                              │
-│                       ││0 relationships · 0 custom fields                                                  │
+│                       ││                                                                                   │
+│                       ││                                                                                   │
+│                       ││                                                                                   │
+│                       ││                                                                                   │
+│                       ││                                                                                   │
 │                       ││                                                                                   │
 │                       ││                                                                                   │
 │                       ││                                                                                   │
@@ -29,4 +29,4 @@
 │                       ││                                                                                   │
 │                       ││                                                                                   │
 └───────────────────────┘└───────────────────────────────────────────────────────────────────────────────────┘
- CONTACTS / Overview                                         n new  e edit  / search  : commands  ctrl+g Menu 
+ CONTACTS / Overview                                                  esc back  e edit  / search  ctrl+g Menu 

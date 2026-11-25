@@ -17,4 +17,4 @@ schedule
                                                             
                                                             
                                                             
- INSIGHTS / Inbox  n new  / filter  : commands  ? help  ctr 
+ INSIGHTS / Inbox       n new  / filter  : commands  ? help 

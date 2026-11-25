@@ -14,7 +14,7 @@ Every key below is a command in one registry: the same command runs from its key
 | / | Incremental workspace search |
 | :, Ctrl+K | Fuzzy command palette |
 | ? | Searchable help browser; categories on the left, shortcuts on the right |
-| Ctrl+G | Focus the workspace/action menu (modal below 120 columns); n opens New for the highlighted workspace |
+| Ctrl+G | Focus the workspace/action menu (modal below 120 columns); ↑/↓ previews workspaces, Tab/Right/l enters the list, and n opens New for the highlighted workspace |
 | 1–8 | Switch workspace: People, Organizations, Relationships, Activities, Tasks, Projects, Pipelines, Insights |
 | n / e | New / edit contact or organization |
 | f / a | Toggle favorite / archived |
@@ -72,7 +72,7 @@ Palette-only commands: Quick capture task (one line), Quick capture activity (on
 | Quick-capture prompt | Type, Enter accepts, Esc cancels. Errors keep the prompt open |
 | Picker | Type to search, Up/Down (or Ctrl+P/Ctrl+N) select, Enter chooses, Esc cancels |
 | Confirmation | y confirms, n or Esc cancels |
-| Record form (modal) | Tab/Shift+Tab or Up/Down move between fields, Left/Right/Space change a choice, Enter, F2 or Ctrl+S saves (Ctrl+S in a multi-line field, where Enter is a newline), Esc cancels (asks before discarding changes) |
+| Record form (modal) | Tab/Shift+Tab or Up/Down move between fields, Left/Right/Space change a choice, Enter advances a field. F2 or Ctrl+S saves (Ctrl+S in a multi-line field, where Enter is a newline), Esc cancels (asks before discarding changes) |
 | Task/activity People & orgs / Projects | Space or Ctrl+O opens a searchable chooser; Enter toggles a link and returns; Ctrl+D removes the last link |
 | Multi-line field in a form | Same editor as contact notes; Tab leaves it |
 
@@ -82,10 +82,11 @@ Creation and edit forms share a fixed vertical height, with compact input rows a
 
 | Keys | Action |
 |---|---|
-| F5 / F6 | Previous section / next section; Left/Right stay in the current text input |
+| ↑ from first field | Focus section tabs. Use ←/→ to change sections and ↓ or Enter to edit. In Notes or Biography, ↑ reaches tabs from the start of the text. |
+| F5 / F6 | Previous section / next section. Inside a field, ←/→ moves the text cursor. |
 | Down / Up, Tab / Shift+Tab | Next/previous input; in multiline Notes/Biography, arrows move the cursor and Tab switches the two sections |
 | Ctrl+N / Ctrl+D | Add/remove a method, membership, custom field or relationship |
-| Enter / F2 / Ctrl+S | Validate and atomically save (in Notes and Biography, Enter is a newline: use Ctrl+S) |
+| F2 / Ctrl+S | Validate and atomically save (in Notes and Biography, Enter is a newline: use Ctrl+S) |
 | Esc | Cancel; confirm discard if modified |
 | Ctrl+C | Exit; confirm discard if modified |
 

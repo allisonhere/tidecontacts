@@ -21,7 +21,7 @@ type systemClipboard struct{}
 func (systemClipboard) Read() (string, error) { return clipboard.ReadAll() }
 func (systemClipboard) Write(s string) error  { return clipboard.WriteAll(s) }
 
-var editorSections = []string{"Identity", "Methods", "Organizations", "Tags & fields", "Relationships", "Notes", "Biography"}
+var editorSections = []string{"Name & contact", "Emails & phones", "Organizations", "Tags & fields", "Relationships", "Notes", "Biography"}
 
 type editField struct {
 	path, label, initial string
@@ -34,7 +34,7 @@ type contactEditor struct {
 	section, selected int
 	notes, biography  multiline
 	err, confirm      string
-	quit              bool
+	quit, tabsFocused bool
 }
 
 func newEditor(c domain.Contact) contactEditor {
@@ -47,9 +47,6 @@ func (e *contactEditor) add(section, group int, path, label string) {
 	if err != nil {
 		return
 	}
-	input := textinput.New()
-	input.Prompt = ""
-	input.CharLimit = 4096
 	value := ""
 	switch v.Kind() {
 	case reflect.Bool:
@@ -63,12 +60,26 @@ func (e *contactEditor) add(section, group int, path, label string) {
 	default:
 		value = v.String()
 	}
+	e.addInput(section, group, path, label, value)
+}
+func (e *contactEditor) addInput(section, group int, path, label, value string) {
+	input := textinput.New()
+	input.Prompt = ""
+	input.CharLimit = 4096
 	input.SetValue(value)
 	e.fields[section] = append(e.fields[section], editField{path: path, label: label, initial: input.Value(), group: group, input: input})
 }
 func (e *contactEditor) rebuild() {
 	e.fields = [5][]editField{}
-	identity := []string{"DisplayName", "Aliases", "Source", "Avatar", "Favorite", "Archived"}
+	e.add(0, -1, "DisplayName", "Name")
+	for _, item := range []struct{ kind, label string }{{"email", "Email"}, {"phone", "Phone"}} {
+		value := ""
+		if i := primaryMethodIndex(e.draft.Methods, item.kind); i >= 0 {
+			value = e.draft.Methods[i].Value
+		}
+		e.addInput(0, -1, item.kind, item.label, value)
+	}
+	identity := []string{"Aliases", "Source", "Avatar", "Favorite", "Archived"}
 	if e.draft.Kind == "person" {
 		identity = append(identity, "Given", "Middle", "Family", "Prefix", "Suffix", "Nickname", "Phonetic", "Birthday", "Anniversary")
 	} else {
@@ -110,6 +121,22 @@ func (e *contactEditor) rebuild() {
 		e.selected = min(e.selected, max(0, len(e.fields[e.section])-1))
 	}
 }
+func primaryMethodIndex(methods []domain.Method, kind string) int {
+	first := -1
+	for i, m := range methods {
+		if m.Kind != kind {
+			continue
+		}
+		if m.Preferred {
+			return i
+		}
+		if first < 0 {
+			first = i
+		}
+	}
+	return first
+}
+
 func fieldValue(c *domain.Contact, path string) (reflect.Value, error) {
 	v := reflect.ValueOf(c).Elem()
 	for _, name := range strings.Split(path, ".") {
@@ -129,9 +156,31 @@ func fieldValue(c *domain.Contact, path string) (reflect.Value, error) {
 	return v, nil
 }
 func (e *contactEditor) flush() error {
+	pending := *e
+	pending.draft = cloneContact(e.draft)
+	if err := pending.applyInputs(); err != nil {
+		return err
+	}
+	e.draft = pending.draft
+	return nil
+}
+func (e *contactEditor) applyInputs() error {
 	for _, fields := range e.fields {
 		for _, f := range fields {
 			if f.input.Value() == f.initial {
+				continue
+			}
+			if f.path == "email" || f.path == "phone" {
+				value := strings.TrimSpace(f.input.Value())
+				i := primaryMethodIndex(e.draft.Methods, f.path)
+				switch {
+				case i < 0 && value != "":
+					e.draft.Methods = append(e.draft.Methods, domain.Method{Kind: f.path, Value: value, Source: "manual", Verification: "unknown"})
+				case i >= 0 && value == "":
+					e.draft.Methods = append(e.draft.Methods[:i], e.draft.Methods[i+1:]...)
+				case i >= 0:
+					e.draft.Methods[i].Value = value
+				}
 				continue
 			}
 			v, err := fieldValue(&e.draft, f.path)
@@ -181,7 +230,7 @@ func (e *contactEditor) flush() error {
 func (e *contactEditor) dirty() bool {
 	copy := *e
 	copy.draft = cloneContact(e.draft)
-	if copy.flush() != nil {
+	if copy.applyInputs() != nil {
 		return true
 	}
 	a, _ := json.Marshal(copy.draft)
@@ -195,6 +244,9 @@ func (e *contactEditor) focusCmd() tea.Cmd {
 		for i := range e.fields[s] {
 			e.fields[s][i].input.Blur()
 		}
+	}
+	if e.tabsFocused {
+		return nil
 	}
 	if e.section == 5 {
 		e.notes.Focus()
@@ -236,7 +288,25 @@ func (m Model) updateEditor(msg tea.Msg) (Model, tea.Cmd, bool) {
 			}
 			return m, nil, true
 		}
-		switch k.String() {
+		key := k.String()
+		if e.tabsFocused {
+			switch key {
+			case "left":
+				key = "f5"
+			case "right":
+				key = "f6"
+			case "enter", "down", "tab":
+				e.tabsFocused = false
+				return m, e.focusCmd(), true
+			case "f5", "f6", "esc", "ctrl+c", "ctrl+s", "f2":
+			default:
+				return m, nil, true
+			}
+		} else if key == "up" && e.selected == 0 && (e.section < 5 || e.section == 5 && e.notes.model.CursorIndex() == 0 || e.section == 6 && e.biography.model.CursorIndex() == 0) {
+			e.tabsFocused = true
+			return m, e.focusCmd(), true
+		}
+		switch key {
 		case "ctrl+c", "esc":
 			if e.dirty() {
 				e.confirm = "Discard unsaved changes?"
@@ -248,17 +318,14 @@ func (m Model) updateEditor(msg tea.Msg) (Model, tea.Cmd, bool) {
 				return m, tea.Quit, true
 			}
 			return m, nil, true
-		case "enter":
-			if e.section >= 5 {
-				break // a newline in notes and biography
-			}
-			fallthrough
 		case "f2", "ctrl+s":
-			if err := e.flush(); err != nil {
+			pending := *e
+			pending.draft = cloneContact(e.draft)
+			if err := pending.applyInputs(); err != nil {
 				e.err = err.Error()
 				return m, nil, true
 			}
-			draft := cloneContact(e.draft)
+			draft := pending.draft
 			draft.Normalize()
 			if err := draft.Validate(); err != nil {
 				e.err = err.Error()
@@ -276,14 +343,17 @@ func (m Model) updateEditor(msg tea.Msg) (Model, tea.Cmd, bool) {
 				return m, nil, true
 			}
 			delta := 1
-			if k.String() == "f5" {
+			if key == "f5" {
 				delta = -1
 			}
 			e.section = (e.section + delta + len(editorSections)) % len(editorSections)
 			e.selected = 0
 			e.rebuild()
 			return m, e.focusCmd(), true
-		case "tab", "shift+tab", "up", "down":
+		case "enter", "tab", "shift+tab", "up", "down":
+			if k.String() == "enter" && e.section >= 5 {
+				break
+			}
 			if e.section >= 5 {
 				if k.String() == "up" || k.String() == "down" {
 					break
@@ -305,6 +375,9 @@ func (m Model) updateEditor(msg tea.Msg) (Model, tea.Cmd, bool) {
 			}
 			return m, e.focusCmd(), true
 		case "ctrl+n", "ctrl+d":
+			if e.section == 0 {
+				return m, nil, true
+			}
 			if e.section >= 5 {
 				break
 			}
@@ -406,7 +479,7 @@ func (m Model) editorPanel(u softUI) *tideui.Overlay {
 	if e.original.Revision > 0 {
 		title = "edit " + e.draft.Kind + " · " + domain.SafeText(e.original.DisplayName)
 	}
-	helpText := "Names are optional. Aliases: comma-separated. Dates: YYYY-MM-DD or --MM-DD."
+	helpText := "↑ from Name selects the section tabs."
 	switch e.section {
 	case 1:
 		helpText = "Kinds: email, phone, website, social, messaging, address. Preferred: true/false."
@@ -425,13 +498,13 @@ func (m Model) editorPanel(u softUI) *tideui.Overlay {
 			labelW = max(labelW, lipgloss.Width(f.label)+2)
 		}
 	}
-	width, height := m.recordFormSize(84)
+	width, height := m.recordFormSize(max(84, lipgloss.Width(strings.Join(editorSections, "  "))+4))
 	labelW = min(labelW, max(8, width*2/5))
 	cw := u.controlWidth(width, labelW)
-	body := []string{u.tabs(editorSections, e.section, width), u.blank(width)}
-	budget := max(1, height-7)
+	body := append(u.tabs(editorSections, e.section, width, e.tabsFocused), u.blank(width))
+	budget := max(1, height-5-len(body))
 	if e.section >= 5 {
-		budget = max(1, height-8)
+		budget = max(1, height-6-len(body))
 	}
 	if e.section >= 5 {
 		ed := e.notes
@@ -445,7 +518,8 @@ func (m Model) editorPanel(u softUI) *tideui.Overlay {
 		fields := e.fields[e.section]
 		rows := make([]string, len(fields))
 		for i, f := range fields {
-			rows[i] = u.row(f.label, i == e.selected, u.input(f.input, cw, i == e.selected), width, labelW)
+			focused := !e.tabsFocused && i == e.selected
+			rows[i] = u.row(f.label, focused, u.input(f.input, cw, focused), width, labelW)
 		}
 		if len(rows) == 0 {
 			rows = []string{u.note("No entries yet — ctrl+n adds one.", width, false)}
@@ -463,13 +537,20 @@ func (m Model) editorPanel(u softUI) *tideui.Overlay {
 	default:
 		footer = append(footer, u.note(helpText, width, false))
 	}
+	prev := editorSections[(e.section+len(editorSections)-1)%len(editorSections)]
+	next := editorSections[(e.section+1)%len(editorSections)]
+	sectionHints := u.hints(width, "f5", prev, "f6", next)
 	switch {
 	case e.confirm != "":
 		footer = append(footer, u.hints(width, "y", "discard", "n", "keep editing"))
+	case e.tabsFocused:
+		footer = append(footer, u.hints(width, "←/→", "section", "↓/enter", "edit fields"), sectionHints)
+	case e.section == 0:
+		footer = append(footer, u.hints(width, "ctrl+s", "save", "tab", "next field", "esc", "cancel"), sectionHints)
 	case e.section >= 5:
-		footer = append(footer, u.hints(width, "ctrl+s", "save", "tab", "notes/biography"), u.hints(width, "f5", "previous section", "f6", "next section", "esc", "cancel"))
+		footer = append(footer, u.hints(width, "ctrl+s", "save", "tab", "notes/biography"), sectionHints)
 	default:
-		footer = append(footer, u.hints(width, "enter", "save", "↑/↓", "field", "ctrl+n", "add entry", "ctrl+d", "remove entry"), u.hints(width, "f5", "previous section", "f6", "next section", "esc", "cancel"))
+		footer = append(footer, u.hints(width, "ctrl+s", "save", "↑/↓", "field", "ctrl+n", "add entry", "ctrl+d", "remove entry"), sectionHints)
 	}
 	return u.fixedFormPanel(title, width, height, body, footer)
 }

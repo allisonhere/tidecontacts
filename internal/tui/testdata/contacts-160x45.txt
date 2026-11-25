@@ -2,7 +2,7 @@
 ┌───────────────────────────────────┐┌──────────────────────────────────────────────┐┌─────────────────────────────────────────────────────────────────────────┐
 │  Menu                             ││  People 1/1                                  ││> Overview                                                               │
 │> People                       1   ││/                                             ││Renée Rivera                                                             │
-│  Organizations                2   ││> Renée Rivera                                ││                                                                         │
+│  Organizations                2   ││> Renée Rivera · renee@example.com            ││                                                                         │
 │  Relationships                3   ││                                              ││─ Contact details ───────────────────────────────────────────────────────│
 │  Activities                   4   ││                                              ││email            renee@example.com                                       │
 │  Tasks                        5   ││                                              ││                                                                         │
@@ -10,11 +10,11 @@
 │  Pipelines                    7   ││                                              ││Private notes                                                            │
 │  Insights                     8   ││                                              ││Second line                                                              │
 │                                   ││                                              ││                                                                         │
-│Actions                            ││                                              ││─ Record details ────────────────────────────────────────────────────────│
-│  New record in this workspace n   ││                                              ││Source           manual                                                  │
-│  Sync TideMail                    ││                                              ││Updated          Jan 1, 2000 · 00:00 UTC                                 │
-│  Import data…                 I   ││                                              ││UUID             00000000-0000-0000-0000-000000000000                    │
-│  Refresh address books            ││                                              ││0 relationships · 0 custom fields                                        │
+│Actions                            ││                                              ││                                                                         │
+│  New record in this workspace n   ││                                              ││                                                                         │
+│  Sync TideMail                    ││                                              ││                                                                         │
+│  Import data…                 I   ││                                              ││                                                                         │
+│  Refresh address books            ││                                              ││                                                                         │
 │  Themes                           ││                                              ││                                                                         │
 │  All actions                  :   ││                                              ││                                                                         │
 │  Help                         ?   ││                                              ││                                                                         │
@@ -42,4 +42,4 @@
 │                                   ││                                              ││                                                                         │
 │                                   ││                                              ││                                                                         │
 └───────────────────────────────────┘└──────────────────────────────────────────────┘└─────────────────────────────────────────────────────────────────────────┘
- CONTACTS / Overview                                                                                           n new  e edit  / search  : commands  ctrl+g Menu 
+ CONTACTS / Overview                                                                                                    esc back  e edit  / search  ctrl+g Menu 

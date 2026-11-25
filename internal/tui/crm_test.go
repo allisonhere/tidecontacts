@@ -314,6 +314,10 @@ func TestActivitiesDossierAndBackNavigation(t *testing.T) {
 		t.Fatal("convert-to-task form")
 	}
 	m = do(m, "enter")
+	if m.crm.form == nil || m.crm.form.selected != 1 {
+		t.Fatal("Enter should advance one field")
+	}
+	m = do(m, "f2")
 	tasks, _ := s.Tasks(context.Background(), app.TaskFilter{View: "open"})
 	if len(tasks) != 1 || tasks[0].Entities[0].ID != alex.ID || tasks[0].Projects[0].Name != "Harbor" {
 		t.Fatalf("%+v", tasks)

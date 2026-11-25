@@ -589,7 +589,7 @@ func (m Model) transferBody() string {
 		lines = append(lines, "Enter / Esc returns to contacts")
 	}
 	message := t.message
-	if m.contacts.err != "" {
+	if message == "" && m.contacts.err != "" {
 		message = "! " + m.contacts.err
 	}
 	lines = append(lines, "", ansi.Hardwrap(domain.SafeText(message), w, true))

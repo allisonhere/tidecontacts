@@ -19,7 +19,7 @@ Every workspace has the same shape: a list on the left, details in the middle, c
 
 ## Creating tasks and activities
 
-`T` anywhere, or `n` in Tasks, opens a labeled task form. Status/priority are choices; Space or Ctrl+O on People & orgs or Projects opens a search picker. Tab moves fields and Enter/F2/Ctrl+S saves (Ctrl+S in multiline Description). The selected contact or project is prelinked. No capture syntax is needed. See [tasks](tasks.md). `A` anywhere or `n` in Activities opens the matching activity form; Log meeting/call/note preselects Type. See [activities](activities.md).
+`T` anywhere, or `n` in Tasks, opens a labeled task form. Status/priority are choices; Space or Ctrl+O on People & orgs or Projects opens a search picker. Tab moves fields and F2 or Ctrl+S saves (Ctrl+S in multiline Description). The selected contact or project is prelinked. No capture syntax is needed. See [tasks](tasks.md). `A` anywhere or `n` in Activities opens the matching activity form; Log meeting/call/note preselects Type. See [activities](activities.md).
 
 ## Optional quick capture
 
@@ -46,7 +46,7 @@ Water plants due:tomorrow every:week
 | `every:` | A recurrence: `week`, `"2 weeks"`, `weekdays`, `"monthly on 31"` |
 | `type:` `status:` | Activity type; task status |
 
-Unknown `word:` pairs such as "Re:" stay in the title. A capture that cannot be understood stays in the prompt with the reason and writes nothing. Tasks captured without a date go to the task Inbox for later processing. Press `e` on any record for the full form, which opens as a modal over the current screen (Tab between fields, ←/→ on choices, a multi-line editor for notes, Enter or F2 to save, Ctrl+S inside a multi-line field).
+Unknown `word:` pairs such as "Re:" stay in the title. A capture that cannot be understood stays in the prompt with the reason and writes nothing. Tasks captured without a date go to the task Inbox for later processing. Press `e` on any record for the full form, which opens as a modal over the current screen (Tab between fields, ←/→ on choices, a multi-line editor for notes, F2 or Ctrl+S to save, Ctrl+S inside a multi-line field).
 
 ## The contact dossier
 

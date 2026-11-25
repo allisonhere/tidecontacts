@@ -29,6 +29,7 @@ type contactsState struct {
 	cancelList, cancelDetail context.CancelFunc
 	loading, busy            bool
 	err, order, confirm      string
+	savedID                  string
 	editor                   *contactEditor
 	transfer                 *transferUI
 	undo                     *domain.Contact
@@ -140,13 +141,20 @@ func (m Model) updateContacts(msg tea.Msg) (Model, tea.Cmd, bool) {
 			return m, nil, true
 		}
 		old := c.contact.ID
+		found := false
 		c.rows = v.rows
-		c.selected = 0
+		c.selected = min(c.selected, max(0, len(c.rows)-1))
 		for i, row := range c.rows {
 			if row.ID == old {
 				c.selected = i
+				found = true
 			}
 		}
+		if !found && old != "" && old == c.savedID && m.queries[m.state.Active] != "" {
+			m.feedback += " · outside current filter"
+			m.focus = 0
+		}
+		c.savedID = ""
 		return m, m.loadContact(), true
 	case detailResult:
 		if v.seq != c.detailSeq {
@@ -183,6 +191,10 @@ func (m Model) updateContacts(msg tea.Msg) (Model, tea.Cmd, bool) {
 		m.feedback = v.action + " saved"
 		if len(v.contacts) > 0 {
 			c.contact = v.contacts[0]
+			if v.action == "edit" {
+				c.savedID = c.contact.ID
+				m.feedback = domain.SafeText(c.contact.DisplayName) + " saved"
+			}
 		}
 		if c.transfer != nil {
 			c.transfer.stage = "result"
@@ -432,7 +444,10 @@ func (m Model) contactPanes(r tideui.Renderer) [3]tideui.Pane {
 		if row.Favorite {
 			prefix += "* "
 		}
-		suffix := row.Organization
+		suffix := row.PrimaryEmail
+		if suffix == "" {
+			suffix = row.Organization
+		}
 		if suffix == "" {
 			suffix = row.Tags
 		}
@@ -463,7 +478,11 @@ func (m Model) contactPanes(r tideui.Renderer) [3]tideui.Pane {
 	if c.loading {
 		rows = append(rows, "Searching...")
 	} else if len(c.rows) == 0 {
-		rows = append(rows, "No contacts match this view.", "Add your first contact: "+m.hint("new-contact"), "Import an address book: "+m.hint("import-contacts"), "Search contacts: "+m.hint("search"))
+		if m.queries[m.state.Active] != "" {
+			rows = append(rows, "No matches. "+m.hint("search")+" then Esc clears search.")
+		} else {
+			rows = append(rows, "No contacts match this view.", "Add your first contact: "+m.hint("new-contact"), "Import an address book: "+m.hint("import-contacts"), "Search contacts: "+m.hint("search"))
+		}
 	}
 	if c.err != "" {
 		rows = append(rows, r.Styles.DetailBody.Foreground(r.Styles.Theme.Error).Render("! "+clip(domain.SafeText(c.err), navWidth)))
@@ -486,7 +505,7 @@ func (m Model) contactPanes(r tideui.Renderer) [3]tideui.Pane {
 		rendered, at := m.renderRows(r, rows, m.crm.dossierCursor+1, m.focus == 1, detailWidth)
 		content, offset = strings.Join(rendered, "\n"), max(0, at-max(1, m.height-6)+2)
 	}
-	contextLines := []string{"Profile views"}
+	contextLines := []string{"Source: " + domain.SafeText(c.contact.Source), "Updated: " + domain.SafeText(c.contact.UpdatedAt), "UUID: " + c.contact.ID, "", "Profile views"}
 	for i, name := range profileViews {
 		prefix := "  "
 		if i == c.view {

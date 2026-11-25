@@ -57,6 +57,7 @@ type History struct {
 	At, Action, Snapshot string
 }
 type Summary struct {
+	PrimaryEmail                                             string `json:",omitempty"`
 	ID, Kind, Name, Organization, Tags, UpdatedAt, CreatedAt string
 	Favorite, Archived                                       bool
 	Revision                                                 int
@@ -88,7 +89,21 @@ func (c *Contact) Normalize() {
 		c.DisplayName = c.Memberships[0].Organization
 	}
 	if c.DisplayName == "" && len(c.Methods) > 0 {
-		c.DisplayName = c.Methods[0].Value
+		for _, method := range c.Methods {
+			c.DisplayName = strings.TrimSpace(method.Value)
+			if c.DisplayName == "" && method.Kind == "address" {
+				var parts []string
+				for _, part := range strings.Split(method.Address.String(), "; ") {
+					if value := strings.TrimSpace(part); value != "" {
+						parts = append(parts, value)
+					}
+				}
+				c.DisplayName = strings.Join(parts, ", ")
+			}
+			if c.DisplayName != "" {
+				break
+			}
+		}
 	}
 	c.Website = normalizeWebsite(c.Website)
 	seen := map[string]bool{}

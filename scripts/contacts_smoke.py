@@ -51,13 +51,12 @@ with tempfile.TemporaryDirectory(prefix='tidecontacts-crud-') as root:
         drain(1)
         send('n')
         send('Alice Offline')
-        send(b'\x1b[17~')  # F6: Methods
-        send(b'\x0e')  # Ctrl+N: new method
-        send(b'\t')
-        send('work')
-        send(b'\t')
+        send(b'\t')  # Email on the first screen
         send('alice@example.com')
-        send(b'\x1bOQ', 0.5)  # F2 save
+        send(b'\t')
+        send('555-0100')
+        send(b'\x13', 0.5)  # Ctrl+S
+        assert query("SELECT value FROM methods WHERE kind='phone'") == [('555-0100',)]
         assert query("SELECT display_name FROM entities WHERE kind='person'") == [('Alice Offline',)], bytes(transcript[-4000:])
         assert query("SELECT value FROM methods WHERE kind='email'") == [('alice@example.com',)]
         send('e')

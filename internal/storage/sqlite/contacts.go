@@ -439,6 +439,7 @@ func (s *Store) List(ctx context.Context, kind string, q search.Query, order str
 		}
 	}
 	rows, e := s.db.QueryContext(ctx, `SELECT e.id,e.kind,e.display_name,e.favorite,e.archived,e.updated_at,e.created_at,e.revision,
+ COALESCE((SELECT value FROM methods WHERE entity_id=e.id AND kind='email' ORDER BY preferred DESC,rowid LIMIT 1),''),
  COALESCE((SELECT group_concat(o.display_name,', ') FROM memberships m JOIN entities o ON o.id=m.organization_id WHERE m.person_id=e.id),''),
  COALESCE((SELECT group_concat(t.name,', ') FROM entity_tags et JOIN tags t ON t.id=et.tag_id WHERE et.entity_id=e.id),'') FROM entities e WHERE `+strings.Join(where, " AND "), args...)
 	if e != nil {
@@ -449,7 +450,7 @@ func (s *Store) List(ctx context.Context, kind string, q search.Query, order str
 	scores := map[string]int{}
 	for rows.Next() {
 		var c domain.Summary
-		if e = rows.Scan(&c.ID, &c.Kind, &c.Name, &c.Favorite, &c.Archived, &c.UpdatedAt, &c.CreatedAt, &c.Revision, &c.Organization, &c.Tags); e != nil {
+		if e = rows.Scan(&c.ID, &c.Kind, &c.Name, &c.Favorite, &c.Archived, &c.UpdatedAt, &c.CreatedAt, &c.Revision, &c.PrimaryEmail, &c.Organization, &c.Tags); e != nil {
 			return nil, e
 		}
 		c.SearchText = documents[c.ID]

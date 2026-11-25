@@ -84,6 +84,9 @@ func Prepare(ctx context.Context, path string, repo app.Directories) (domain.Dir
 		}
 	}
 	snapshot, err := transfer.ReadDirectory(ctx, absolute)
+	if err == nil && revision == 0 && len(snapshot.Cards) == 0 {
+		return snapshot, revision, fmt.Errorf("folder is empty; choose the folder containing the vCard files: %s", absolute)
+	}
 	return snapshot, revision, err
 }
 func Sync(ctx context.Context, path string, repo app.Directories) (domain.DirectoryReport, error) {
@@ -116,11 +119,12 @@ func RefreshAll(ctx context.Context, repo app.Directories) ([]domain.DirectoryRe
 	return reports, strings.Join(failures, "; ")
 }
 func Summary(reports []domain.DirectoryReport) string {
-	added, updated, removed := 0, 0, 0
+	added, updated, removed, unchanged := 0, 0, 0, 0
 	for _, r := range reports {
 		added += r.Added
 		updated += r.Updated
 		removed += r.Removed
+		unchanged += r.Unchanged
 	}
-	return fmt.Sprintf("%d folders refreshed · %d added · %d updated · %d removed", len(reports), added, updated, removed)
+	return fmt.Sprintf("%d folders refreshed · %d added · %d updated · %d removed · %d unchanged", len(reports), added, updated, removed, unchanged)
 }

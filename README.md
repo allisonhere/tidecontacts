@@ -70,11 +70,11 @@ the real binary using fictional data.
 
 ## First contact
 
-Start in People, press `n`, and enter a display name. Names are optional: a nickname, contact method or organization can supply the display identity. Press Enter (or F2) to save. The editor opens as a modal over the screen you were on.
+Start in People, press `n`, and enter a display name. Tab moves to Email and then Phone. Editing either updates the preferred entry, or the first entry when none is preferred. Names are optional: a nickname, contact method or organization can supply the display identity. Press Ctrl+S (or F2) to save. The editor opens as a modal over the screen you were on.
 
-Use F5/F6 to move between editor sections: Identity, Methods, Organizations, Tags & fields, Relationships, Notes and Biography. Down/Up or Tab/Shift+Tab moves between inputs; Left/Right moves within text. F5 is previous section and F6 is next section. Ctrl+N adds a repeated entry; Ctrl+D removes the current entry. Enter, F2 or Ctrl+S saves the entire record atomically (in Notes and Biography Enter is a newline, so use Ctrl+S); Esc cancels and asks before discarding changes.
+Press Up from Name to focus the section tabs. Left/Right changes section and Down or Enter returns to the fields. F5/F6 also moves directly between sections: Name & contact, Emails & phones, Organizations, Tags & fields, Relationships, Notes and Biography. Down/Up or Tab/Shift+Tab moves between inputs; Left/Right moves within text. F5 is previous section and F6 is next section. Ctrl+N adds a repeated entry; Ctrl+D removes the current entry. Enter advances a field. F2 or Ctrl+S saves the entire record atomically (in Notes and Biography Enter is a newline, so use Ctrl+S); Esc cancels and asks before discarding changes.
 
-In Methods, choose `email`, `phone`, `website`, `social`, `messaging` or `address`. Changing the kind to address exposes its postal components. Use `true`/`false` for flags. There can be one preferred method of each kind. In Organizations, an existing name/UUID selects an organization; a new name creates it in the same save transaction. Relationship targets must already exist or be included in the same import.
+In Emails & phones, choose `email`, `phone`, `website`, `social`, `messaging` or `address`. Changing the kind to address exposes its postal components. Use `true`/`false` for flags. There can be one preferred method of each kind. In Organizations, an existing name/UUID selects an organization; a new name creates it in the same save transaction. Relationship targets must already exist or be included in the same import.
 
 Notes and biography use Ripple: multiline editing, soft wrap, Shift+arrows selection, undo/redo, bracketed paste, and clipboard integration where the OS provides it. No editor subprocess is needed.
 
@@ -104,8 +104,8 @@ Unsupported TideMail themes (including its dynamic desktop theme) are not offere
 
 Terminals at least 120 columns wide show **Menu → record list → details**. The menu names every
 workspace and lists actions for the current one. Press **Ctrl+G** to focus it,
-use arrows or j/k to choose, then Enter. Press `n` on a workspace to open its New dialog directly (or your configured New shortcut). Esc or Tab returns to your records.
-Shift+Tab from the record list also opens the menu. On smaller terminals it
+use ↑/↓ or j/k to preview workspaces as you move, then Tab, Right, or l to enter the record list. Enter opens the highlighted workspace or runs the highlighted action. Press `n` on a workspace to open its New dialog directly (or your configured New shortcut). Esc leaves the menu. The workspace numbers, help (?), command palette (:), reminders (b), and import (I) work directly from the menu.
+Left moves from details to the list and from the list to the menu. Right enters the highlighted workspace from the menu, then moves from the list into details. Tab and Shift+Tab cycle through record panes. On smaller terminals the menu
 opens as a modal. Workspace number shortcuts and the command palette still work.
 
 ## Browse and search

@@ -420,7 +420,7 @@ func (m Model) updateForm(msg tea.Msg) (Model, tea.Cmd) {
 			if fd.multiline {
 				break
 			}
-			fallthrough
+			return move(1)
 		case "f2", "ctrl+s":
 			cmd, err := f.save(&m, f.values())
 			if err != nil {
@@ -530,11 +530,11 @@ func (m Model) formPanel(u softUI) *tideui.Overlay {
 	case fd.multiline:
 		footer = append(footer, u.hints(width, "ctrl+s", "save", "tab", "next field", "esc", "cancel"))
 	case fd.referenceSource != "":
-		footer = append(footer, u.hints(width, "enter", "save", "space", "choose", "ctrl+d", "remove last", "↑/↓", "field", "esc", "cancel"))
+		footer = append(footer, u.hints(width, "ctrl+s", "save", "space", "choose", "ctrl+d", "remove last", "↑/↓", "field", "esc", "cancel"))
 	case len(fd.options) > 0:
-		footer = append(footer, u.hints(width, "enter", "save", "←→", "change", "↑/↓", "field", "esc", "cancel"))
+		footer = append(footer, u.hints(width, "ctrl+s", "save", "←→", "change", "↑/↓", "field", "esc", "cancel"))
 	default:
-		footer = append(footer, u.hints(width, "enter", "save", "↑/↓", "field", "tab", "next field", "esc", "cancel"))
+		footer = append(footer, u.hints(width, "ctrl+s", "save", "↑/↓", "field", "tab", "next field", "esc", "cancel"))
 	}
 	return u.fixedFormPanel(strings.ToLower(f.title), width, height, body, footer)
 }

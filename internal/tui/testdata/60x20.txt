@@ -17,4 +17,4 @@
                                                             
                                                             
                                                             
- NORMAL / navigation  esc back  tab pane  : commands  ctrl+ 
+ NORMAL / navigation         esc back  tab pane  : commands 

@@ -154,3 +154,67 @@ func TestNewFromMenuRespectsBindingAndOrganizationKind(t *testing.T) {
 		t.Fatal("custom New did not create an organization")
 	}
 }
+
+func TestPaneNavigationRoundTrip(t *testing.T) {
+	for _, width := range []int{60, 80, 110, 160} {
+		m, _ := crmApp(t, width, 32)
+		for _, workspace := range []string{"1", "5", "7"} {
+			m = do(m, workspace)
+			for focus := range m.focusCount() {
+				m.focus = focus
+				m = do(m, "tab")
+				if m.menuOpen || m.focus != (focus+1)%m.focusCount() {
+					t.Fatalf("width %d workspace %s: Tab from %d reached %d", width, workspace, focus, m.focus)
+				}
+				m = do(m, "shift+tab", "ctrl+g", "esc")
+				if m.menuOpen || m.focus != focus {
+					t.Fatalf("width %d workspace %s: lost focus %d", width, workspace, focus)
+				}
+			}
+		}
+	}
+}
+
+func TestHorizontalMenuNavigation(t *testing.T) {
+	for _, width := range []int{60, 110, 160} {
+		m, _ := crmApp(t, width, 32)
+		m = do(m, "1", "right", "left", "left")
+		if !m.menuOpen || m.menuSelected != wsPeople {
+			t.Fatalf("%d: Left from list should focus People in menu", width)
+		}
+		m = do(m, "down", "right")
+		if m.menuOpen || m.state.Active != wsOrganizations || m.focus != 0 {
+			t.Fatalf("%d: Right should enter Organizations list", width)
+		}
+		m = do(m, "right")
+		if m.focus != 1 {
+			t.Fatalf("%d: Right should focus details", width)
+		}
+	}
+}
+
+func TestMenuWorkspacePreviewAndShortcuts(t *testing.T) {
+	for _, enter := range []string{"tab", "right", "l", "enter"} {
+		m, _ := crmApp(t, 160, 40)
+		m = do(m, "ctrl+g", "down")
+		if !m.menuOpen || m.state.Active != wsOrganizations {
+			t.Fatal("highlight did not show Organizations")
+		}
+		m = do(m, enter)
+		if m.menuOpen || m.focus != 0 || m.state.Active != wsOrganizations {
+			t.Fatal(enter)
+		}
+	}
+	m, _ := crmApp(t, 160, 40)
+	m = do(m, "ctrl+g", "8")
+	if m.menuOpen || m.state.Active != wsInsights {
+		t.Fatal("8 did not open Insights")
+	}
+	for _, k := range []string{"?", ":", "b", "I"} {
+		m = do(m, "ctrl+g", k)
+		if m.menuOpen || k == "?" && m.overlay != help || k == ":" && m.overlay != palette || k == "b" && m.crm.prompt == nil || k == "I" && m.contacts.transfer == nil {
+			t.Fatalf("menu swallowed %q", k)
+		}
+		m = do(m, "esc")
+	}
+}

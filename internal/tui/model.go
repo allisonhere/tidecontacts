@@ -103,35 +103,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if next, cmd, handled := m.updateDirectories(msg); handled {
 		return next, cmd
 	}
-	if k, ok := msg.(tea.KeyMsg); ok && m.ready && m.overlay == none && !m.editing && m.contacts.editor == nil && m.crm.form == nil && m.crm.prompt == nil && m.crm.picker == nil && m.crm.confirm == nil && m.contacts.transfer == nil {
+	if k, ok := msg.(tea.KeyMsg); ok && m.ready && m.overlay == none && !m.editing && m.contacts.editor == nil && m.crm.form == nil && m.crm.prompt == nil && m.crm.picker == nil && m.crm.confirm == nil && m.contacts.transfer == nil && m.contacts.confirm == "" {
 		if k.String() == "ctrl+g" {
 			m.menuOpen = !m.menuOpen
+			m.menuSelected = m.state.Active
 			return m, nil
 		}
 		if m.menuOpen {
-			if m.registry.Key(k.String()) == "new-contact" {
-				return m.newFromMenu()
-			}
-			switch k.String() {
-			case "ctrl+c":
-				return m, tea.Quit
-			case "esc", "tab":
-				m.menuOpen = false
-			case "j", "down":
-				m.menuSelected = min(m.menuSelected+1, len(m.menuCommands())-1)
-			case "k", "up":
-				m.menuSelected = max(0, m.menuSelected-1)
-			case "enter":
-				c := m.menuCommands()[min(m.menuSelected, len(m.menuCommands())-1)]
-				m.menuOpen = false
-				return m.dispatch(c.ID)
-			}
-			return m, nil
+			return m.updateMenu(k)
 		}
-		if k.String() == "shift+tab" && m.focus == 0 {
-			m.menuOpen = true
-			return m, nil
-		}
+
 	}
 	if next, cmd, handled := m.updateCRM(msg); handled {
 		return next, cmd
@@ -256,7 +237,30 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if v.Paste {
 			return m, nil
 		}
-		return m.dispatch(m.registry.Key(key))
+		id := m.registry.Key(key)
+		if m.isContacts() || m.isCRM() {
+			if id == "previous" && key != "shift+tab" && m.focus == 0 {
+				m.menuSelected = m.state.Active
+				m.menuOpen = true
+				return m, nil
+			}
+			last := m.focusCount() - 1
+			if m.mode() == tideui.ThreeColumn && m.state.Active != wsPipelines {
+				last = 1
+			}
+			if id == "next" && key != "tab" && m.focus >= last && !(m.state.Active == wsPipelines && m.focus == 1) {
+				return m, nil
+			}
+		}
+		if m.state.Active == wsPipelines && ((key == "tab" && id == "next") || (key == "shift+tab" && id == "previous")) {
+			step := 1
+			if id == "previous" {
+				step = -1
+			}
+			m.focus = (m.focus + step + m.focusCount()) % m.focusCount()
+			return m, nil
+		}
+		return m.dispatch(id)
 	case tea.MouseMsg:
 		if m.cfg.Mouse && m.overlay == none && !m.editing && v.Action == tea.MouseActionPress && v.Button == tea.MouseButtonLeft {
 			if v.Y < 1 || v.Y >= m.height-1 {
@@ -265,6 +269,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			left, right := m.ratios()
 			if m.mode() == tideui.ThreeColumn {
 				if v.X < int(float64(m.width)*left) {
+					if !m.menuOpen {
+						m.menuSelected = m.state.Active
+					}
 					m.menuOpen = true
 				} else if v.X >= int(float64(m.width)*(left+right)) {
 					m.focus = 1
@@ -302,14 +309,6 @@ func (m Model) dispatch(id string) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 	m.feedback = ""
-	if id == "next" && m.focus == 1 && m.state.Active != wsPipelines && (m.isContacts() || m.isCRM()) {
-		m.menuOpen = true
-		return m, nil
-	}
-	if id == "previous" && m.focus == 0 {
-		m.menuOpen = true
-		return m, nil
-	}
 	if next, cmd, handled := m.crmGlobal(id); handled {
 		return next, cmd
 	}
@@ -528,7 +527,10 @@ func (m Model) View() string {
 	if m.isContacts() {
 		panes = m.contactPanes(r)
 		status = "CONTACTS / " + profileViews[m.contacts.view]
-		hints = "n new  e edit  / search  : commands"
+		hints = "← menu  " + m.hint("search") + " search  " + m.hint("activate") + " open  " + m.hint("edit-contact") + " edit"
+		if m.focus != 0 {
+			hints = m.hint("back") + " back  " + m.hint("edit-contact") + " edit  " + m.hint("search") + " search"
+		}
 		if m.editing {
 			status = "SEARCH"
 			hints = "enter finish  esc clear"
@@ -576,7 +578,7 @@ func (m Model) View() string {
 	}
 	if m.mode() == tideui.ThreeColumn && (m.isContacts() || m.isCRM()) {
 		detail := panes[1]
-		if m.state.Active == wsPipelines && m.focus == 2 {
+		if m.focus == 2 {
 			detail = panes[2]
 		}
 		panes = [3]tideui.Pane{m.menuPane(), panes[0], detail}
@@ -585,7 +587,18 @@ func (m Model) View() string {
 			panes[2].Focused = false
 		}
 	}
-	hints = hints + "  ctrl+g Menu"
+	if m.menuOpen {
+		hints = "→ records  ↑↓ choose  enter open  esc close"
+	} else if m.overlay == none && !m.editing && m.contacts.editor == nil && m.crm.form == nil && m.crm.picker == nil && m.crm.prompt == nil && m.contacts.transfer == nil {
+		hints += "  ctrl+g Menu"
+	}
+	for ansi.StringWidth(status)+ansi.StringWidth(hints)+4 > m.width {
+		i := strings.LastIndex(hints, "  ")
+		if i < 0 {
+			break
+		}
+		hints = hints[:i]
+	}
 	leftRatio, rightRatio := m.ratios()
 	if m.cfg.Demo {
 		status = "DEMO · " + status
