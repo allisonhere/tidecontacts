@@ -36,6 +36,12 @@ func invalid(message string) error              { return fail(3, "invalid_input"
 var resources = map[string]bool{"contacts": true, "organizations": true, "tasks": true, "activities": true, "projects": true, "pipelines": true, "items": true, "crm": true, "schema": true, "extensions": true, "capabilities": true}
 
 func Handles(args []string) bool {
+	if rest, _, _, err := globalFlags(args); err == nil && len(rest) > 0 && !strings.HasPrefix(rest[0], "-") && !strings.HasPrefix(args[0], "--sync") {
+		// A leading --demo or --database does not hide a resource: "--demo opportunities list".
+		if len(rest) < len(args) {
+			return true
+		}
+	}
 	if len(args) > 0 && !strings.HasPrefix(args[0], "-") {
 		return true
 	}
@@ -126,11 +132,7 @@ func Run(ctx context.Context, args []string, in io.Reader, out, stderr io.Writer
 			result = e
 		}
 	}()
-	if len(args) > 0 && !strings.HasPrefix(args[0], "-") && !resources[args[0]] {
-		rest, demoMode, database, gerr := globalFlags(args)
-		if gerr != nil {
-			return gerr
-		}
+	if rest, demoMode, database, gerr := globalFlags(args); gerr == nil && len(rest) > 0 && !strings.HasPrefix(rest[0], "-") && !resources[rest[0]] {
 		if handled, herr := runExtensionResource(ctx, rest, in, out, demoMode, database); handled {
 			return herr
 		}

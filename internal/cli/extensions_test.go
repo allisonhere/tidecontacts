@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"os"
@@ -222,4 +223,25 @@ func TestExtensionResourceNeedsEntitlementWhenDeclared(t *testing.T) {
 	h.run(0, "", "deals", "list")
 	t.Setenv("TIDECONTACTS_DEV_ENTITLEMENTS", "")
 	h.run(2, "", "deals", "list") // entitlement gone: the resource is no longer offered, data untouched
+}
+
+func TestExtensionResourceAfterLeadingHostFlags(t *testing.T) {
+	h := setup(t)
+	scriptExt(t, respond+"printf '{\"api\":1,\"type\":\"response\",\"request_id\":\"%s\",\"ok\":true,\"data\":{\"data\":[{\"id\":\"d1\"}],\"count\":1}}\\n' \"$id\"\n")
+	h.run(0, "", "extensions", "enable", "deals-ext", "--yes")
+	// The harness appends --database; also exercise flags before the resource.
+	if got := h.run(0, "", "deals", "list"); got.Meta.Resource != "deals" {
+		t.Fatalf("%+v", got.Meta)
+	}
+	var out, errb bytes.Buffer
+	err := Run(context.Background(), []string{"--database", h.db, "deals", "list"}, strings.NewReader(""), &out, &errb)
+	if err != nil || !strings.Contains(out.String(), `"resource":"deals"`) {
+		t.Fatalf("a leading --database hid the extension resource: %v %s", err, errb.String())
+	}
+	if !Handles([]string{"--demo", "deals", "list"}) || !Handles([]string{"--database", "/x", "deals", "list"}) {
+		t.Fatal("Handles must see a resource after leading host flags")
+	}
+	if Handles([]string{"--demo"}) || Handles([]string{"--check"}) {
+		t.Fatal("TUI flags must not be treated as CLI commands")
+	}
 }
