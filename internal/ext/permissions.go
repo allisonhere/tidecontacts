@@ -34,7 +34,7 @@ var permissionTable = []Permission{
 	{"tasks.read", "Read tasks", EnforcedByHost, true},
 	{"tasks.write", "Create and edit tasks", EnforcedByHost, true},
 	{"projects.read", "Read projects", EnforcedByHost, true},
-	{"projects.write", "Create and edit projects", Reserved, true},
+	{"projects.write", "Create and edit projects", EnforcedByHost, true},
 	{"pipelines.read", "Read pipelines and their items", EnforcedByHost, true},
 	{"pipelines.write", "Create and edit pipelines", Reserved, true},
 	{"events.subscribe", "Receive domain events (identifiers only)", EnforcedByHost, false},

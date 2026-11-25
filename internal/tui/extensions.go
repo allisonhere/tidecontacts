@@ -129,6 +129,11 @@ func (m Model) extDispatch(id string) (tea.Model, tea.Cmd) {
 	// Context for commands that act on the selection (read-only facts: an id and a kind).
 	if m.isContacts() && m.contacts.contact.ID != "" {
 		args["context_contact"], args["context_kind"] = m.contacts.contact.ID, m.contacts.contact.Kind
+		args["context_record_kind"], args["context_record_id"] = m.contacts.contact.Kind, m.contacts.contact.ID
+	} else if m.isCRM() {
+		if row, ok := m.listRow(); ok && row.id != "" && !strings.Contains(row.kind, ":") {
+			args["context_record_kind"], args["context_record_id"] = row.kind, row.id
+		}
 	}
 	ctx := m.contacts.ctx
 	return m, func() tea.Msg {

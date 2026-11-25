@@ -271,6 +271,19 @@ func (s *Session) Call(ctx context.Context, method string, data json.RawMessage)
 			return nil, mapErr(err)
 		}
 		return out, nil
+	case "projects.save":
+		if e := s.need("projects.write"); e != nil {
+			return nil, e
+		}
+		var p domain.Project
+		if e := decode(data, &p); e != nil {
+			return nil, e
+		}
+		out, err := s.Repo.SaveProject(ctx, p)
+		if err != nil {
+			return nil, mapErr(err)
+		}
+		return out, nil
 	case "projects.list":
 		if e := s.need("projects.read"); e != nil {
 			return nil, e
@@ -382,6 +395,8 @@ type Record struct {
 	Status     string `json:"status,omitempty"`
 	Due        string `json:"due,omitempty"`
 	When       string `json:"when,omitempty"`
+	Updated    string `json:"updated,omitempty"`
+	Created    string `json:"created,omitempty"`
 	URL        string `json:"url,omitempty"`
 	Revision   int    `json:"revision,omitempty"`
 	Archived   bool   `json:"archived,omitempty"`
@@ -444,12 +459,14 @@ func (s *Session) resolve(ctx context.Context, data json.RawMessage) (any, *Prot
 			var t domain.Task
 			if t, err = s.Repo.Task(ctx, id); err == nil {
 				r.Name, r.Status, r.Due, r.Archived, r.Deleted, r.Revision = t.Title, t.Status, t.Due, t.Archived, t.Deleted, t.Revision
+				r.Updated, r.Created = t.UpdatedAt, t.CreatedAt
 			}
 		case "activity":
 			var ac domain.Activity
 			if ac, err = s.Repo.Activity(ctx, id); err == nil {
 				r.Name, r.Detail, r.Deleted, r.Revision, r.URL = ac.Title, ac.Type, ac.Deleted, ac.Revision, ac.ExternalURL
 				r.When = ac.OccurredAt.Format("2006-01-02")
+				r.Detail = ac.Type
 			}
 		case "project":
 			var p domain.Project

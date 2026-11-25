@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/allisonhere/tidecontacts/internal/domain"
@@ -141,5 +142,18 @@ func TestHostRechecksEntitlementOnEveryCall(t *testing.T) {
 	s := &Session{ID: "p-ext", Repo: newStore(t), Granted: NewPermissionSet("contacts.read"), Entitlement: "pro.x", Entitled: denyAll{}}
 	if _, e := call(t, s, "contacts.list", nil); e == nil || e.Code != CodeEntitlement {
 		t.Fatalf("entitlement not enforced at the service boundary: %v", e)
+	}
+}
+
+func TestProjectsSaveNeedsWriteAndValidates(t *testing.T) {
+	store := newStore(t)
+	denied := &Session{ID: "p-ext", Repo: store, Granted: NewPermissionSet("projects.read")}
+	if _, e := call(t, denied, "projects.save", map[string]any{"Name": "X"}); e == nil || e.Code != CodePermissionDenied {
+		t.Fatalf("write allowed with read grant: %v", e)
+	}
+	w := &Session{ID: "p-ext", Repo: store, Granted: NewPermissionSet("projects.write", "projects.read")}
+	out, e := call(t, w, "projects.save", map[string]any{"Name": "Onboarding"})
+	if e != nil || !strings.Contains(string(out), "Onboarding") {
+		t.Fatalf("%s %v", out, e)
 	}
 }

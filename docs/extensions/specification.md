@@ -71,13 +71,14 @@ boundary (`ext.Session`), before touching the repository.
 | `activities.read` / `activities.write` | host-api | `activities.list` / `activities.save` |
 | `tasks.read` / `tasks.write` | host-api | `tasks.list` / `tasks.save` |
 | `projects.read` | host-api | `projects.list` |
+| `projects.write` | host-api | `projects.save` |
 | `pipelines.read` | host-api | `pipelines.list` |
 | `events.subscribe` | host-api | Receive subscribed events |
 | `commands.register` | host-api | Palette/CLI commands are only offered if granted |
 | `ui.register` | host-api | Panels are only rendered if granted |
 | `storage.extension` | host-api | `storage.*` |
 | `network.access` | **declared-only** | Recorded and shown. The host cannot stop a same-user process using the network. |
-| `relationships.write`, `projects.write`, `pipelines.write` | reserved | Valid names; no host API yet |
+| `relationships.write`, `pipelines.write` | reserved | Valid names; no host API yet |
 
 * Approval is explicit: `enable` shows the list; the CLI needs `--yes`.
 * The user's grant is exactly the set requested at approval time. If an update
