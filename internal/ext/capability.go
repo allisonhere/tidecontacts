@@ -36,6 +36,7 @@ func CoreCapabilities() []Capability {
 		c("core.pipelines", "pipelines.read", "pipelines.write"),
 		c("core.insights", "contacts.read", "activities.read", "tasks.read"),
 		c("core.events", "events.subscribe"),
+		c("core.event-journal", "events.consume"),
 	}
 }
 

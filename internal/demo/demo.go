@@ -4,6 +4,7 @@ package demo
 import (
 	"context"
 	"fmt"
+	"github.com/allisonhere/tidecontacts/internal/app"
 	"github.com/allisonhere/tidecontacts/internal/config"
 	"github.com/allisonhere/tidecontacts/internal/domain"
 	"github.com/allisonhere/tidecontacts/internal/storage/sqlite"
@@ -25,6 +26,7 @@ func Seed(ctx context.Context, s *sqlite.Store) error {
 	if err != nil || done != "" {
 		return err
 	}
+	ctx = app.WithoutEvents(ctx)
 	now := time.Now()
 	people := []domain.Contact{}
 	for i, name := range []string{"Alex Rivera", "Morgan Chen", "Sam Taylor", "Jamie Patel", "Robin Ellis", "Casey Brooks"} {

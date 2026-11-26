@@ -629,7 +629,7 @@ func (m *Manager) session(r *record) *Session {
 	for _, p := range r.m.Published {
 		pub[p.Type] = p.EntityType
 	}
-	return &Session{ID: r.m.ID, Granted: r.effective(), Repo: m.o.Repo, Storage: r.store, Config: cfg, Entitlement: r.m.Entitlement, Entitled: m.o.Entitlements, Bus: m.o.Bus, Published: pub}
+	return &Session{ID: r.m.ID, Granted: r.effective(), Repo: m.o.Repo, Storage: r.store, Config: cfg, Entitlement: r.m.Entitlement, Entitled: m.o.Entitlements, Bus: m.o.Bus, Published: pub, durableTypes: r.m.Events.Durable}
 }
 
 // invoke runs one request against an active (or activating) extension and

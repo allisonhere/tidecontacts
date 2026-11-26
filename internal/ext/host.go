@@ -20,16 +20,17 @@ import (
 // then goes through the same application repository, validation and revision
 // checks the UI and CLI use. Extensions never receive a database handle.
 type Session struct {
-	ID          string
-	Granted     PermissionSet
-	Repo        app.CRM // nil: the host has no records to serve (denied as unavailable)
-	Storage     *Storage
-	Config      map[string]any
-	Entitlement string // capability to re-check on every call, if the manifest declares one
-	Entitled    EntitlementProvider
-	Bus         *Bus              // where events.publish goes; nil drops them
-	Published   map[string]string // declared event type -> entity type
-	published   int
+	ID           string
+	Granted      PermissionSet
+	Repo         app.CRM // nil: the host has no records to serve (denied as unavailable)
+	Storage      *Storage
+	Config       map[string]any
+	Entitlement  string // capability to re-check on every call, if the manifest declares one
+	Entitled     EntitlementProvider
+	Bus          *Bus              // where events.publish goes; nil drops them
+	Published    map[string]string // declared event type -> entity type
+	durableTypes []string
+	published    int
 }
 
 // maxPublishPerCall bounds events one request may publish (an import, say).
@@ -92,6 +93,7 @@ func (s *Session) Call(ctx context.Context, method string, data json.RawMessage)
 	if s.Repo == nil && !strings.HasPrefix(method, "storage.") && method != "config.get" && method != "entitlement.check" && method != "events.publish" {
 		return nil, perr(CodeUnknownMethod, "records are not available")
 	}
+	ctx = app.WithEventOrigin(ctx, app.EventOrigin{Source: ExtensionSource + s.ID})
 	switch method {
 	case "config.get":
 		return s.Config, nil
@@ -112,6 +114,8 @@ func (s *Session) Call(ctx context.Context, method string, data json.RawMessage)
 		return d, nil
 	case "attention.list", "attention.act", "tasks.complete", "contacts.engagement":
 		return s.attention(ctx, method, data)
+	case "events.next", "events.settle", "events.dead", "events.replay":
+		return s.eventJournal(ctx, method, data)
 	case "events.publish":
 		return s.publish(data)
 	case "records.resolve":

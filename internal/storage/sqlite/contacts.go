@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/allisonhere/tidecontacts/internal/app"
 	"github.com/allisonhere/tidecontacts/internal/domain"
 	"github.com/allisonhere/tidecontacts/internal/search"
 	"github.com/sahilm/fuzzy"
@@ -184,7 +185,8 @@ func saveDirectoryContact(ctx context.Context, tx *sql.Tx, c *domain.Contact, ac
 
 	var revision int
 	var created, kind string
-	e := tx.QueryRowContext(ctx, "SELECT revision,created_at,kind FROM entities WHERE id=?", c.ID).Scan(&revision, &created, &kind)
+	var archived, deleted bool
+	e := tx.QueryRowContext(ctx, "SELECT revision,created_at,kind,archived,deleted FROM entities WHERE id=?", c.ID).Scan(&revision, &created, &kind, &archived, &deleted)
 	exists := e == nil
 	if e != nil && e != sql.ErrNoRows {
 		return e
@@ -195,7 +197,8 @@ func saveDirectoryContact(ctx context.Context, tx *sql.Tx, c *domain.Contact, ac
 	if !exists && c.Revision != 0 {
 		return fmt.Errorf("record no longer exists")
 	}
-	now := time.Now().UTC().Format(time.RFC3339Nano)
+	at := time.Now().UTC()
+	now := at.Format(time.RFC3339Nano)
 	if !exists {
 		created = now
 	}
@@ -280,6 +283,23 @@ func saveDirectoryContact(ctx context.Context, tx *sql.Tx, c *domain.Contact, ac
 	_, e = tx.ExecContext(ctx, "INSERT INTO history VALUES(?,?,?,?,?)", c.ID, c.Revision, now, action, string(snapshot))
 	if e != nil {
 		return e
+	}
+	if !directoryWrite && !c.Deleted {
+		entityType := "contact"
+		if c.Kind == "organization" {
+			entityType = "organization"
+		}
+		event := app.DurableEvent{Type: entityType + ".updated", EntityType: entityType, EntityID: c.ID, Revision: c.Revision}
+		switch {
+		case revision == 0:
+			event.Type = entityType + ".created"
+		case entityType == "contact" && !archived && !deleted && c.Archived:
+			event.Type = "contact.archived"
+			event.Payload = &app.EventPayload{BeforeStatus: "active", AfterStatus: "archived"}
+		}
+		if e := appendEvent(ctx, tx, at, event); e != nil {
+			return e
+		}
 	}
 	return reindex(ctx, tx, c.ID)
 }

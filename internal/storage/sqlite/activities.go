@@ -239,6 +239,11 @@ func saveActivity(ctx context.Context, tx *sql.Tx, a *domain.Activity, now time.
 			return e
 		}
 	}
+	if revision == 0 && !a.Deleted && eventToken.MatchString(a.ID) {
+		if e := appendEvent(ctx, tx, now, app.DurableEvent{Type: "activity.created", EntityType: "activity", EntityID: a.ID, Revision: a.Revision}); e != nil {
+			return e
+		}
+	}
 	return reindexRecord(ctx, tx, "activity", a.ID)
 }
 

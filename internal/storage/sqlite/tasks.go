@@ -240,8 +240,8 @@ func saveTask(ctx context.Context, tx *sql.Tx, t *domain.Task, now time.Time, re
 		return e
 	}
 	var revision int
-	var created string
-	e := tx.QueryRowContext(ctx, "SELECT revision,created_at FROM tasks WHERE id=?", t.ID).Scan(&revision, &created)
+	var created, oldStatus string
+	e := tx.QueryRowContext(ctx, "SELECT revision,created_at,status FROM tasks WHERE id=?", t.ID).Scan(&revision, &created, &oldStatus)
 	if e != nil && e != sql.ErrNoRows {
 		return e
 	}
@@ -276,6 +276,23 @@ func saveTask(ctx context.Context, tx *sql.Tx, t *domain.Task, now time.Time, re
 		}
 		if e = setTags(ctx, tx, "task", t.ID, t.Tags); e != nil {
 			return e
+		}
+	}
+	if !t.Deleted && eventToken.MatchString(t.ID) {
+		event := app.DurableEvent{EntityType: "task", EntityID: t.ID, Revision: t.Revision}
+		if revision == 0 {
+			event.Type = "task.created"
+			event.Payload = &app.EventPayload{AfterStatus: t.Status}
+			if e = appendEvent(ctx, tx, now, event); e != nil {
+				return e
+			}
+		}
+		if oldStatus != "completed" && t.Status == "completed" {
+			event.Type = "task.completed"
+			event.Payload = &app.EventPayload{BeforeStatus: oldStatus, AfterStatus: t.Status}
+			if e = appendEvent(ctx, tx, now, event); e != nil {
+				return e
+			}
 		}
 	}
 	return reindexRecord(ctx, tx, "task", t.ID)

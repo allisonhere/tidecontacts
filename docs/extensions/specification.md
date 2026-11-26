@@ -25,7 +25,7 @@ no arguments, working directory = the extension directory.
 | `api` | int | yes | Extension API major version. This host: `1` |
 | `description`, `author` | string | no | ≤ 400 / 80 chars |
 | `command` | string | yes | Clean relative path inside the directory (no `..`, `\`, absolute) |
-| `min_host` | string | no | Minimum extension-host version (this host: `0.4.0`) |
+| `min_host` | string | no | Minimum extension-host version (this host: `0.5.0`) |
 | `requires` | [string] | no | Capability ids that must be available |
 | `optional` | [string] | no | Capability ids used if present |
 | `permissions` | [string] | no | Requested permissions (§4) |
@@ -375,3 +375,60 @@ responses use the versioned JSON envelope unless the caller explicitly
 passes `--raw` and the extension returns `output`. That string is written
 without the envelope; terminal control characters are stripped, except LF, CR
 and TAB used by text formats. Errors still use the JSON error envelope.
+
+## 11. Durable event journal (host 0.5.0, API v1)
+
+`[events] durable = […]` opts into a pull journal. This requires `events.consume`
+and the matching read permission for **each** topic. Identity is the approved
+extension ID. A caller cannot supply a consumer ID, grant, or topic override.
+Unlike the legacy `subscribe` bus, this journal is shared across invocations and
+is fed by committed SQLite writes. Existing `event.deliver` listeners are unchanged.
+
+Durable topics: `contact.created/updated/archived/merged`,
+`organization.created/updated`, `task.created/completed`, `activity.created`.
+The merge points to the surviving contact and includes the tombstone as
+`related_id`. No historical events are fabricated during migration. An overdue
+task or follow-up is an evaluated condition, not a stored business mutation.
+
+The event payload schema is **2** independently of the wire protocol:
+
+```json
+{"id":"650a1fa2e4c94d7ca7cc8c013d32a012","type":"task.completed","schema_version":2,
+ "source":"local","entity_type":"task","entity_id":"59076aa3-d03b-4a49-b0ad-efe76aa134b7",
+ "occurred_at":"2026-11-25T17:00:00Z","recorded_at":"2026-11-25T17:00:00Z","revision":2,
+ "payload":{"before_status":"next","after_status":"completed"}}
+```
+
+`correlation_id`, `causation_id`, `automation_id`, `depth`, and `related_id`
+are optional. `payload` contains only typed enum values or IDs. It never
+contains titles, content, notes or credentials. The host stamps the source on
+extension writes. Consumers must not treat resulting writes as fresh automation
+triggers solely because they appear in the same journal.
+
+* `events.next {}` → `{sequence,event,attempts}` or `null` when no delivery is ready.
+* `events.settle {sequence,retry}` → acknowledge successful persistence
+  (`retry:false`) or schedule a bounded retry (`true`). Persist before ACK and
+  deduplicate on **event ID**: an interrupted ACK can be delivered again.
+* `events.dead {after,limit}` → dead letters for the approved consumer and
+  granted topics only (`limit` ≤ 100).
+* `events.replay {sequence}` → put one of those dead letters back in delivery,
+  retaining event identity. This does not authorize repeating an action.
+
+Normal delivery is ordered per topic. A failed delivery blocks that topic for
+1, 2, 4, then 8 seconds; the fifth failure moves it to dead letters and lets
+the topic advance. Other topics can continue meanwhile. Concurrent pulls may
+return the same offered event. Replay neither rewinds a checkpoint nor changes
+the event ID. The order across independent stores is the order of local intake,
+not a global business chronology.
+
+`tidecontacts extensions prune-events --yes` removes at most 1,000 events
+older than 180 days, only past all enrolled consumers' topic checkpoints.
+Pending and dead deliveries are retained. An extension enrolls on its first
+authorized pull; first-time consumers can only see retained history. Disabled
+or abandoned consumers can pin events. Directory refreshes and built-in demo
+seed writes are excluded. Task/activity imports with non-wire-compatible IDs
+remain usable but do not produce durable envelopes.
+
+No exactly-once claim across databases or processes. Pulls are bounded; their
+caller decides when to poll. The host does not run a scheduler. These methods
+do not grant an extension direct database access.

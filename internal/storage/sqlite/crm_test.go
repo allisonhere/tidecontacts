@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/allisonhere/tidecontacts/internal/app"
 	"github.com/allisonhere/tidecontacts/internal/domain"
 	"github.com/allisonhere/tidecontacts/internal/search"
 )
@@ -855,7 +856,7 @@ func TestMigrationFromPhaseTwoPreservesData(t *testing.T) {
 	c.Notes = "kept"
 	c.Methods = []domain.Method{{Kind: "email", Value: "two@example.com"}}
 	c.Memberships = []domain.Membership{{Organization: "Old Org"}}
-	saved := must[[]domain.Contact](t)(s.SaveContacts(bg, []domain.Contact{c}, "create"))[0]
+	saved := must[[]domain.Contact](t)(s.SaveContacts(app.WithoutEvents(bg), []domain.Contact{c}, "create"))[0]
 	if e = s.Put(bg, "pane-widths", `{"Left":0.3,"Right":0.2}`); e != nil {
 		t.Fatal(e)
 	}

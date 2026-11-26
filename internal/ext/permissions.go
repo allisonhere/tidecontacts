@@ -38,6 +38,7 @@ var permissionTable = []Permission{
 	{"pipelines.read", "Read pipelines and their items", EnforcedByHost, true},
 	{"pipelines.write", "Create and edit pipelines", Reserved, true},
 	{"events.subscribe", "Receive domain events (identifiers only)", EnforcedByHost, false},
+	{"events.consume", "Read and acknowledge durable domain events from declared topics", EnforcedByHost, true},
 	{"ui.register", "Contribute host-rendered panels", EnforcedByHost, false},
 	{"commands.register", "Add command-palette actions", EnforcedByHost, false},
 	{"storage.extension", "Use the extension's private key-value storage", EnforcedByHost, false},

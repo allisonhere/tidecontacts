@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/allisonhere/tidecontacts/internal/app"
 	"github.com/allisonhere/tidecontacts/internal/domain"
 	"github.com/google/uuid"
 )
@@ -464,7 +465,7 @@ func (s *Store) MergeContacts(ctx context.Context, keepID, mergeID string) (doma
 		if e = keep.Validate(); e != nil {
 			return e
 		}
-		if e = saveContact(ctx, tx, &keep, "merge"); e != nil {
+		if e = saveContact(app.WithoutEvents(ctx), tx, &keep, "merge"); e != nil {
 			return e
 		}
 		gone.Deleted, gone.Memberships, gone.Relationships = true, nil, nil
@@ -496,7 +497,11 @@ func (s *Store) MergeContacts(ctx context.Context, keepID, mergeID string) (doma
 				return e
 			}
 		}
-		return nil
+		event := app.DurableEvent{Type: "contact.merged", EntityType: "contact", EntityID: keep.ID, RelatedID: gone.ID, Revision: keep.Revision}
+		if keep.Kind == "organization" {
+			event.Type, event.EntityType, event.RelatedID = "organization.updated", "organization", ""
+		}
+		return appendEvent(ctx, tx, s.now(), event)
 	})
 	if e != nil {
 		return keep, e

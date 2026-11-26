@@ -11,10 +11,10 @@ page is the overview; the other pages are the reference:
 | [../adr/phase3a-extensions.md](../adr/phase3a-extensions.md) | Architectural decision records and rejected alternatives |
 | [licensing-boundary.md](licensing-boundary.md) | The proposed Community/Professional boundary, pending legal review |
 
-**Nothing here changes Community behaviour.** With no extensions installed,
-TideContacts runs exactly as before: no processes are started, no tables are
-added, the palette gains one entry ("Manage extensions…"), and the existing
-database opens unchanged (the schema stays at version 4).
+**Extensions remain optional.** With none installed, the host starts no
+extension processes and Community workflows remain available. The current
+schema is 5 whether or not extensions are installed. See the
+[durable event protocol](specification.md#11-durable-event-journal-host-050-api-v1).
 
 ## Layers
 

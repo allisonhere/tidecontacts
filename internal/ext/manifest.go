@@ -11,6 +11,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/BurntSushi/toml"
+	"github.com/allisonhere/tidecontacts/internal/app"
 )
 
 // ManifestFile is the fixed manifest name inside an extension directory.
@@ -99,6 +100,7 @@ type PanelDecl struct {
 // EventDecl lists subscribed event types.
 type EventDecl struct {
 	Subscribe []string `toml:"subscribe" json:"subscribe,omitempty"`
+	Durable   []string `toml:"durable" json:"durable,omitempty"`
 }
 
 // StorageDecl states whether private storage is needed and how much.
@@ -324,6 +326,21 @@ func (m Manifest) Validate() error {
 		}
 	}
 	if err := dupes("event subscription", m.Events.Subscribe); err != nil {
+		return err
+	}
+	if len(m.Events.Durable) > 0 && !granted.Has("events.consume") {
+		return fmt.Errorf("durable subscriptions require the events.consume permission")
+	}
+	for _, t := range m.Events.Durable {
+		info, ok := LookupEventType(t)
+		if !ok || !app.IsDurableEventType(t) {
+			return fmt.Errorf("event %q is not a durable topic", t)
+		}
+		if !granted.Has(info.ReadPermission) {
+			return fmt.Errorf("event %q requires the %s permission", t, info.ReadPermission)
+		}
+	}
+	if err := dupes("durable event subscription", m.Events.Durable); err != nil {
 		return err
 	}
 	if m.Storage.SQL && !granted.Has("storage.sql") {

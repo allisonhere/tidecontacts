@@ -75,7 +75,11 @@ permissions must never be presented as OS-level isolation.
 * No resource limits for CPU, memory or open files.
 * No code signing, publisher identity, revocation or update channel.
 * Approval state is a plain file in the user's data directory.
-* Event delivery is in-process and best-effort; a restart loses queued events.
+* Legacy push event delivery is best effort and in-process. The newer
+  durable journal is a separate permission-checked pull API.
+* Durable event consumers see only their approved topics and must also hold
+  the corresponding record read grants. Retry and replay cannot address
+  another extension's delivery state.
 * `contacts.read` is all-or-nothing: no field-level or per-collection scopes.
 * The TUI shows an extension's sanitized stderr tail as "diagnostic". It is
   truncated and cleaned, but it is still text the extension chose.

@@ -18,11 +18,11 @@ import (
 
 // ExtensionsHelp documents the extension commands.
 const ExtensionsHelp = `
-  extensions             list|inspect|permissions|commands|config|health|enable|disable|run|purge-data
+  extensions             list|inspect|permissions|commands|config|health|enable|disable|run|purge-data|prune-events
   capabilities           list
 `
 
-var extensionActions = map[string]bool{"list": true, "inspect": true, "permissions": true, "commands": true, "config": true, "health": true, "enable": true, "disable": true, "run": true, "purge-data": true}
+var extensionActions = map[string]bool{"list": true, "inspect": true, "permissions": true, "commands": true, "config": true, "health": true, "enable": true, "disable": true, "run": true, "purge-data": true, "prune-events": true}
 
 // extCommand is one declared command with its availability.
 type extCommand struct {
@@ -72,6 +72,21 @@ func runExtensions(ctx context.Context, resource, action, id, command string, o 
 	}
 	if action == "purge-data" && !o.yes {
 		return usage("purge-data deletes the extension's private data; repeat with --yes")
+	}
+	if action == "prune-events" {
+		if id != "" || !o.yes {
+			return usage("use extensions prune-events --yes")
+		}
+		s, err := sqlite.Open(ctx, paths.Database)
+		if err != nil {
+			return err
+		}
+		defer func() { _ = s.Close() }()
+		n, err := s.PruneEvents(ctx)
+		if err != nil {
+			return err
+		}
+		return json.NewEncoder(out).Encode(envelope{Version: 1, Data: map[string]int64{"pruned": n}, Meta: &metadata{Resource: resource, Action: action, Count: int(n)}})
 	}
 	var repo app.CRM
 	if action == "run" {

@@ -223,7 +223,7 @@ quit = ["x"] # replaces q outside inputs
 
 Wide terminals show three panes; medium terminals show list/profile; narrow terminals show one focused pane with Tab navigation and Esc back to the list. Shift+Left/Right adjusts the left pane; Shift+Down/Up adjusts context width. Ratios save on orderly exit and override TOML defaults. Theme choices are saved on exit and override the startup theme; density changes last for the session. `NO_COLOR` retains text focus markers. `TERM=dumb` uses plain guidance.
 
-SQLite migrations are append-only; the current schema is version 4 and adds directory ownership tables while preserving existing contacts and CRM data (see [migration and backup](docs/migration-backup.md)). Foreign keys, WAL, busy timeout, transactions, optimistic revisions and tombstones protect local data. Back up the database using SQLite's backup API, or copy it after the app has closed; do not copy only the main file while WAL writes are active. JSON logs currently append without rotation.
+SQLite migrations are append-only. Schema 5 adds a durable event journal while preserving existing contacts and CRM data (see [migration and backup](docs/migration-backup.md)). Foreign keys, WAL, busy timeout, transactions, optimistic revisions and tombstones protect local data. Back up the database using SQLite's backup API, or copy it after the app has closed; do not copy only the main file while WAL writes are active. JSON logs currently append without rotation.
 
 ## Extensions (optional)
 

@@ -1,8 +1,8 @@
 # Database migration, backup and recovery
 
-## Current schema: 4
+## Current schema: 5
 
-The current build applies migration 4 once when it opens an older database, including through `tidecontacts --check` or the TideMail plugin’s People/lookup path. The standalone app does not need to run first if the matching plugin opens the database. Plugin **Check connection** remains read-only and does not migrate.
+The current build applies all missing migrations once when it opens an older database, including through `tidecontacts --check` or the matching TideMail plugin’s People/lookup path. Plugin **Check connection** remains read-only and does not migrate. Migration 5 adds durable event storage and per-consumer delivery state; it does not backfill older events. Older executables refuse schema 5; keep a pre-upgrade backup if you need to return to an older build.
 
 Migration 4 adds `contact_directories` and `directory_contacts`. These store canonical folder paths, refresh revisions, timestamps, card identities and fingerprints, with ownership links to cached contact records. Existing contact and CRM tables and rows are preserved. Migration metadata and schema changes commit atomically. Older executables refuse schema 4; keep a backup if you need to return to an older build.
 
