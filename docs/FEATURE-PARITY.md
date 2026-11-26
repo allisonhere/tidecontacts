@@ -38,3 +38,13 @@ Status after Phase 4C implementation. Baseline: Community `feat/phase3d-automati
 2. Extend the same transport with daily operations. Keep typed server validation and app-owned IDs; never share script execution or file paths with browser clients.
 3. Bridge each approved Professional operation by capability, explicitly separating passive read projections, ordinary edits, and consequential approvals. Keep extension code private.
 4. Fill productivity/platform gaps only where the UI can drive a verified operation. Record real screenshot and workflow evidence before calling a row complete.
+
+## Phase 4D plan (open items after Phase 4C)
+
+Recorded at the end of Phase 4C; none of these is implemented.
+
+1. Browser: saved views and in-app navigation history, onboarding, integration settings, Inbox/Radar and transfer screens.
+2. Desktop: Professional read views, a relationship map, dark theme, and a palette with quick capture.
+3. Professional writes through the approval ledger: automation decisions, playbook starts, scenario edits and report saving. Each needs its own authorized operation and tests.
+4. A screen-reader, keyboard-only and contrast audit of both clients, and a performance measurement against the 10,000-record fixtures.
+5. Update the reusable modern-gui skill with the pane, settings and capture patterns used here.
