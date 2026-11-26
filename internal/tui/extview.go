@@ -444,6 +444,13 @@ func (m Model) followExtTarget(v *extView, t ext.Target) (Model, tea.Cmd) {
 		if t.Action != "" {
 			return m, m.extRunAction(v, t.Action, t.ID, nil)
 		}
+		if t.Workspace != "" && t.Workspace != v.ws && m.hasWorkspace(v.ext, t.Workspace) {
+			m.closeExtView()
+			m2, _ := m.openExtWorkspace(v.ext, t.Workspace)
+			n := m2.extensions.view
+			n.stack, n.cur = nil, extFrame{tab: t.Tab, item: t.ID}
+			return m2, m2.extRender(n)
+		}
 		v.cur.remember()
 		v.stack = append(v.stack, v.cur)
 		v.cur = extFrame{tab: t.Tab, item: t.ID, state: copyState(v.cur.state)}
@@ -950,6 +957,16 @@ func copyState(in map[string]string) map[string]string {
 	return out
 }
 
+// hasWorkspace reports whether an enabled extension contributes ws.
+func (m Model) hasWorkspace(extID, ws string) bool {
+	for _, w := range m.extensions.mgr.Workspaces() {
+		if w.Extension == extID && w.ID == ws {
+			return true
+		}
+	}
+	return false
+}
+
 // firstWorkspace returns the id of an extension's first workspace.
 func (m Model) firstWorkspace(extID string) string {
 	for _, w := range m.extensions.mgr.Workspaces() {
@@ -965,6 +982,9 @@ func (m Model) firstWorkspace(extID string) string {
 // the requested place, or the requested form.
 func (m Model) applyExtCommandResult(extID string, res ext.ActionResult) (Model, tea.Cmd) {
 	ws := m.firstWorkspace(extID)
+	if res.Open != nil && res.Open.Workspace != "" && m.hasWorkspace(extID, res.Open.Workspace) {
+		ws = res.Open.Workspace
+	}
 	if res.Form != nil {
 		v := &extView{ext: extID, ws: ws}
 		return m, m.openExtForm(v, *res.Form)

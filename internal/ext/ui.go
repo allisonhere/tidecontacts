@@ -136,8 +136,10 @@ type Target struct {
 	// Kind is "ext" (another view of this extension) or a core record kind the
 	// host can open: contact, organization, task, activity, project.
 	Kind string `json:"kind"`
-	Tab  string `json:"tab,omitempty"`
-	ID   string `json:"id"`
+	// Workspace opens an "ext" target in another workspace of the extension.
+	Workspace string `json:"workspace,omitempty"`
+	Tab       string `json:"tab,omitempty"`
+	ID        string `json:"id"`
 	// Action, when set with Kind "ext", is run instead of navigating.
 	Action string `json:"action,omitempty"`
 }
@@ -299,7 +301,7 @@ func sanitizeTarget(t *Target) *Target {
 	if id == "" {
 		return nil
 	}
-	return &Target{Kind: t.Kind, Tab: tokenOr(t.Tab), ID: id, Action: tokenOr(t.Action)}
+	return &Target{Kind: t.Kind, Workspace: tokenOr(t.Workspace), Tab: tokenOr(t.Tab), ID: id, Action: tokenOr(t.Action)}
 }
 
 func sanitizeMap(m map[string]string, n int) map[string]string {
