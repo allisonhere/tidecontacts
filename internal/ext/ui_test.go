@@ -333,3 +333,10 @@ func TestDataDirectoryOnlyWithStorageSQL(t *testing.T) {
 		t.Fatal("purge left data behind")
 	}
 }
+
+func TestRawCommandOutputCannotDriveTheTerminal(t *testing.T) {
+	got := cleanOutput("a,b\r\n\x1b[2J\x07c\td\u202e\u009b1m\x00e\n")
+	if want := "a,b\r\n[2Jc\td1me\n"; got != want {
+		t.Fatalf("%q", got)
+	}
+}

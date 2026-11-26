@@ -519,8 +519,8 @@ func (m Manifest) validateContributions(granted PermissionSet) error {
 	if len(m.CLI) > 0 && !granted.Has("cli.register") {
 		return fmt.Errorf("CLI resources require the cli.register permission")
 	}
-	if len(m.CLI) > 8 {
-		return fmt.Errorf("at most 8 CLI resources")
+	if len(m.CLI) > 16 {
+		return fmt.Errorf("at most 16 CLI resources")
 	}
 	var res []string
 	for _, c := range m.CLI {

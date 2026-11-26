@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strings"
+	"unicode"
 )
 
 // WorkspaceRef is a workspace contributed by an enabled extension.
@@ -207,6 +209,10 @@ type CLIResponse struct {
 	ETag      string          `json:"etag,omitempty"`
 	Truncated bool            `json:"possibly_truncated,omitempty"`
 	Warnings  []string        `json:"warnings,omitempty"`
+	// Output, when set, is written to standard output instead of the JSON
+	// envelope, for piping reports into other tools. Control sequences are
+	// removed.
+	Output string `json:"output,omitempty"`
 }
 
 // RunCLI serves a contributed CLI resource.
@@ -228,6 +234,9 @@ func (m *Manager) RunCLI(ctx context.Context, req CLIRequest) (CLIResponse, erro
 		r.Warnings[i] = Clean(w, 200, false)
 	}
 	r.ETag = Clean(r.ETag, 128, false)
+	if r.Output != "" {
+		r.Output = cleanOutput(r.Output)
+	}
 	return r, nil
 }
 
@@ -243,4 +252,18 @@ func (m *Manager) CLISchema(ctx context.Context, resource string) (json.RawMessa
 		}
 	}
 	return nil, &ProtocolError{CodeNotFound, fmt.Sprintf("no enabled extension provides %q", resource)}
+}
+
+// cleanOutput keeps an extension's raw command output free of terminal control
+// sequences: newlines, tabs and carriage returns are the only controls kept.
+func cleanOutput(s string) string {
+	return strings.Map(func(r rune) rune {
+		switch {
+		case r == '\n' || r == '\t' || r == '\r':
+			return r
+		case unicode.IsControl(r) || unicode.Is(unicode.Bidi_Control, r):
+			return -1
+		}
+		return r
+	}, strings.ToValidUTF8(s, "\uFFFD"))
 }

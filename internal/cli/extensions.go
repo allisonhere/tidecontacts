@@ -317,6 +317,10 @@ func runExtensionResource(ctx context.Context, args []string, in io.Reader, out 
 	if len(req.Argv) > 0 {
 		action = req.Argv[0]
 	}
+	if resp.Output != "" {
+		_, err := io.WriteString(out, resp.Output)
+		return true, err
+	}
 	data := resp.Data
 	if len(data) == 0 {
 		data = json.RawMessage("null")
