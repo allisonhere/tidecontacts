@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/allisonhere/tidecontacts/internal/ext"
 )
@@ -38,6 +39,11 @@ func (s Server) professional(r *http.Request, operation, id string) (any, error)
 			return nil, invalid("The offset must be a non-negative number.")
 		}
 		query.Offset = n
+	}
+	if query.Operation == "replay" {
+		if _, err := time.Parse(time.DateOnly, query.Date); err != nil {
+			return nil, invalid("Choose a replay date as YYYY-MM-DD.")
+		}
 	}
 	res, err := s.pro.RunGraphicalRead(r.Context(), query)
 	if err != nil {

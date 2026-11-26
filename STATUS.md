@@ -23,6 +23,7 @@ TideContacts is a standalone, offline-first terminal CRM with a shared TideMail 
 - **Scoped rule integration (Phase 3D host):** approved extensions page typed CRM facts, check effective permissions, and request scoped local writes. Declarative workspace state supports keyboard editors. [Spec §§12–13](docs/extensions/specification.md#12-scoped-record-evaluation-host-060-api-v1)
 - **Demo:** isolated fictional contacts/CRM, paired TideMail demo, reset support. Live activity sync, folder connections and desktop notifications are disabled.
 - **Community MCP (Phase 3D host):** opt-in stdio server, revisioned per-profile grants, bounded CRM projections, scoped writes, protocol diagnostics, and a local content-free audit. Optional Professional tools require separate extension approval and entitlements. [Setup](docs/mcp.md).
+- **Graphical clients (Phase 4C):** `cmd/tidecontacts-web` serves an authenticated loopback JSON API (`internal/webapp`; launch-specific bearer token, exact Host, no CORS, bounded requests, revision-bound writes) for a Svelte browser client (`web/`, embedded with `make web`) and a Qt Quick Community desktop client (`desktop/`). Optional Professional views are read-only and reach the approved extension only through a closed set of authorized reads (`ext.GraphicalActions`); there is no raw command path. Feature coverage and gaps: [docs/FEATURE-PARITY.md](docs/FEATURE-PARITY.md); design record: [docs/design](docs/design/DESIGN.md).
 
 ## Remaining limits
 

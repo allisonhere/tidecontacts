@@ -52,6 +52,7 @@
     </section>
   {/if}
 
+  {@const tasks = [...(dossier.OpenTasks ?? []), ...(dossier.Commitments ?? []).filter((task) => !dossier?.OpenTasks?.some((entry) => entry.ID === task.ID))]}
   <section class="detail-section">
     <div class="section-heading"><h3>Open tasks &amp; commitments</h3><a href={dossierURL('tasks', contact.ID)}>All tasks</a></div>
     {#if tasks.length}

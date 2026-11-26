@@ -2,6 +2,32 @@
 
 Use [STATUS.md](STATUS.md) for the current feature inventory and [README.md](README.md) for setup. Earlier handoff entries below are historical.
 
+## Phase 4C: graphical clients
+
+Local, uncommitted until verified. Build with `make web`, `make build-web` and
+`make desktop` (Node and Qt 6 Quick required; `bin/` is ignored).
+
+- `internal/webapp`: loopback API. Token, Host and Origin checks, 64 KiB bodies,
+  revision-bound writes (`MoveItemRevision`, `CompleteTaskRevision`), and
+  `GET /api/v1/pro/{operation}[/{id}]` for Professional reads. Responses use
+  `schema_version: 1`; Professional paging is `meta.possibly_truncated`.
+- `internal/ext/manager_graphical.go`: the `graphical.read` method. A fixed
+  operation table maps a route to one CLI resource and action. The extension must
+  be approved with `cli.register` and `storage.sql`, provide `pro.graphical-read`
+  and the operation's capability, and be entitled on every call. The session may
+  call only record reads. Private `graphicalRead` re-checks the same allow-list.
+- `web/`: Svelte 5 client (`App.svelte` shell, `Professional.svelte`, shared
+  record components). `desktop/`: Qt Quick client for Community records.
+- Launch: `tidecontacts-web --profile demo|local [--api-only] [--assets DIR]`
+  prints exactly one line, `http://127.0.0.1:PORT/#session=TOKEN`.
+- Verified: race tests for `webapp` and `ext`, the paired real-binary API with
+  Professional enabled, real browser runs at 1440x900 and 390x844 (light and dark),
+  and offscreen desktop capture. The desktop record editor and the web write
+  forms were exercised by unit or API tests, not by a human or a screen reader.
+- Not done: Professional desktop views, writes to Professional data, Inbox/Radar,
+  transfer and import screens, saved views, onboarding. See FEATURE-PARITY.md.
+  Commercial licensing and distribution are unchanged.
+
 ## Phase 3D: Business Automation Studio host
 
 Branch `feat/phase3d-automation-host`; pair with the private `feat/phase3d`

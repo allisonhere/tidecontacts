@@ -1,0 +1,24 @@
+ TideContacts / Business  |  local
+>╭─ tidecontacts · business ──────────────────────────────────────────────────╮
+/│                                                                            │
+>│  Business Command Center                                                PRO│
+ │  [command]  briefing  rescue  revenue  pipeline  customers  renewals ›     │
+ │  Pipeline $119,600 · Weighted $73,860 · Booked $19,600 · Target 78.4%      │
+ │  Thursday, November 26                             This month · no filter  │
+ │  [attention]  revenue  pipeline  forecast  rescue  customers ›             │
+ │  ▌REQUIRES YOUR ATTENTION                                             19   │
+ │  ›! Harbor Studio · Onboarding …  In Qualified for 21 days; expe…  $5,000  │
+ │   ! Harbor Studio · Turnaround …  1 linked task is overdue.       $18,000  │
+ │   ! Harbor Studio · Security au…  1 linked task is overdue.        $8,000  │
+ │   ! Harbor Studio · Care plan     Renewal date 2026-11-22 has pa…    €450  │
+ │   ! Follow up with Alex Rivera    Due 2026-11-24, 2 days overdue…          │
+ │   ! Follow up with Morgan Chen    Due 2026-11-25, 1 day overdue;…          │
+ │                                                                            │
+ │   13 more in Briefing.                                                     │
+ │                                                                            │
+ │                                                                            │
+ │                                                                            │
+ │                                                                            │
+ │  • USD figures · 4 other currencies · f to filter                          │
+ │  ↹ panel   j/k item   ↩️ open   [ ] view   ? keys   z snooze   ␛ close     │
+ ╰────────────────────────────────────────────────────────────────────────────╯

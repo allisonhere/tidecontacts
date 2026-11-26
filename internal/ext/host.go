@@ -20,18 +20,18 @@ import (
 // then goes through the same application repository, validation and revision
 // checks the UI and CLI use. Extensions never receive a database handle.
 type Session struct {
-	ID           string
-	Granted      PermissionSet
-	Repo         app.CRM // nil: the host has no records to serve (denied as unavailable)
-	Storage      *Storage
-	Config       map[string]any
-	Entitlement  string // capability to re-check on every call, if the manifest declares one
-	Entitled     EntitlementProvider
-	Bus          *Bus              // where events.publish goes; nil drops them
-	Published    map[string]string // declared event type -> entity type
-	durableTypes []string
-	published    int
-	mcpOnly      bool
+	ID            string
+	Granted       PermissionSet
+	Repo          app.CRM // nil: the host has no records to serve (denied as unavailable)
+	Storage       *Storage
+	Config        map[string]any
+	Entitlement   string // capability to re-check on every call, if the manifest declares one
+	Entitled      EntitlementProvider
+	Bus           *Bus              // where events.publish goes; nil drops them
+	Published     map[string]string // declared event type -> entity type
+	durableTypes  []string
+	published     int
+	mcpOnly       bool
 	graphicalOnly bool
 }
 

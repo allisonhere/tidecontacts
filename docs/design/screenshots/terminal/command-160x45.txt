@@ -1,0 +1,45 @@
+ TideContacts / Business  |  local
+┌╭─ tidecontacts · business ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮┐
+││                                                                                                                                                            ││
+││  Business Command Center                                                                                                                                PRO││
+││  [command]  briefing  rescue  revenue  pipeline  customers  renewals  targets  simulator  replay  reports                                                  ││
+││                                                                                                                                                            ││
+││   PIPELINE                              WEIGHTED                              BOOKED                                TARGET                                 ││
+││   $119,600                              $73,860                               $19,600                               78.4%                                  ││
+││   6 deals, 1 unvalued                   61.76% weighted                       ↑ 15.3%                               $5,400 to go                           ││
+││                                                                                                                                                            ││
+││  Thursday, November 26                                                                                                             This month · no filter  ││
+││  ▌REQUIRES YOUR ATTENTION                                                                                                                             19   ││
+││  ›! Harbor Studio · Onboarding review  In Qualified for 21 days; expected 7.                                                                       $5,000  ││
+││   ! Harbor Studio · Turnaround plan    1 linked task is overdue.                                                                                  $18,000  ││
+││   ! Harbor Studio · Security audit     1 linked task is overdue.                                                                                   $8,000  ││
+││   ! Harbor Studio · Care plan          Renewal date 2026-11-22 has passed with no outcome recorded                                                   €450  ││
+││   ↓ 6 more                                                                                                                                                 ││
+││  ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────  ││
+││   REVENUE PERFORMANCE                 booked USD  │  SALES PIPELINE                    6 open deals  │  FORECAST                          weighted USD     ││
+││   Jun ████████                             $6,050 │  Open now, by stage (USD)                        │  Weighted, by expected month                        ││
+││   Jul ██████▉                              $5,150 │  New Inquiry                               0  $0 │  Dec ███████████████████████████████████ $63,960    ││
+││   Aug ███████████████████████             $17,250 │  Qualified   ████████                  1  $5,000 │                                                     ││
+││   Sep ███████████████████████████████████ $26,300 │  Discovery   ████████                 1  unknown │  Overdue  1 deal                          $9,900    ││
+││   Oct ██████████████████████▋             $17,000 │  Proposal    ████████████████████████ 3  $89,600 │  No date  1 deal                         unknown    ││
+││   ↓ 4 more                                        │  Negotiation ████████                 1  $25,000 │                                                     ││
+││  ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────  ││
+││   OPPORTUNITY INTELLIGENCE          10 to review  │  CUSTOMER INTELLIGENCE              5 customers  │  UPCOMING COMMITMENTS                         6     ││
+││   ! Harbor Studio · O…  In Qualified for…  $5,000 │  ! Casey Brooks   At least 1 overdue commitment… │  ◷ Follow up with Sa…  Captured 2026-11…            ││
+││   ! Harbor Studio · T…  1 linked task is… $18,000 │  ! Harbor Studio  At least 2 overdue commitment… │  ! Harbor Studio · A…  A proposal was r… €17,240    ││
+││   ! Harbor Studio · S…  1 linked task is…  $8,000 │  ! Robin Ellis    At least 1 overdue commitment… │  ◇ Harbor Studio · M…  Notice deadline …  $1,200    ││
+││   ! Harbor Studio · A…  A proposal was r… €17,240 │  ! Sam Taylor     Follow-up overdue by 1 days. … │  ◷ Quarterly review …  Meeting recorded…            ││
+││   ! Harbor Studio · A…  No next action i…       — │  ◇ Jamie Patel    1 open commitment(s)           │  ◷ Harbor Studio · S…  Expected to clos… $25,000    ││
+││   ↓ 2 more                                        │                                                  │  ◇ Harbor Studio · S…  Renewal in 45 da…  $7,200    ││
+││  ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────  ││
+││   BUSINESS TARGETS                             3  │  RENEWALS                          4 in 90 days  │  CUSTOMER CONCENTRATION                     USD     ││
+││   Monthly booked sales                            │  ! Harbor Studio  Care plan · ov… €450 quarterly │  ████████████████████████████▓▓▓▓▓▓▓▓▓▓▒▒▒▒▒▒▒▒     ││
+││   $19,600 / $25,000                               │  ◇ Harbor Studio  Managed suppor… $1,200 monthly │  █ Harbor Studio                          61.22%    ││
+││   ███████████████████████████████░░░░░░░░░ 78.4%  │  ◇ Harbor Studio  Security monit…  $7,200 annual │  ▓ Casey Brooks                           21.68%    ││
+││                                                   │  ◇ Harbor Studio  Platform licen…  £2,400 annual │  ▒ Jamie Patel                            17.09%    ││
+││   Remaining      Behind linear pace        $5,400 │                                                  │                                                     ││
+││   ↓ 10 more                                       │                                                  │  ↓ 4 more                                           ││
+││                                                                                                                                                            ││
+││  • USD figures · 4 other currencies · f to filter                                                                                                          ││
+└│  ↹ panel   j/k item   ↩️ open   [ ] view   ? keys   z snooze   x dismiss   c complete task   T new task   A log activity   S change stage   ␛ close        │┘
+ ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯

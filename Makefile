@@ -1,4 +1,4 @@
-.PHONY: build install test check fmt
+.PHONY: build install test check fmt web build-web desktop
 build:
 	go build -buildvcs=false -o bin/tidecontacts ./cmd/tidecontacts
 install:
@@ -57,3 +57,15 @@ smoke-mail-clients: build
 .PHONY: smoke-directories
 smoke-directories: plugin
 	python3 scripts/directory_smoke.py
+
+# Graphical clients (Phase 4C). `web` needs Node; `desktop` needs Qt 6 Quick.
+web:
+	cd web && npm ci && npm run check && npm run build
+
+build-web: web
+	go build -tags webdist -buildvcs=false -o bin/tidecontacts-web ./cmd/tidecontacts-web
+
+desktop: build-web
+	mkdir -p bin/desktop
+	cd bin/desktop && qmake6 ../../desktop/tidecontacts-desktop.pro && $(MAKE) -j4
+	cp bin/desktop/tidecontacts-desktop bin/tidecontacts-desktop

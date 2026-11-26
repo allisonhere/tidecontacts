@@ -2,6 +2,10 @@
 
 A standalone, offline-first personal CRM for the terminal: contacts, a timeline of what happened, tasks and reminders, projects, optional pipelines, and a review inbox that explains itself. Written in Go with TideUI, Bubble Tea, Ripple and SQLite. No account, server, browser, network connection, plugin or AI service is needed.
 
+## Graphical clients
+
+`make build-web` builds `bin/tidecontacts-web` with the browser client embedded; run `bin/tidecontacts-web --profile demo` and open the printed URL. `make desktop` also builds the Qt Quick client. Both use a private loopback session and the same data as the terminal. See [feature parity](docs/FEATURE-PARITY.md).
+
 ## Build and run
 
 Requires Go 1.26.1 or newer. SQLite is pure Go; no C compiler is required.
