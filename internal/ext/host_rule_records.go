@@ -20,7 +20,7 @@ func (s *Session) ruleRecords(ctx context.Context, data json.RawMessage) (any, *
 	if e := decode(data, &a); e != nil {
 		return nil, e
 	}
-	perm := map[string]string{"contact": "contacts.read", "organization": "organizations.read", "task": "tasks.read", "activity": "activities.read", "followup": "contacts.read"}[a.Kind]
+	perm := map[string]string{"contact": "contacts.read", "organization": "organizations.read", "task": "tasks.read", "activity": "activities.read", "project": "projects.read", "followup": "contacts.read"}[a.Kind]
 	if perm == "" || len(a.After) > 256 || a.Limit < 1 || a.Limit > 500 {
 		return nil, perr(CodeInvalid, "invalid record kind, cursor, or limit")
 	}
@@ -67,6 +67,7 @@ func (s *Session) ruleWrite(ctx context.Context, data json.RawMessage) (any, *Pr
 		RecordID      string `json:"record_id"`
 		Title         string `json:"title"`
 		Due           string `json:"due"`
+		TaskStatus    string `json:"task_status"`
 		Tag           string `json:"tag"`
 		Revision      int    `json:"revision"`
 		CorrelationID string `json:"correlation_id"`
@@ -87,19 +88,28 @@ func (s *Session) ruleWrite(ctx context.Context, data json.RawMessage) (any, *Pr
 		read, tagWrite = "contacts.read", "contacts.tags.write"
 	case "organization":
 		read, tagWrite = "organizations.read", "organizations.tags.write"
+	case "project":
+		if a.Kind != "task" && a.Kind != "timeline" && a.Kind != "note" {
+			return nil, perr(CodeInvalid, "this action does not accept a project link")
+		}
+		read = "projects.read"
 	case "":
 		if a.RecordID != "" {
 			return nil, perr(CodeInvalid, "a linked record requires a kind")
 		}
 	default:
-		return nil, perr(CodeInvalid, "a linked record must be a contact or organization")
+		return nil, perr(CodeInvalid, "unsupported linked record kind")
 	}
 	perm := ""
 	switch a.Kind {
 	case "task":
 		perm = "tasks.write"
-	case "timeline":
+	case "timeline", "note":
 		perm = "activities.write"
+	case "project":
+		perm = "projects.write"
+	case "reminder":
+		perm = "reminders.write"
 	case "add_tag", "remove_tag":
 		perm = tagWrite
 	}
@@ -111,16 +121,31 @@ func (s *Session) ruleWrite(ctx context.Context, data json.RawMessage) (any, *Pr
 	}
 	var c domain.Contact
 	var links []domain.Ref
+	var projects []domain.Ref
 	if read != "" {
 		if e := s.need(read); e != nil {
 			return nil, e
 		}
-		var err error
-		c, err = s.Repo.Contact(ctx, a.RecordID)
-		if err != nil || c.Deleted || c.Archived || (c.Kind == "organization") != (a.RecordKind == "organization") {
-			return nil, perr(CodeNotFound, "linked record is not live")
+		if a.RecordKind == "project" {
+			p, err := s.Repo.Project(ctx, a.RecordID)
+			if err != nil || p.Deleted || p.Status == "archived" {
+				return nil, perr(CodeNotFound, "linked project is not live")
+			}
+			projects = []domain.Ref{{ID: p.ID}}
+		} else {
+			var err error
+			c, err = s.Repo.Contact(ctx, a.RecordID)
+			if err != nil || c.Deleted || c.Archived || (c.Kind == "organization") != (a.RecordKind == "organization") {
+				return nil, perr(CodeNotFound, "linked record is not live")
+			}
+			links = []domain.Ref{{ID: c.ID, Kind: c.Kind}}
 		}
-		links = []domain.Ref{{ID: c.ID, Kind: c.Kind}}
+	}
+	if a.TaskStatus != "" && (a.Kind != "task" || a.TaskStatus != "next" && a.TaskStatus != "waiting") {
+		return nil, perr(CodeInvalid, "invalid task status")
+	}
+	if a.Due != "" && a.Kind != "task" && a.Kind != "reminder" {
+		return nil, perr(CodeInvalid, "this action does not accept a due date")
 	}
 	if a.Kind == "add_tag" || a.Kind == "remove_tag" {
 		if a.Tag = strings.TrimSpace(a.Tag); a.Tag == "" || Clean(a.Tag, 80, false) != a.Tag || a.Revision <= 0 {
@@ -144,12 +169,36 @@ func (s *Session) ruleWrite(ctx context.Context, data json.RawMessage) (any, *Pr
 	if a.Title = strings.TrimSpace(a.Title); a.Title == "" || Clean(a.Title, 240, false) != a.Title {
 		return nil, perr(CodeInvalid, "a printable title is required")
 	}
-	if a.Kind == "task" {
-		t, err := s.Repo.SaveTask(ctx, domain.Task{Title: a.Title, Due: a.Due, Status: "next", Entities: links})
+	switch a.Kind {
+	case "task":
+		status := a.TaskStatus
+		if status == "" {
+			status = "next"
+		}
+		t, err := s.Repo.SaveTask(ctx, domain.Task{Title: a.Title, Due: a.Due, Status: status, Entities: links, Projects: projects})
 		return map[string]string{"id": t.ID}, mapErr(err)
+	case "project":
+		p, err := s.Repo.SaveProject(ctx, domain.Project{Name: a.Title, Members: links})
+		return map[string]string{"id": p.ID}, mapErr(err)
+	case "reminder":
+		at, err := time.ParseInLocation(time.DateOnly, a.Due, time.Local)
+		if err != nil || at.Year() < 1 || at.Format(time.DateOnly) != a.Due {
+			return nil, perr(CodeInvalid, "reminder needs a YYYY-MM-DD due date")
+		}
+		m := domain.Reminder{Title: a.Title, At: at}
+		if len(links) > 0 {
+			m.Entity = links[0]
+		}
+		m, err = s.Repo.SaveReminder(ctx, m)
+		return map[string]string{"id": m.ID}, mapErr(err)
+	default: // timeline or note, verified above
+		kind := "automation"
+		if a.Kind == "note" {
+			kind = "note"
+		}
+		r, err := s.Repo.SaveActivity(ctx, domain.Activity{Type: kind, Title: a.Title, Entities: links, Projects: projects, Provenance: domain.Local, SourceApp: ExtensionSource + s.ID, OccurredAt: time.Now()})
+		return map[string]string{"id": r.ID}, mapErr(err)
 	}
-	r, err := s.Repo.SaveActivity(ctx, domain.Activity{Type: "automation", Title: a.Title, Entities: links, Provenance: domain.Local, SourceApp: ExtensionSource + s.ID, OccurredAt: time.Now()})
-	return map[string]string{"id": r.ID}, mapErr(err)
 }
 
 func (s *Session) ruleOrigin(ctx context.Context, correlation, causation, automation string, depth int) (context.Context, *ProtocolError) {

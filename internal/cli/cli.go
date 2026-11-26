@@ -33,7 +33,7 @@ func fail(code int, kind, message string) error { return &Error{code, kind, mess
 func usage(message string) error                { return fail(2, "usage", message) }
 func invalid(message string) error              { return fail(3, "invalid_input", message) }
 
-var resources = map[string]bool{"contacts": true, "organizations": true, "tasks": true, "activities": true, "projects": true, "pipelines": true, "items": true, "crm": true, "schema": true, "extensions": true, "capabilities": true}
+var resources = map[string]bool{"contacts": true, "organizations": true, "tasks": true, "activities": true, "projects": true, "pipelines": true, "items": true, "crm": true, "schema": true, "extensions": true, "capabilities": true, "mcp": true}
 
 func Handles(args []string) bool {
 	if rest, _, _, err := globalFlags(args); err == nil && len(rest) > 0 && !strings.HasPrefix(rest[0], "-") && !strings.HasPrefix(args[0], "--sync") {
@@ -66,6 +66,7 @@ const Help = `TideContacts scripting CLI (JSON API version 1)
   crm                    export|import
   extensions             list|inspect|permissions|commands|config|health|enable|disable|run|purge-data
   capabilities           list
+  mcp                    profiles|profile-set|profile-disable|capabilities|diagnose|config|audit|serve
   schema                 [RESOURCE]
 
 Options (before or after subcommands):
@@ -132,9 +133,14 @@ func Run(ctx context.Context, args []string, in io.Reader, out, stderr io.Writer
 			result = e
 		}
 	}()
-	if rest, demoMode, database, gerr := globalFlags(args); gerr == nil && len(rest) > 0 && !strings.HasPrefix(rest[0], "-") && !resources[rest[0]] {
-		if handled, herr := runExtensionResource(ctx, rest, in, out, demoMode, database); handled {
-			return herr
+	if rest, demoMode, database, gerr := globalFlags(args); gerr == nil && len(rest) > 0 {
+		if rest[0] == "mcp" {
+			return runMCP(ctx, rest[1:], demoMode, database, in, out)
+		}
+		if !strings.HasPrefix(rest[0], "-") && !resources[rest[0]] {
+			if handled, herr := runExtensionResource(ctx, rest, in, out, demoMode, database); handled {
+				return herr
+			}
 		}
 	}
 	o, pos, err := parse(args)

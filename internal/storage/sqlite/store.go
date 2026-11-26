@@ -19,7 +19,7 @@ type Store struct {
 }
 
 // Migrations are append-only and applied atomically with their version record.
-var migrations = []string{`CREATE TABLE preferences (key TEXT PRIMARY KEY, value TEXT NOT NULL);`, contactsSchema, crmSchema, directoriesSchema, eventLogSchema}
+var migrations = []string{`CREATE TABLE preferences (key TEXT PRIMARY KEY, value TEXT NOT NULL);`, contactsSchema, crmSchema, directoriesSchema, eventLogSchema, mcpSchema}
 
 func Open(ctx context.Context, path string) (*Store, error) {
 	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {

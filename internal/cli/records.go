@@ -536,6 +536,9 @@ func schema(resource string) (any, error) {
 	if details, ok := descriptions["contacts"].(map[string]any); ok {
 		details["query_fields"] = describe(reflect.TypeOf(domain.Recipient{}))
 	}
+	if resource == "" || resource == "mcp" {
+		descriptions["mcp"] = mcpSchemaInfo()
+	}
 	if resource != "" && len(descriptions) == 0 {
 		return nil, usage("unknown schema resource " + resource)
 	}

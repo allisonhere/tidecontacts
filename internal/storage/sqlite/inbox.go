@@ -178,12 +178,25 @@ func orSomeone(names string) string {
 // snoozed entries removed. An entry that was dismissed returns only when the facts
 // behind it change (its fingerprint), for example a new due date or a later interaction.
 func (s *Store) Inbox(ctx context.Context) ([]domain.InboxItem, error) {
+	return s.inbox(ctx, true)
+}
+
+// InboxSnapshot uses the same attention rules without persisting first-seen or snooze state.
+func (s *Store) InboxSnapshot(ctx context.Context) ([]domain.InboxItem, error) {
+	return s.inbox(ctx, false)
+}
+
+func (s *Store) inbox(ctx context.Context, persist bool) ([]domain.InboxItem, error) {
 	var out []domain.InboxItem
 	cfg, e := s.RadarConfig(ctx)
 	if e != nil {
 		return nil, e
 	}
-	e = s.write(ctx, func(tx *sql.Tx) error {
+	run := s.read
+	if persist {
+		run = s.write
+	}
+	e = run(ctx, func(tx *sql.Tx) error {
 		items, e := s.candidates(ctx, tx, cfg)
 		if e != nil {
 			return e
@@ -211,20 +224,27 @@ func (s *Store) Inbox(ctx context.Context) ([]domain.InboxItem, error) {
 			switch {
 			case !known || st.fingerprint != it.Fingerprint:
 				st = state{it.Fingerprint, "open", "", now}
-				if _, e = tx.ExecContext(ctx, `INSERT INTO inbox_state(key,kind,fingerprint,status,snoozed_until,first_seen,updated_at) VALUES(?,?,?,'open','',?,?)
+				if persist {
+					if _, e = tx.ExecContext(ctx, `INSERT INTO inbox_state(key,kind,fingerprint,status,snoozed_until,first_seen,updated_at) VALUES(?,?,?,'open','',?,?)
  ON CONFLICT(key) DO UPDATE SET kind=excluded.kind,fingerprint=excluded.fingerprint,status='open',snoozed_until='',first_seen=excluded.first_seen,updated_at=excluded.updated_at`, it.Key, it.Kind, it.Fingerprint, now, now); e != nil {
-					return e
+						return e
+					}
 				}
 			case st.status == "dismissed", st.status == "snoozed" && st.snoozed > today:
 				continue
 			case st.status == "snoozed":
 				st.status = "open"
-				if _, e = tx.ExecContext(ctx, "UPDATE inbox_state SET status='open',snoozed_until='',updated_at=? WHERE key=?", now, it.Key); e != nil {
-					return e
+				if persist {
+					if _, e = tx.ExecContext(ctx, "UPDATE inbox_state SET status='open',snoozed_until='',updated_at=? WHERE key=?", now, it.Key); e != nil {
+						return e
+					}
 				}
 			}
 			it.Status, it.FirstSeen = st.status, st.first
 			out = append(out, it)
+		}
+		if !persist {
+			return nil
 		}
 		// Forget state for records that stopped qualifying long ago, so the table stays bounded.
 		cutoff := stamp(s.now().AddDate(0, 0, -180))

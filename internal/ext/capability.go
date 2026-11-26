@@ -37,7 +37,8 @@ func CoreCapabilities() []Capability {
 		c("core.insights", "contacts.read", "activities.read", "tasks.read"),
 		c("core.events", "events.subscribe"),
 		c("core.event-journal", "events.consume"),
-		c("core.rule-records", "contacts.tags.write", "organizations.tags.write"),
+		c("core.rule-records", "contacts.tags.write", "organizations.tags.write", "reminders.write"),
+		c("core.mcp", "mcp.register"),
 	}
 }
 

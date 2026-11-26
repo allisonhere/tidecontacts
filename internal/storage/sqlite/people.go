@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/allisonhere/tidecontacts/internal/app"
 	"github.com/allisonhere/tidecontacts/internal/domain"
@@ -74,21 +75,34 @@ func (s *Store) followUps(ctx context.Context, q querier) ([]domain.FollowUp, er
 // Changing the cadence restarts its clock from today when no interaction is recorded.
 func (s *Store) SetFollowUp(ctx context.Context, f domain.FollowUp) error {
 	return s.write(ctx, func(tx *sql.Tx) error {
-		if f.Interval.IsZero() {
-			f.Interval = domain.Interval{Unit: "day"}
+		var updated string
+		err := tx.QueryRowContext(ctx, "SELECT updated_at FROM followup_prefs WHERE entity_id=?", f.Entity.ID).Scan(&updated)
+		if err != nil && err != sql.ErrNoRows {
+			return err
 		}
-		for _, d := range []string{f.NextDate, f.SnoozedUntil} {
-			if _, ok := domain.ParseDay(d); d != "" && !ok {
-				return fmt.Errorf("follow-up dates must be YYYY-MM-DD")
-			}
+		return s.setFollowUp(ctx, tx, f, updated)
+	})
+}
+
+func (s *Store) setFollowUp(ctx context.Context, tx *sql.Tx, f domain.FollowUp, updated string) error {
+	if f.Interval.IsZero() {
+		f.Interval = domain.Interval{Unit: "day"}
+	}
+	for _, d := range []string{f.NextDate, f.SnoozedUntil} {
+		if _, ok := domain.ParseDay(d); d != "" && !ok {
+			return fmt.Errorf("follow-up dates must be YYYY-MM-DD")
 		}
-		now, today := stamp(s.now()), s.today()
-		_, e := tx.ExecContext(ctx, `INSERT INTO followup_prefs(entity_id,every,unit,never,next_date,snoozed_until,set_at,updated_at) VALUES(?,?,?,?,?,?,?,?)
+	}
+	now := s.now()
+	today := domain.Day(now)
+	if previous := parseStamp(updated); !now.After(previous) {
+		now = previous.Add(time.Nanosecond)
+	}
+	_, e := tx.ExecContext(ctx, `INSERT INTO followup_prefs(entity_id,every,unit,never,next_date,snoozed_until,set_at,updated_at) VALUES(?,?,?,?,?,?,?,?)
  ON CONFLICT(entity_id) DO UPDATE SET set_at=CASE WHEN every!=excluded.every OR unit!=excluded.unit THEN excluded.set_at ELSE set_at END,
  every=excluded.every,unit=excluded.unit,never=excluded.never,next_date=excluded.next_date,snoozed_until=excluded.snoozed_until,updated_at=excluded.updated_at`,
-			f.Entity.ID, f.Interval.Every, f.Interval.Unit, f.Never, f.NextDate, f.SnoozedUntil, today, now)
-		return e
-	})
+		f.Entity.ID, f.Interval.Every, f.Interval.Unit, f.Never, f.NextDate, f.SnoozedUntil, today, now.UTC().Format(time.RFC3339Nano))
+	return e
 }
 
 func (s *Store) scanDate(r interface{ Scan(...any) error }) (domain.ImportantDate, error) {

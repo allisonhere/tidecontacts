@@ -174,7 +174,24 @@ func (s *Store) ActivityTypes(ctx context.Context) ([]string, error) {
 // SaveActivity creates or edits a locally owned activity. Records owned by another
 // application are read-only here; connectors use UpsertExternalActivity.
 func (s *Store) SaveActivity(ctx context.Context, a domain.Activity) (domain.Activity, error) {
-	e := s.write(ctx, func(tx *sql.Tx) error {
+	if err := s.saveLocalActivity(ctx, &a, true); err != nil {
+		return a, err
+	}
+	return s.Activity(ctx, a.ID)
+}
+
+// SaveActivityPreservingTaskLinks updates a local activity without replacing
+// links managed by tasks.
+func (s *Store) SaveActivityPreservingTaskLinks(ctx context.Context, a domain.Activity) (int, error) {
+	if a.Revision <= 0 {
+		return 0, ErrConflict
+	}
+	err := s.saveLocalActivity(ctx, &a, false)
+	return a.Revision, err
+}
+
+func (s *Store) saveLocalActivity(ctx context.Context, a *domain.Activity, replaceTaskLinks bool) error {
+	return s.write(ctx, func(tx *sql.Tx) error {
 		var provenance string
 		err := tx.QueryRowContext(ctx, "SELECT provenance FROM activities WHERE id=?", a.ID).Scan(&provenance)
 		if err == nil && provenance != domain.Local {
@@ -183,7 +200,7 @@ func (s *Store) SaveActivity(ctx context.Context, a domain.Activity) (domain.Act
 		if err != nil && err != sql.ErrNoRows {
 			return err
 		}
-		if e := saveActivity(ctx, tx, &a, s.now(), true); e != nil {
+		if e := saveActivityRecord(ctx, tx, a, s.now(), true, replaceTaskLinks); e != nil {
 			return e
 		}
 		if !domain.IsInteraction(a.Type) || a.Deleted {
@@ -195,13 +212,13 @@ func (s *Store) SaveActivity(ctx context.Context, a domain.Activity) (domain.Act
  AND entity_id IN (SELECT entity_id FROM activity_entities WHERE activity_id=?)`, day, a.ID)
 		return e
 	})
-	if e != nil {
-		return a, e
-	}
-	return s.Activity(ctx, a.ID)
 }
 
 func saveActivity(ctx context.Context, tx *sql.Tx, a *domain.Activity, now time.Time, replaceLinks bool) error {
+	return saveActivityRecord(ctx, tx, a, now, replaceLinks, true)
+}
+
+func saveActivityRecord(ctx context.Context, tx *sql.Tx, a *domain.Activity, now time.Time, replaceLinks, replaceTaskLinks bool) error {
 	a.Normalize(now)
 	if e := a.Validate(); e != nil {
 		return e
@@ -216,6 +233,9 @@ func saveActivity(ctx context.Context, tx *sql.Tx, a *domain.Activity, now time.
 		return fmt.Errorf("%w: activity changed since it was opened; reload before saving", ErrConflict)
 	}
 	if e == sql.ErrNoRows {
+		if a.Revision != 0 {
+			return sql.ErrNoRows
+		}
 		created = stamp(now)
 	}
 	a.CreatedAt, a.UpdatedAt, a.Revision = created, stamp(now), revision+1
@@ -231,6 +251,9 @@ func saveActivity(ctx context.Context, tx *sql.Tx, a *domain.Activity, now time.
 	}
 	if replaceLinks {
 		for target, refs := range map[string][]domain.Ref{"entity": a.Entities, "project": a.Projects, "task": a.Tasks} {
+			if target == "task" && !replaceTaskLinks {
+				continue
+			}
 			if e = setLinks(ctx, tx, "activity", a.ID, target, refs); e != nil {
 				return e
 			}

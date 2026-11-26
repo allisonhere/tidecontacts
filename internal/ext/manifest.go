@@ -48,6 +48,7 @@ type Manifest struct {
 	Workspaces []WorkspaceDecl  `toml:"workspaces" json:"workspaces,omitempty"`
 	CLI        []CLIDecl        `toml:"cli" json:"cli,omitempty"`
 	Signals    bool             `toml:"signals" json:"signals,omitempty"`
+	MCP        bool             `toml:"mcp" json:"mcp,omitempty"`
 	Published  []PublishedEvent `toml:"published_events" json:"published_events,omitempty"`
 	// TimeoutSeconds raises the per-request budget (default 10, host cap 30).
 	TimeoutSeconds int `toml:"timeout_seconds" json:"timeout_seconds,omitempty"`
@@ -75,7 +76,7 @@ type PublishedEvent struct {
 }
 
 // ReservedCLIResources are built-in names an extension cannot take over.
-var ReservedCLIResources = map[string]bool{"contacts": true, "organizations": true, "tasks": true, "activities": true, "projects": true, "pipelines": true, "items": true, "crm": true, "schema": true, "extensions": true, "capabilities": true, "help": true}
+var ReservedCLIResources = map[string]bool{"contacts": true, "organizations": true, "tasks": true, "activities": true, "projects": true, "pipelines": true, "items": true, "crm": true, "schema": true, "extensions": true, "capabilities": true, "mcp": true, "help": true}
 
 // Provided is a capability an extension offers.
 type Provided struct {
@@ -547,8 +548,8 @@ func (m Manifest) validateContributions(granted PermissionSet) error {
 		if err := text("CLI description", c.Description, 120, false); err != nil {
 			return err
 		}
-		if len(c.Actions) > 32 {
-			return fmt.Errorf("at most 32 actions per CLI resource")
+		if len(c.Actions) > 40 {
+			return fmt.Errorf("at most 40 actions per CLI resource")
 		}
 		for _, a := range c.Actions {
 			if !localPattern.MatchString(a) {
@@ -562,6 +563,9 @@ func (m Manifest) validateContributions(granted PermissionSet) error {
 	}
 	if m.Signals && !granted.Has("signals.provide") {
 		return fmt.Errorf("signals require the signals.provide permission")
+	}
+	if m.MCP && !granted.Has("mcp.register") {
+		return fmt.Errorf("MCP contributions require the mcp.register permission")
 	}
 	if len(m.Published) > 0 && !granted.Has("events.publish") {
 		return fmt.Errorf("published events require the events.publish permission")

@@ -174,7 +174,7 @@ multi-record write such as an import batch.
 | `task.created/updated/completed/reopened` | yes | `tasks.read` |
 | `project.created/updated` | yes | `projects.read` |
 | `pipeline.created/updated`, `pipeline.item_created/item_moved` | yes | `pipelines.read` |
-| `project.status_changed`, `followup.due`, `reminder.due` | **reserved, not emitted** | |
+| `followup.due`, `reminder.due` | **reserved, not emitted** | |
 
 Semantics:
 
@@ -370,7 +370,7 @@ form's `args`, `values` and `refs`.
 
 ### 10.3 CLI output
 
-A manifest can register up to 16 CLI resources with up to 32 actions each.
+A manifest can register up to 16 CLI resources with up to 40 actions each.
 Successful extension CLI responses use the versioned JSON envelope unless the caller explicitly
 passes `--raw` and the extension returns `output`. That string is written
 without the envelope; terminal control characters are stripped, except LF, CR
@@ -385,7 +385,8 @@ Unlike the legacy `subscribe` bus, this journal is shared across invocations and
 is fed by committed SQLite writes. Existing `event.deliver` listeners are unchanged.
 
 Durable topics: `contact.created/updated/archived/merged`,
-`organization.created/updated`, `task.created/completed`, `activity.created`.
+`organization.created/updated`, `task.created/completed/reopened/waiting`,
+`activity.created`, `project.created/status_changed`, and `reminder.created`.
 The merge points to the surviving contact and includes the tombstone as
 `related_id`. No historical events are fabricated during migration. An overdue
 task or follow-up is an evaluated condition, not a stored business mutation.
@@ -440,22 +441,32 @@ grants, not declarations or the grants of other extensions. It accepts at most
 32 known permission names.
 
 `records.rule-page {kind,after,limit}` returns a stable ID-ordered page of live
-contacts, organizations, tasks, activities, or follow-up schedules (1–500
-rows); pass the last ID as the next cursor. Fields are intentionally limited to
+contacts, organizations, tasks, activities, projects, or follow-up schedules
+(1–500 rows); pass the last ID as the next cursor. Fields are intentionally limited to
 rule facts: IDs, revision, display name, status, date, activity kind, task
 priority, and contact tags as applicable. It excludes private notes and
 activity bodies. The respective existing `*.read` grant applies. Follow-ups
 require both contact and organization reads; dates are evaluated with the
 existing follow-up calculation, not inferred from journal entries.
 
-`records.rule-write` accepts only `task`, `timeline`, `add_tag`, or `remove_tag`.
-Task and timeline writes need their existing `*.write` grants. Linked records
-must be live people or organizations and require their read grants. Tag
-writes require revision and `contacts.tags.write` or `organizations.tags.write`;
-they cannot update any other field. All four operations accept bounded causal
+`records.rule-write` accepts `task`, `timeline`, `project`, `reminder`, `note`,
+`add_tag`, and `remove_tag`. Creates need the corresponding `tasks.write`,
+`activities.write`, `projects.write`, or `reminders.write` grant. A task accepts
+an optional calendar `due` and a `task_status` of `next` (default) or `waiting`;
+a reminder requires a `due` calendar date and is due from local midnight.
+Notes are local activities of kind `note`. Links require the corresponding read
+grant and a live record: people and organizations can link to any create;
+tasks, timeline entries, and notes may also link to projects. Tag writes require
+the target revision and the narrow `contacts.tags.write` or
+`organizations.tags.write` grant; they cannot update any other field.
+All operations accept bounded causal
 IDs and depth (1–8); the host supplies the source. They have no access to shell,
 communications or SQL. The extension must not silently repeat a write whose
 outcome it cannot determine from the response.
+
+The durable journal records `project.created`, `project.status_changed`, and
+`reminder.created` in the same transaction as the corresponding write.
+Project status transitions carry the old and new status, not titles or notes.
 
 ## 13. Workspace edit state
 
@@ -465,3 +476,16 @@ per update, 64 KiB per value and 128 KiB total. Invalid or oversized values
 are dropped, not truncated into unusable drafts. When a result also opens a
 target workspace or dossier, updates belong to the destination frame. The
 back stack retains the previous frame's filter and selection.
+
+## 14. Scoped MCP contribution (host 0.7.0, API v1)
+
+Manifest `mcp = true` requires `mcp.register` and explicit re-approval.
+The host's MCP actions are fixed, not arbitrary CLI or command dispatch.
+The host sends `mcp.run {action, actor, input}` to the approved provider
+after checking the local profile scope and feature entitlement. The extension
+must authorize the same capability and reject unknown actions and fields.
+`actor` is the locally selected profile, not the client's `clientInfo`.
+Host callbacks on these invocations are limited to reads and entitlement
+checks. A playbook start may save an approval proposal only; no host writes,
+external delivery, approvals or auto-authorization are allowed. Not an OS
+sandbox. See [MCP setup and trust](../mcp.md).

@@ -60,6 +60,20 @@ type Activity struct {
 	Revision                           int
 }
 
+// SummaryTitle omits the fallback title when it was copied from the activity body.
+// Older records don't track how the title was chosen, so an exact match is omitted.
+func (a Activity) SummaryTitle() string {
+	if strings.TrimSpace(a.Title) == strings.TrimSpace(activityBodyTitle(a.Body)) {
+		return ""
+	}
+	return a.Title
+}
+
+func activityBodyTitle(body string) string {
+	line, _, _ := strings.Cut(strings.TrimSpace(body), "\n")
+	return line
+}
+
 func (a *Activity) Normalize(now time.Time) {
 	if a.ID == "" {
 		a.ID = uuid.NewString()
@@ -70,8 +84,7 @@ func (a *Activity) Normalize(now time.Time) {
 	}
 	a.Title = strings.TrimSpace(a.Title)
 	if a.Title == "" {
-		line, _, _ := strings.Cut(strings.TrimSpace(a.Body), "\n")
-		a.Title = line
+		a.Title = activityBodyTitle(a.Body)
 	}
 	if a.Provenance == "" {
 		a.Provenance = Local

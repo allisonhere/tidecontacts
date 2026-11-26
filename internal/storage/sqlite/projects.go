@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/allisonhere/tidecontacts/internal/app"
 	"github.com/allisonhere/tidecontacts/internal/domain"
 	"github.com/allisonhere/tidecontacts/internal/search"
 	"github.com/google/uuid"
@@ -187,6 +188,18 @@ func saveProject(ctx context.Context, tx *sql.Tx, p *domain.Project, now time.Ti
 	if oldStatus != "" && oldStatus != p.Status {
 		a := domain.Activity{ID: uuid.NewString(), Type: "project-update", Title: fmt.Sprintf("%s: %s → %s", p.Name, oldStatus, p.Status), OccurredAt: now, Projects: []domain.Ref{{ID: p.ID}}}
 		if e = saveActivity(ctx, tx, &a, now, true); e != nil {
+			return e
+		}
+	}
+	if revision == 0 || oldStatus != p.Status {
+		event := app.DurableEvent{
+			Type: "project.created", EntityType: "project", EntityID: p.ID, Revision: p.Revision,
+			Payload: &app.EventPayload{BeforeStatus: oldStatus, AfterStatus: p.Status},
+		}
+		if revision != 0 {
+			event.Type = "project.status_changed"
+		}
+		if e = appendEvent(ctx, tx, now, event); e != nil {
 			return e
 		}
 	}

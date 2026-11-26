@@ -59,14 +59,16 @@ var eventTable = []EventType{
 	{"task.updated", "task", "tasks.read", true},
 	{"task.completed", "task", "tasks.read", true},
 	{"task.reopened", "task", "tasks.read", true},
+	{"task.waiting", "task", "tasks.read", true},
 	{"project.created", "project", "projects.read", true},
 	{"project.updated", "project", "projects.read", true},
-	{"project.status_changed", "project", "projects.read", false},
+	{"project.status_changed", "project", "projects.read", true},
 	{"pipeline.created", "pipeline", "pipelines.read", true},
 	{"pipeline.updated", "pipeline", "pipelines.read", true},
 	{"pipeline.item_created", "pipeline_item", "pipelines.read", true},
 	{"pipeline.item_moved", "pipeline_item", "pipelines.read", true},
 	{"followup.due", "contact", "contacts.read", false},
+	{"reminder.created", "reminder", "tasks.read", true},
 	{"reminder.due", "reminder", "tasks.read", false},
 }
 

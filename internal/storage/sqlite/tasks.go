@@ -228,7 +228,23 @@ func (s *Store) SaveTask(ctx context.Context, t domain.Task) (domain.Task, error
 	return s.Task(ctx, t.ID)
 }
 
+// SaveTaskPreservingActivityLinks updates a live task without replacing links
+// managed by timeline activities.
+func (s *Store) SaveTaskPreservingActivityLinks(ctx context.Context, t domain.Task) (int, error) {
+	if t.Revision <= 0 {
+		return 0, ErrConflict
+	}
+	err := s.write(ctx, func(tx *sql.Tx) error {
+		return saveTaskRecord(ctx, tx, &t, s.now(), true, false)
+	})
+	return t.Revision, err
+}
+
 func saveTask(ctx context.Context, tx *sql.Tx, t *domain.Task, now time.Time, replaceLinks bool) error {
+	return saveTaskRecord(ctx, tx, t, now, replaceLinks, true)
+}
+
+func saveTaskRecord(ctx context.Context, tx *sql.Tx, t *domain.Task, now time.Time, replaceLinks, replaceActivityLinks bool) error {
 	t.Normalize()
 	if t.Status == "completed" && t.CompletedAt == "" {
 		t.CompletedAt = stamp(now)
@@ -249,6 +265,9 @@ func saveTask(ctx context.Context, tx *sql.Tx, t *domain.Task, now time.Time, re
 		return fmt.Errorf("%w: task changed since it was opened; reload before saving", ErrConflict)
 	}
 	if e == sql.ErrNoRows {
+		if t.Revision != 0 {
+			return sql.ErrNoRows
+		}
 		created = stamp(now)
 	}
 	t.CreatedAt, t.UpdatedAt, t.Revision = created, stamp(now), revision+1
@@ -270,6 +289,9 @@ func saveTask(ctx context.Context, tx *sql.Tx, t *domain.Task, now time.Time, re
 	}
 	if replaceLinks {
 		for target, refs := range map[string][]domain.Ref{"entity": t.Entities, "project": t.Projects, "activity": t.Activities} {
+			if target == "activity" && !replaceActivityLinks {
+				continue
+			}
 			if e = setLinks(ctx, tx, "task", t.ID, target, refs); e != nil {
 				return e
 			}
@@ -294,6 +316,21 @@ func saveTask(ctx context.Context, tx *sql.Tx, t *domain.Task, now time.Time, re
 				return e
 			}
 		}
+		if revision != 0 && oldStatus != t.Status {
+			event.Payload = &app.EventPayload{BeforeStatus: oldStatus, AfterStatus: t.Status}
+			if (oldStatus == "completed" || oldStatus == "canceled") && t.Open() {
+				event.Type = "task.reopened"
+				if e = appendEvent(ctx, tx, now, event); e != nil {
+					return e
+				}
+			}
+			if t.Status == "waiting" {
+				event.Type = "task.waiting"
+				if e = appendEvent(ctx, tx, now, event); e != nil {
+					return e
+				}
+			}
+		}
 	}
 	return reindexRecord(ctx, tx, "task", t.ID)
 }
@@ -304,11 +341,36 @@ var completionNamespace = uuid.MustParse("6f1d5f0e-7a0b-4c53-9f0e-1c2a7d0b9e11")
 // A task linked to people, organizations or projects gets one timeline entry; a
 // recurring task gets exactly one successor, guarded by a unique (series, occurrence) key.
 func (s *Store) CompleteTask(ctx context.Context, id string) (domain.Task, error) {
+	if _, err := s.completeTask(ctx, id, 0); err != nil {
+		return domain.Task{}, err
+	}
+	return s.Task(ctx, id)
+}
+
+// CompleteTaskRevision completes an active task only at the caller's observed revision.
+func (s *Store) CompleteTaskRevision(ctx context.Context, id string, revision int) (domain.Task, error) {
+	if revision <= 0 {
+		return domain.Task{}, ErrConflict
+	}
+	return s.completeTask(ctx, id, revision)
+}
+
+func (s *Store) completeTask(ctx context.Context, id string, revision int) (domain.Task, error) {
+	var completed domain.Task
 	e := s.write(ctx, func(tx *sql.Tx) error {
 		t, e := readTask(ctx, tx, id)
 		if e != nil {
 			return e
 		}
+		if revision != 0 {
+			if t.Archived || t.Deleted {
+				return sql.ErrNoRows
+			}
+			if t.Revision != revision || t.Status == "canceled" {
+				return ErrConflict
+			}
+		}
+		completed = t
 		if t.Status == "completed" {
 			return nil
 		}
@@ -317,6 +379,7 @@ func (s *Store) CompleteTask(ctx context.Context, id string) (domain.Task, error
 		if e = saveTask(ctx, tx, &t, now, false); e != nil {
 			return e
 		}
+		completed = t
 		if _, e = tx.ExecContext(ctx, "UPDATE reminders SET status='dismissed',updated_at=? WHERE task_id=? AND status='pending'", stamp(now), id); e != nil {
 			return e
 		}
@@ -346,7 +409,7 @@ func (s *Store) CompleteTask(ctx context.Context, id string) (domain.Task, error
 	if e != nil {
 		return domain.Task{}, e
 	}
-	return s.Task(ctx, id)
+	return completed, nil
 }
 
 // ReopenTask returns a completed or canceled task to active work and withdraws its
@@ -454,7 +517,8 @@ func (s *Store) Reminders(ctx context.Context, dueOnly bool) ([]domain.Reminder,
 }
 
 func (s *Store) SaveReminder(ctx context.Context, m domain.Reminder) (domain.Reminder, error) {
-	if m.ID == "" {
+	created := m.ID == ""
+	if created {
 		m.ID = uuid.NewString()
 	}
 	m.Title = strings.TrimSpace(m.Title)
@@ -471,7 +535,8 @@ func (s *Store) SaveReminder(ctx context.Context, m domain.Reminder) (domain.Rem
 		m.Timezone = m.At.Location().String()
 	}
 	e := s.write(ctx, func(tx *sql.Tx) error {
-		now := stamp(s.now())
+		at := s.now()
+		now := stamp(at)
 		var rule, task, entity any
 		if !m.Recurrence.IsZero() {
 			if m.Recurrence.Anchor == "" {
@@ -500,6 +565,9 @@ func (s *Store) SaveReminder(ctx context.Context, m domain.Reminder) (domain.Rem
  ON CONFLICT(id) DO UPDATE SET title=excluded.title,note=excluded.note,remind_at=excluded.remind_at,timezone=excluded.timezone,recurrence_id=excluded.recurrence_id,
  task_id=excluded.task_id,entity_id=excluded.entity_id,status=excluded.status,snoozed_until=excluded.snoozed_until,updated_at=excluded.updated_at`,
 			m.ID, m.Title, m.Note, stamp(m.At), m.Timezone, rule, task, entity, m.Status, snoozed, now, now)
+		if e == nil && created {
+			e = appendEvent(ctx, tx, at, app.DurableEvent{Type: "reminder.created", EntityType: "reminder", EntityID: m.ID})
+		}
 		return e
 	})
 	return m, e

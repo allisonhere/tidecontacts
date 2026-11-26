@@ -23,8 +23,10 @@ import (
 	"log/slog"
 	"os"
 	"os/exec"
+	"os/signal"
 	"runtime"
 	"sync"
+	"syscall"
 	"time"
 )
 
@@ -42,6 +44,11 @@ func main() {
 	}
 }
 func run() (result error) {
+	if cli.IsMCPServe(os.Args[1:]) {
+		ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+		defer cancel()
+		return cli.Run(ctx, os.Args[1:], os.Stdin, os.Stdout, os.Stderr)
+	}
 	if cli.Handles(os.Args[1:]) {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 		defer cancel()
@@ -178,7 +185,7 @@ func run() (result error) {
 		} else {
 			extensions.Start()
 		}
-		return tui.Ready{Config: c, Repo: observed, Context: ctx, Extensions: extensions}
+		return tui.Ready{Config: c, Repo: observed, MCP: store, Context: ctx, Extensions: extensions}
 	}
 	wg.Add(1)
 	// Start once before Run: quitting during initialization still joins and closes resources.

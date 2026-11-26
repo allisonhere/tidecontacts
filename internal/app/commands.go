@@ -46,6 +46,7 @@ var phase3 = []Command{
 	{ID: "crm-export-calendar", Label: "Export tasks and reminders (iCalendar)", Keys: nil, Soft: true},
 	{ID: "crm-import", Label: "Import CRM records (JSON)", Keys: nil, Soft: true},
 	{ID: "extensions-manage", Label: "Manage extensions…", Keys: nil, Soft: true},
+	{ID: "mcp-manage", Label: "Manage MCP profiles…", Soft: true},
 }
 
 type Registry struct{ commands []Command }

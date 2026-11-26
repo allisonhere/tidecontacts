@@ -218,6 +218,7 @@ func (m *Manager) Discover(ctx context.Context) error {
 		}
 		if prev, ok := old[key]; ok && r.status == "" {
 			r.health, r.dropped, r.queue, r.cancel = prev.health, prev.dropped, prev.queue, prev.cancel
+			r.sem = prev.sem // rediscovery must not replace an in-use concurrency gate
 		}
 		m.recs[key] = r
 		m.order = append(m.order, key)
@@ -646,7 +647,19 @@ func (m *Manager) invoke(ctx context.Context, id, method string, params any) (js
 		m.mu.Unlock()
 		return nil, fmt.Errorf("extension %s is %s", id, st)
 	}
-	sess, dir, cmd, sem := m.session(r), r.dir, r.m.Command, r.sem
+	dir, cmd, sem := r.dir, r.m.Command, r.sem
+	var sess *Session
+	if method == methodMCPRun {
+		req, valid := params.(MCPRequest)
+		if !valid || id != professionalMCPProvider || !m.mcpAvailableLocked(ctx, req.Action) {
+			m.mu.Unlock()
+			return nil, mcpUnavailable()
+		}
+		sess = &Session{ID: id, Granted: r.effective(), Repo: m.o.Repo,
+			Entitled: m.o.Entitlements, Entitlement: mcpCapabilities[req.Action], mcpOnly: true}
+	} else {
+		sess = m.session(r)
+	}
 	timeout, opt := m.o.Timeout, InvokeOptions{}
 	if r.m.TimeoutSeconds > 0 {
 		timeout = time.Duration(r.m.TimeoutSeconds) * time.Second
@@ -660,6 +673,15 @@ func (m *Manager) invoke(ctx context.Context, id, method string, params any) (js
 		defer func() { <-sem }()
 	case <-ctx.Done():
 		return nil, ctx.Err()
+	}
+	if sess.mcpOnly {
+		m.mu.Lock()
+		cur := m.recs[id]
+		current := m.mcpAvailableLocked(ctx, params.(MCPRequest).Action) && cur.execSHA == r.execSHA
+		m.mu.Unlock()
+		if !current {
+			return nil, mcpUnavailable()
+		}
 	}
 	res, err := InvokeOpts(ctx, dir, cmd, id, method, params, timeout, sess.Call, opt)
 	m.mu.Lock()

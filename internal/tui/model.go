@@ -19,6 +19,7 @@ type Ready struct {
 	// Extensions is optional; nil means the extension system is not in use.
 	Extensions *ext.Manager
 	Repo       app.Contacts
+	MCP        app.MCPState
 	Context    context.Context
 	Config     config.Config
 	Err        error
@@ -54,6 +55,7 @@ type Model struct {
 	left, right                                                 tideui.PaneRatio
 	feedback                                                    string
 	extensions                                                  extState
+	mcp                                                         mcpSettings
 }
 
 func New(load tea.Cmd) Model {
@@ -104,6 +106,9 @@ func (m Model) focusCount() int {
 	return 3
 }
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if next, cmd, handled := m.updateMCP(msg); handled {
+		return next, cmd
+	}
 	if next, cmd, handled := m.updateExtensions(msg); handled {
 		return next, cmd
 	}
@@ -141,6 +146,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		n := NewReady(v.Config)
 		n.width, n.height = m.width, m.height
 		n.contacts.repo = v.Repo
+		n.mcp.state = v.MCP
 		n.extensions.mgr = v.Extensions
 		n.contacts.ctx = v.Context
 		if n.contacts.ctx == nil {
@@ -311,6 +317,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 func (m Model) dispatch(id string) (tea.Model, tea.Cmd) {
+	if id == "mcp-manage" {
+		return m.openMCP()
+	}
 	if id == "extensions-manage" || strings.HasPrefix(id, "ext:") || strings.HasPrefix(id, "ext-ws:") {
 		return m.extDispatch(id)
 	}
@@ -612,6 +621,9 @@ func (m Model) View() string {
 	} else if m.overlay == none && !m.editing && m.contacts.editor == nil && m.crm.form == nil && m.crm.picker == nil && m.crm.prompt == nil && m.contacts.transfer == nil {
 		hints += "  ctrl+g Menu"
 	}
+	if m.mcp.modal != nil {
+		status, hints = "MCP / PROFILES", ""
+	}
 	for ansi.StringWidth(status)+ansi.StringWidth(hints)+4 > m.width {
 		i := strings.LastIndex(hints, "  ")
 		if i < 0 {
@@ -676,6 +688,9 @@ func (m Model) View() string {
 	}
 	if m.contacts.transfer != nil {
 		layout.Modal = m.transferPanel(r)
+	}
+	if m.mcp.modal != nil {
+		layout.Modal = m.mcpPanel(r)
 	}
 	return lipgloss.JoinVertical(lipgloss.Left, header, r.Render(layout))
 }

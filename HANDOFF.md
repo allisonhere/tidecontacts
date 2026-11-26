@@ -5,7 +5,7 @@ Use [STATUS.md](STATUS.md) for the current feature inventory and [README.md](REA
 ## Phase 3D: Business Automation Studio host
 
 Branch `feat/phase3d-automation-host`; pair with the private `feat/phase3d`
-branch. Host **0.6.0**, wire protocol **v1**, Community schema **5**. The
+branch. Host **0.7.0**, wire protocol **v1**, Community schema **6**. The
 Community app can be used without either installing or enabling Professional.
 
 - `internal/storage/sqlite/eventlog.go`: transactional outbox, per-topic
@@ -17,6 +17,9 @@ Community app can be used without either installing or enabling Professional.
 - `internal/ext/ui.go` and `internal/tui/extview.go`: bounded declarative
   editor state and keyboard drill-down; no Professional rules or runner in
   Community. [Extension protocol](docs/extensions/specification.md#11-durable-event-journal-host-050-api-v1).
+- `internal/mcpserver` and `internal/cli/mcp.go`: official SDK over stdio,
+  local grants, bounded record tools, setup/diagnostics and redacted audit.
+  `scripts/mcp_smoke.py` runs Community-only or with the paired extension.
 
 Relevant extension, SQLite, CLI and TUI race tests use only isolated fixtures.
 The private checkout has paired CLI/PTY tests, measured benchmarks and the

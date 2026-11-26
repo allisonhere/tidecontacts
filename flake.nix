@@ -46,7 +46,7 @@
 
             # Update after any go.mod/go.sum change: set to lib.fakeHash,
             # build, and copy the "got:" hash from the error.
-            vendorHash = "sha256-6/dCesCRjhnNmQaFWj6304zyqBfjjz/R/S3GEt89zn8=";
+            vendorHash = "sha256-LH/I7cGjS+IXRvzmk2hLdF/a/D+URaDzUJHa58RF3U8=";
 
             subPackages = [
               "cmd/tidecontacts"

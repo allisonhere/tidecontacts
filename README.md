@@ -68,6 +68,13 @@ Updates require revisions (or pipeline configuration tokens); JSON errors and
 exit codes are documented in the [CLI guide](docs/cli.md). `make smoke-cli` tests
 the real binary using fictional data.
 
+## Local MCP
+
+TideContacts can expose selected CRM operations to an authorized local client over
+stdio, without a network listener or TUI. Profiles grant no writes by default.
+Try `tidecontacts --demo mcp diagnose PROFILE` after setting up a fictional
+profile. [Setup, client snippets and grants](docs/mcp.md).
+
 ## First contact
 
 Start in People, press `n`, and enter a display name. Tab moves to Email and then Phone. Editing either updates the preferred entry, or the first entry when none is preferred. Names are optional: a nickname, contact method or organization can supply the display identity. Press Ctrl+S (or F2) to save. The editor opens as a modal over the screen you were on.
@@ -223,7 +230,7 @@ quit = ["x"] # replaces q outside inputs
 
 Wide terminals show three panes; medium terminals show list/profile; narrow terminals show one focused pane with Tab navigation and Esc back to the list. Shift+Left/Right adjusts the left pane; Shift+Down/Up adjusts context width. Ratios save on orderly exit and override TOML defaults. Theme choices are saved on exit and override the startup theme; density changes last for the session. `NO_COLOR` retains text focus markers. `TERM=dumb` uses plain guidance.
 
-SQLite migrations are append-only. Schema 5 adds a durable event journal while preserving existing contacts and CRM data (see [migration and backup](docs/migration-backup.md)). Foreign keys, WAL, busy timeout, transactions, optimistic revisions and tombstones protect local data. Back up the database using SQLite's backup API, or copy it after the app has closed; do not copy only the main file while WAL writes are active. JSON logs currently append without rotation.
+SQLite migrations are append-only. Schema 5 adds a durable event journal; schema 6 adds MCP grants and audit without changing existing CRM rows ([migration and backup](docs/migration-backup.md)). Foreign keys, WAL, busy timeout, transactions, optimistic revisions and tombstones protect local data. Back up with SQLite's backup API, or copy the database after the app has closed; do not copy only the main file while WAL writes are active. JSON logs currently append without rotation.
 
 ## Extensions (optional)
 

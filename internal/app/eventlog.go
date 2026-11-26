@@ -14,7 +14,8 @@ func IsDurableEventType(typ string) bool {
 	switch typ {
 	case "contact.created", "contact.updated", "contact.archived", "contact.merged",
 		"organization.created", "organization.updated",
-		"task.created", "task.completed", "activity.created":
+		"task.created", "task.completed", "task.reopened", "task.waiting", "activity.created",
+		"project.created", "project.status_changed", "reminder.created":
 		return true
 	default:
 		return false

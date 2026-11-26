@@ -15,4 +15,4 @@ package ext
 const APIVersion = 1
 
 // HostVersion is compared against a manifest's min_host.
-const HostVersion = "0.6.0"
+const HostVersion = "0.7.0"

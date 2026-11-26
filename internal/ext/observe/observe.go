@@ -14,6 +14,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/allisonhere/tidecontacts/internal/app"
 	"github.com/allisonhere/tidecontacts/internal/domain"
 	"github.com/allisonhere/tidecontacts/internal/ext"
 	"github.com/allisonhere/tidecontacts/internal/storage/sqlite"
@@ -158,13 +159,18 @@ func (s *Store) ReopenTask(ctx context.Context, id string) (domain.Task, error) 
 }
 
 func (s *Store) SaveProject(ctx context.Context, p domain.Project) (domain.Project, error) {
+	origin := app.EventOriginFromContext(ctx)
+	if origin.Source == "" {
+		origin.Source = s.src
+		ctx = app.WithEventOrigin(ctx, origin)
+	}
 	out, err := s.Store.SaveProject(ctx, p)
 	if err == nil {
 		typ := "project.updated"
 		if p.Revision == 0 {
 			typ = "project.created"
 		}
-		s.emit(typ, out.ID, out.Revision, s.src, "")
+		s.emit(typ, out.ID, out.Revision, origin.Source, origin.CorrelationID)
 	}
 	return out, err
 }

@@ -31,6 +31,7 @@ type Session struct {
 	Published    map[string]string // declared event type -> entity type
 	durableTypes []string
 	published    int
+	mcpOnly      bool
 }
 
 // maxPublishPerCall bounds events one request may publish (an import, say).
@@ -86,6 +87,15 @@ func limitOf(n, def, max int) int {
 
 // Call dispatches one host_call. It is the HostFunc given to Invoke.
 func (s *Session) Call(ctx context.Context, method string, data json.RawMessage) (any, *ProtocolError) {
+	if s.mcpOnly {
+		switch method {
+		case "entitlement.check", "permissions.check", "records.rule-page", "records.resolve",
+			"attention.list", "contacts.engagement", "contacts.list", "contacts.get",
+			"contacts.connections", "activities.list", "tasks.list", "projects.list", "pipelines.list":
+		default:
+			return nil, perr(CodePermissionDenied, "callback not available to MCP")
+		}
+	}
 	if s.Entitlement != "" {
 		d, err := s.Entitled.Check(ctx, s.Entitlement)
 		if err != nil || !d.Allowed {
