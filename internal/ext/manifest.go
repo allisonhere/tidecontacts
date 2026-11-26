@@ -547,8 +547,8 @@ func (m Manifest) validateContributions(granted PermissionSet) error {
 		if err := text("CLI description", c.Description, 120, false); err != nil {
 			return err
 		}
-		if len(c.Actions) > 24 {
-			return fmt.Errorf("at most 24 actions per CLI resource")
+		if len(c.Actions) > 32 {
+			return fmt.Errorf("at most 32 actions per CLI resource")
 		}
 		for _, a := range c.Actions {
 			if !localPattern.MatchString(a) {

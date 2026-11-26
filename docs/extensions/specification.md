@@ -370,8 +370,8 @@ form's `args`, `values` and `refs`.
 
 ### 10.3 CLI output
 
-A manifest can register up to 16 CLI resources. Successful extension CLI
-responses use the versioned JSON envelope unless the caller explicitly
+A manifest can register up to 16 CLI resources with up to 32 actions each.
+Successful extension CLI responses use the versioned JSON envelope unless the caller explicitly
 passes `--raw` and the extension returns `output`. That string is written
 without the envelope; terminal control characters are stripped, except LF, CR
 and TAB used by text formats. Errors still use the JSON error envelope.

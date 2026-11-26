@@ -19,11 +19,15 @@ TideContacts is a standalone, offline-first terminal CRM with a shared TideMail 
 - **Extension contributions (Phase 3B host):** extensions can contribute a workspace (declarative views, forms, actions), JSON CLI resources, People Inbox signals, namespaced events and a private SQL data directory; per-capability entitlements; a development entitlement provider (not a licence). The first consumer is the separate private *TideContacts Professional: Sales* extension. [Spec §9](docs/extensions/specification.md)
 - **Business dashboards (Phase 3C host):** declarative panels and terminal-cell charts, adaptive layouts, keyboard drill-down with return to the selected record, shared People Inbox and engagement calls, and explicit raw CLI report output. These are optional extension surfaces; the Community schema and record access are unchanged. [Host 0.4.0 / protocol v1](docs/extensions/specification.md#10-panel-views-and-shared-attention-host-040-api-v1)
 - **Durable events (Phase 3D host):** supported CRM writes append identifiers and typed changes in the same SQLite transaction. Approved extensions pull declared topics with checkpoints, retry, dead letters and explicit replay. [Spec §11](docs/extensions/specification.md#11-durable-event-journal-host-050-api-v1)
+- **Scoped rule integration (Phase 3D host):** approved extensions can page typed CRM facts, check effective permissions, and request narrowly scoped task, activity or tag writes. Declarative workspace state supports keyboard editors. [Spec §§12–13](docs/extensions/specification.md#12-scoped-record-evaluation-host-060-api-v1)
 - **Demo:** isolated fictional contacts/CRM, paired TideMail demo, reset support. Live activity sync, folder connections and desktop notifications are disabled.
 
 ## Remaining limits
 
-Extensions: no OS sandbox or CPU/memory limits, no signing/installer/marketplace, in-process best-effort events (not emitted for folder/Google refresh or TideMail sync, nor across processes), one UI slot, `project.status_changed`/`followup.due`/`reminder.due` and the `relationships/projects/pipelines.write` permissions reserved but not implemented. See [extension limitations](docs/extensions/README.md#known-limitations-phase-3a).
+Extensions: no OS sandbox, per-process resource limits, signing, or installer.
+The legacy push bus remains best-effort. The durable journal covers only listed
+transactional writes; no folder/Google refresh events. Due signals are
+evaluated conditions, not synthesized persisted events.
 
 
 Direct CardDAV/server synchronization is implemented only for Google; every other provider still goes through vdirsyncer or a local vCard folder. Calling khard as a query command, provider-specific importers shown as coming soon, iCalendar import, durable CRM undo, ASCII-only glyph mode and AI remain deferred. Mouse support focuses panes only; density is session-only; logs do not rotate.

@@ -2,6 +2,27 @@
 
 Use [STATUS.md](STATUS.md) for the current feature inventory and [README.md](README.md) for setup. Earlier handoff entries below are historical.
 
+## Phase 3D: Business Automation Studio host
+
+Branch `feat/phase3d-automation-host`; pair with the private `feat/phase3d`
+branch. Host **0.6.0**, wire protocol **v1**, Community schema **5**. The
+Community app can be used without either installing or enabling Professional.
+
+- `internal/storage/sqlite/eventlog.go`: transactional outbox, per-topic
+  checkpoints, retry, dead letters, replay and explicitly confirmed cleanup.
+- `internal/ext/host_eventlog.go`: session-owned consumer and current topic
+  read grants. Durable envelope schema 2; legacy transient push is unchanged.
+- `internal/ext/host_rule_records.go`: scoped permissions, note-free pages,
+  tag revision checks and causal metadata on supported CRM writes.
+- `internal/ext/ui.go` and `internal/tui/extview.go`: bounded declarative
+  editor state and keyboard drill-down; no Professional rules or runner in
+  Community. [Extension protocol](docs/extensions/specification.md#11-durable-event-journal-host-050-api-v1).
+
+Relevant extension, SQLite, CLI and TUI race tests use only isolated fixtures.
+The private checkout has paired CLI/PTY tests, measured benchmarks and the
+Phase 4A application API handoff. Licensing is unchanged; nothing is authorized
+for distribution by this work.
+
 ## Phase 3C: Command Center host
 
 Branch `feat/phase3c-command-center`, stacked on Phase 3B; not merged or published. Extension host **0.4.0**, wire protocol **v1**, Community schema **4**. The Professional implementation, its demo, captures and performance record belong to the separate private checkout.
