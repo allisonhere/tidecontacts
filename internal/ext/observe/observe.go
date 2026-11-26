@@ -150,6 +150,15 @@ func (s *Store) CompleteTask(ctx context.Context, id string) (domain.Task, error
 	return out, err
 }
 
+// CompleteTaskRevision announces completion after the revision-bound transaction.
+func (s *Store) CompleteTaskRevision(ctx context.Context, id string, revision int) (domain.Task, error) {
+	out, err := s.Store.CompleteTaskRevision(ctx, id, revision)
+	if err == nil && out.Revision != revision {
+		s.emit("task.completed", out.ID, out.Revision, s.src, "")
+	}
+	return out, err
+}
+
 func (s *Store) ReopenTask(ctx context.Context, id string) (domain.Task, error) {
 	out, err := s.Store.ReopenTask(ctx, id)
 	if err == nil {
@@ -197,6 +206,15 @@ func (s *Store) SaveItem(ctx context.Context, it domain.PipelineItem) (domain.Pi
 
 func (s *Store) MoveItem(ctx context.Context, id, stageID string) error {
 	err := s.Store.MoveItem(ctx, id, stageID)
+	if err == nil {
+		s.emit("pipeline.item_moved", id, 0, s.src, "")
+	}
+	return err
+}
+
+// MoveItemRevision announces a graphical board move without rewriting other item data.
+func (s *Store) MoveItemRevision(ctx context.Context, id, stageID string, revision int) error {
+	err := s.Store.MoveItemRevision(ctx, id, stageID, revision)
 	if err == nil {
 		s.emit("pipeline.item_moved", id, 0, s.src, "")
 	}

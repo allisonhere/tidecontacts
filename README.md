@@ -203,6 +203,13 @@ vCard 3.0/4.0 import supports structured names, multiple methods, postal address
 
 ## Configuration and data
 
+Open **Settings** from `Ctrl+G` → **Settings**, or `:` → **Open Settings**.
+Choose a category with `↑`/`↓` or `j`/`k`; `Tab` or `Enter` moves into its
+controls. `Esc` returns to the categories, then to the previous workspace.
+Use **Display** for theme, contact-list density and mouse capture, **General**
+for the startup workspace and Radar signals, and **Connections**, **Extensions**
+or **Agents (MCP)** to open their existing managers.
+
 Linux defaults:
 
 - `~/.config/tidecontacts/config.toml`
@@ -228,7 +235,7 @@ right = 0.25
 quit = ["x"] # replaces q outside inputs
 ```
 
-Wide terminals show three panes; medium terminals show list/profile; narrow terminals show one focused pane with Tab navigation and Esc back to the list. Shift+Left/Right adjusts the left pane; Shift+Down/Up adjusts context width. Ratios save on orderly exit and override TOML defaults. Theme choices are saved on exit and override the startup theme; density changes last for the session. `NO_COLOR` retains text focus markers. `TERM=dumb` uses plain guidance.
+Wide terminals show three panes; medium terminals show list/profile; narrow terminals show one focused pane with Tab navigation and Esc back to the list. Shift+Left/Right adjusts the left pane; Shift+Down/Up adjusts context width. Ratios and theme save on orderly exit. Once changed in the TUI, density, mouse support and startup workspace also save on orderly exit and override TOML defaults for that profile. Settings does not rewrite `config.toml`. `NO_COLOR` retains text focus markers. `TERM=dumb` uses plain guidance.
 
 SQLite migrations are append-only. Schema 5 adds a durable event journal; schema 6 adds MCP grants and audit without changing existing CRM rows ([migration and backup](docs/migration-backup.md)). Foreign keys, WAL, busy timeout, transactions, optimistic revisions and tombstones protect local data. Back up with SQLite's backup API, or copy the database after the app has closed; do not copy only the main file while WAL writes are active. JSON logs currently append without rotation.
 

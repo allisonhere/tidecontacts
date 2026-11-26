@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/">
+        <file>Main.qml</file>
+        <file>Ink.qml</file>
+        <file>DeskButton.qml</file>
+        <file>RecordPane.qml</file>
+        <file>RecordEditor.qml</file>
+    </qresource>
+</RCC>

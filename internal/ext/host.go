@@ -32,6 +32,7 @@ type Session struct {
 	durableTypes []string
 	published    int
 	mcpOnly      bool
+	graphicalOnly bool
 }
 
 // maxPublishPerCall bounds events one request may publish (an import, say).
@@ -87,12 +88,19 @@ func limitOf(n, def, max int) int {
 
 // Call dispatches one host_call. It is the HostFunc given to Invoke.
 func (s *Session) Call(ctx context.Context, method string, data json.RawMessage) (any, *ProtocolError) {
-	if s.mcpOnly {
+	if s.mcpOnly || s.graphicalOnly {
 		switch method {
 		case "entitlement.check", "permissions.check", "records.rule-page", "records.resolve",
 			"attention.list", "contacts.engagement", "contacts.list", "contacts.get",
 			"contacts.connections", "activities.list", "tasks.list", "projects.list", "pipelines.list":
+		case "config.get":
+			if !s.graphicalOnly {
+				return nil, perr(CodePermissionDenied, "callback not available to MCP")
+			}
 		default:
+			if s.graphicalOnly {
+				return nil, perr(CodePermissionDenied, "callback not available to graphical reads")
+			}
 			return nil, perr(CodePermissionDenied, "callback not available to MCP")
 		}
 	}

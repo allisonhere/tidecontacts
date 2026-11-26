@@ -657,6 +657,15 @@ func (m *Manager) invoke(ctx context.Context, id, method string, params any) (js
 		}
 		sess = &Session{ID: id, Granted: r.effective(), Repo: m.o.Repo,
 			Entitled: m.o.Entitlements, Entitlement: mcpCapabilities[req.Action], mcpOnly: true}
+	} else if method == graphicalMethod {
+		req, valid := params.(graphicalRequest)
+		if !valid || id != graphicalProvider || !m.graphicalAllowedLocked(ctx, req.query) {
+			m.mu.Unlock()
+			return nil, graphicalUnavailable()
+		}
+		sess = m.session(r)
+		sess.graphicalOnly = true
+		sess.Entitlement = graphicalOperations[req.query.Operation].entitlement
 	} else {
 		sess = m.session(r)
 	}
@@ -681,6 +690,14 @@ func (m *Manager) invoke(ctx context.Context, id, method string, params any) (js
 		m.mu.Unlock()
 		if !current {
 			return nil, mcpUnavailable()
+		}
+	} else if sess.graphicalOnly {
+		m.mu.Lock()
+		cur := m.recs[id]
+		current := m.graphicalAllowedLocked(ctx, params.(graphicalRequest).query) && cur.execSHA == r.execSHA
+		m.mu.Unlock()
+		if !current {
+			return nil, graphicalUnavailable()
 		}
 	}
 	res, err := InvokeOpts(ctx, dir, cmd, id, method, params, timeout, sess.Call, opt)

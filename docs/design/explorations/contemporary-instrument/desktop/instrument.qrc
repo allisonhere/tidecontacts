@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/">
+        <file>Main.qml</file>
+        <file>InkText.qml</file>
+        <file>QuietButton.qml</file>
+        <file>InstrumentPlot.qml</file>
+        <file>SourceInspector.qml</file>
+    </qresource>
+</RCC>

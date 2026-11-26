@@ -347,10 +347,32 @@ func (s *Store) SaveItem(ctx context.Context, it domain.PipelineItem) (domain.Pi
 // MoveItem places an item in another stage of its pipeline and records the transition.
 // Moving to the stage it is already in changes nothing.
 func (s *Store) MoveItem(ctx context.Context, id, stageID string) error {
+	return s.moveItem(ctx, id, stageID, 0)
+}
+
+// MoveItemRevision is the optimistic variant for clients editing a shown board.
+func (s *Store) MoveItemRevision(ctx context.Context, id, stageID string, revision int) error {
+	if revision <= 0 {
+		return ErrConflict
+	}
+	return s.moveItem(ctx, id, stageID, revision)
+}
+
+func (s *Store) moveItem(ctx context.Context, id, stageID string, revision int) error {
 	return s.write(ctx, func(tx *sql.Tx) error {
 		var from, to, pipeline, target string
-		if e := tx.QueryRowContext(ctx, "SELECT g.name,i.pipeline_id FROM pipeline_items i JOIN pipeline_stages g ON g.id=i.stage_id WHERE i.id=?", id).Scan(&from, &pipeline); e != nil {
+		var current int
+		var archived, deleted bool
+		if e := tx.QueryRowContext(ctx, "SELECT g.name,i.pipeline_id,i.revision,i.archived OR p.archived,i.deleted FROM pipeline_items i JOIN pipeline_stages g ON g.id=i.stage_id JOIN pipelines p ON p.id=i.pipeline_id WHERE i.id=?", id).Scan(&from, &pipeline, &current, &archived, &deleted); e != nil {
 			return e
+		}
+		if revision > 0 {
+			if archived || deleted {
+				return sql.ErrNoRows
+			}
+			if current != revision {
+				return ErrConflict
+			}
 		}
 		if e := tx.QueryRowContext(ctx, "SELECT name,pipeline_id FROM pipeline_stages WHERE id=?", stageID).Scan(&to, &target); e != nil || target != pipeline {
 			return fmt.Errorf("that stage belongs to a different pipeline")
