@@ -15,7 +15,7 @@
 │  Sync TideMail                    ││  11:00 mail Activity 07 · Alex Rivera, Sam   ││                                                                         │
 │  Import data…                   I ││  04:00 call Activity 08 · Alex Rivera, Sam   ││                                                                         │
 │  Refresh address books            ││─ Tue 2026-11-10 ───────────────────────────  ││                                                                         │
-│  Themes                           ││  21:00 mtg Activity 09 · Alex Rivera, Sam L  ││                                                                         │
+│  Settings                         ││  21:00 mtg Activity 09 · Alex Rivera, Sam L  ││                                                                         │
 │  All actions                    : ││  14:00 conv Activity 10 · Alex Rivera, Sam   ││                                                                         │
 │  Help                           ? ││  07:00 msg Activity 11 · Alex Rivera, Sam L  ││                                                                         │
 │                                   ││  00:00 note Activity 12 · Alex Rivera, Sam   ││                                                                         │

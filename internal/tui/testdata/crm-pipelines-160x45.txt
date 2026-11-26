@@ -15,7 +15,7 @@
 │  New pipeline item                ││                                              ││                                                                         │
 │  Import data…                   I ││                                              ││                                                                         │
 │  Refresh address books            ││                                              ││                                                                         │
-│  Themes                           ││                                              ││                                                                         │
+│  Settings                         ││                                              ││                                                                         │
 │  All actions                    : ││                                              ││                                                                         │
 │  Help                           ? ││                                              ││                                                                         │
 │                                   ││                                              ││                                                                         │

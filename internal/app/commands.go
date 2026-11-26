@@ -17,6 +17,7 @@ type Command struct {
 
 // phase3 commands were added after users may already have customized keys.
 var phase3 = []Command{
+	{ID: "settings", Label: "Open Settings", Soft: true},
 	{ID: "themes", Label: "Choose theme", Soft: true},
 	{ID: "tidemail-sync", Label: "Sync TideMail", Soft: true},
 	{ID: "tidemail-status", Label: "Show TideMail sync status", Soft: true},

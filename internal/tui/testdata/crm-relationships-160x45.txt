@@ -15,7 +15,7 @@
 │  Set follow-up schedule         F ││                                              ││                                                                         │
 │  Import data…                   I ││                                              ││                                                                         │
 │  Refresh address books            ││                                              ││                                                                         │
-│  Themes                           ││                                              ││                                                                         │
+│  Settings                         ││                                              ││                                                                         │
 │  All actions                    : ││                                              ││                                                                         │
 │  Help                           ? ││                                              ││                                                                         │
 │                                   ││                                              ││                                                                         │

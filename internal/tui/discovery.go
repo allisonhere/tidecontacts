@@ -55,7 +55,7 @@ func (m Model) menuCommands() []app.Command {
 			}
 		}
 	}
-	out = append(out, app.Command{ID: "import-contacts", Label: "Import data…"}, app.Command{ID: "refresh-address-books", Label: "Refresh address books"}, app.Command{ID: "themes", Label: "Themes"}, app.Command{ID: "palette", Label: "All actions"}, app.Command{ID: "help", Label: "Help"})
+	out = append(out, app.Command{ID: "import-contacts", Label: "Import data…"}, app.Command{ID: "refresh-address-books", Label: "Refresh address books"}, app.Command{ID: "settings", Label: "Settings"}, app.Command{ID: "palette", Label: "All actions"}, app.Command{ID: "help", Label: "Help"})
 	return out
 }
 func (m Model) menuPane() tideui.Pane {

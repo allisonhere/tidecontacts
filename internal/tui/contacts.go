@@ -387,11 +387,7 @@ func (m Model) contactAction(id string) (Model, tea.Cmd, bool) {
 		m.feedback = "Sort: " + c.order
 		return m, m.refreshContacts(), true
 	case "density":
-		if m.cfg.Density == "comfortable" {
-			m.cfg.Density = "compact"
-		} else {
-			m.cfg.Density = "comfortable"
-		}
+		m.toggleDensity()
 		return m, nil, true
 	case "import-contacts", "export-all", "export-selected", "export-filtered":
 		return m.startTransfer(id)

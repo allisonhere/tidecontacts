@@ -17,12 +17,13 @@ import (
 
 type Ready struct {
 	// Extensions is optional; nil means the extension system is not in use.
-	Extensions *ext.Manager
-	Repo       app.Contacts
-	MCP        app.MCPState
-	Context    context.Context
-	Config     config.Config
-	Err        error
+	Extensions  *ext.Manager
+	Repo        app.Contacts
+	MCP         app.MCPState
+	Context     context.Context
+	Config      config.Config
+	Preferences Preferences
+	Err         error
 }
 type overlay int
 
@@ -33,8 +34,11 @@ const (
 )
 
 type Preferences struct {
-	Left, Right float64
-	Theme       string
+	Left, Right      float64
+	Theme            string
+	Density          string `json:",omitempty"`
+	DefaultWorkspace string `json:",omitempty"`
+	Mouse            *bool  `json:",omitempty"`
 }
 type Model struct {
 	helpBrowser                                                 tideui.HelpBrowser
@@ -56,6 +60,8 @@ type Model struct {
 	feedback                                                    string
 	extensions                                                  extState
 	mcp                                                         mcpSettings
+	settings                                                    settingsState
+	prefs                                                       Preferences
 }
 
 func New(load tea.Cmd) Model {
@@ -86,7 +92,9 @@ func (m Model) Preferences() Preferences {
 	if p := m.crm.picker; p != nil && p.originalTheme != "" {
 		theme = p.originalTheme
 	}
-	return Preferences{Left: m.left.Value(), Right: m.right.Value(), Theme: theme}
+	p := m.prefs
+	p.Left, p.Right, p.Theme = m.left.Value(), m.right.Value(), theme
+	return p
 }
 
 func (m Model) Init() tea.Cmd { return tea.Batch(m.load, tickReminders()) }
@@ -106,6 +114,19 @@ func (m Model) focusCount() int {
 	return 3
 }
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if m.settings.open {
+		switch msg := msg.(type) {
+		case tea.KeyMsg:
+			if !m.settingsHasOverlay() {
+				return m.settingsKey(msg)
+			}
+		case tea.MouseMsg:
+			if !m.settingsHasOverlay() {
+				return m.settingsMouse(msg), nil
+			}
+			return m, nil
+		}
+	}
 	if next, cmd, handled := m.updateMCP(msg); handled {
 		return next, cmd
 	}
@@ -144,6 +165,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 		n := NewReady(v.Config)
+		n.prefs = v.Preferences
 		n.width, n.height = m.width, m.height
 		n.contacts.repo = v.Repo
 		n.mcp.state = v.MCP
@@ -317,6 +339,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 func (m Model) dispatch(id string) (tea.Model, tea.Cmd) {
+	if id == "settings" {
+		m.menuOpen = false
+		m.settings.open, m.settings.detail = true, false
+		m.feedback = ""
+		return m, nil
+	}
 	if id == "mcp-manage" {
 		return m.openMCP()
 	}
@@ -481,6 +509,9 @@ func (m Model) View() string {
 		return ansi.Truncate("TideContacts | Loading local workspace...", m.width, "")
 	}
 	r := tideui.NewRenderer(m.theme(), tideui.StyleOptions{Density: tideui.Compact})
+	if m.settings.open {
+		return m.settingsView(r)
+	}
 	w := domain.Workspaces()[m.state.Active]
 	workspace := w.Name
 	if v := m.extensions.view; v != nil {

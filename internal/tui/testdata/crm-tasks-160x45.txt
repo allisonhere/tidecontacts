@@ -15,7 +15,7 @@
 │  Complete task, milestone or in c ││  [ ] Task 09 👩‍💻 xxxxxxxxxxxxxx ! 3d overdue  ││                                                                         │
 │  Import data…                   I ││  [>] Task 10 👩‍💻 xxxxxxxxxxxxx !! 2d overdue  ││                                                                         │
 │  Refresh address books            ││  [w] Task 11 👩‍💻 xxxxxxxxxxxxx !!! yesterday  ││                                                                         │
-│  Themes                           ││─ Today ────────────────────────────────────  ││                                                                         │
+│  Settings                         ││─ Today ────────────────────────────────────  ││                                                                         │
 │  All actions                    : ││  [?] Task 12 👩‍💻 xxxxxxxxxxxxxxxxxxxxx today  ││                                                                         │
 │  Help                           ? ││                                              ││                                                                         │
 │                                   ││                                              ││                                                                         │

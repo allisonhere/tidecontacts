@@ -160,14 +160,23 @@ func run() (result error) {
 		if e != nil {
 			return tui.Ready{Err: e}
 		}
+		var prefs tui.Preferences
 		if raw != "" {
-			var p tui.Preferences
-			if e = json.Unmarshal([]byte(raw), &p); e != nil {
-				return tui.Ready{Err: fmt.Errorf("invalid saved layout: %w", e)}
+			if e = json.Unmarshal([]byte(raw), &prefs); e != nil {
+				return tui.Ready{Err: fmt.Errorf("invalid saved preferences: %w", e)}
 			}
-			c.Layout.Left, c.Layout.Right = p.Left, p.Right
-			if p.Theme != "" && config.ValidTheme(p.Theme) {
-				c.Theme = p.Theme
+			c.Layout.Left, c.Layout.Right = prefs.Left, prefs.Right
+			if prefs.Theme != "" && config.ValidTheme(prefs.Theme) {
+				c.Theme = prefs.Theme
+			}
+			if prefs.Density != "" {
+				c.Density = prefs.Density
+			}
+			if prefs.DefaultWorkspace != "" {
+				c.DefaultWorkspace = prefs.DefaultWorkspace
+			}
+			if prefs.Mouse != nil {
+				c.Mouse = *prefs.Mouse
 			}
 			if e = c.Validate(); e != nil {
 				return tui.Ready{Err: e}
@@ -185,7 +194,7 @@ func run() (result error) {
 		} else {
 			extensions.Start()
 		}
-		return tui.Ready{Config: c, Repo: observed, MCP: store, Context: ctx, Extensions: extensions}
+		return tui.Ready{Config: c, Preferences: prefs, Repo: observed, MCP: store, Context: ctx, Extensions: extensions}
 	}
 	wg.Add(1)
 	// Start once before Run: quitting during initialization still joins and closes resources.
@@ -242,7 +251,7 @@ func run() (result error) {
 			return e
 		}
 		if e = store.Put(saveCtx, "pane-widths", string(data)); e != nil {
-			return fmt.Errorf("save layout: %w", e)
+			return fmt.Errorf("save preferences: %w", e)
 		}
 	}
 	return nil

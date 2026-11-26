@@ -214,7 +214,7 @@ func (m *Model) closeExtView() {
 // extViewHandles reports whether the extension view should receive keys now.
 func (m Model) extViewActive() bool {
 	c := m.crm
-	return m.extensions.view != nil && m.overlay == none && m.extensions.modal == nil && c.form == nil && c.prompt == nil && c.picker == nil && c.confirm == nil && m.contacts.editor == nil && m.contacts.transfer == nil
+	return m.extensions.view != nil && !m.settings.open && m.overlay == none && m.extensions.modal == nil && c.form == nil && c.prompt == nil && c.picker == nil && c.confirm == nil && m.contacts.editor == nil && m.contacts.transfer == nil
 }
 
 func (m Model) updateExtView(msg tea.Msg) (Model, tea.Cmd, bool) {
