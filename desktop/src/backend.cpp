@@ -422,6 +422,14 @@ void Backend::saveRecord(bool create, const QVariantMap &fields)
            create ? kind : QString());
 }
 
+void Backend::createLinked(const QString &kind, const QVariantMap &fields)
+{
+    // A task or activity created from the open record; the record then reloads in place.
+    if (!m_ready || m_writing || (kind != "tasks" && kind != "activities") || m_address.id.isEmpty())
+        return;
+    mutate("POST", endpoint(kind), QJsonObject::fromVariantMap(fields));
+}
+
 void Backend::archiveContact(bool archived)
 {
     if (!isContact(m_address.kind) || m_record.isEmpty() || m_record.value(QStringLiteral("Archived")).toBool() == archived)

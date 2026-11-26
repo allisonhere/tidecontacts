@@ -29,6 +29,9 @@ ApplicationWindow {
     readonly property bool hasRail: width >= 1010
     readonly property bool sceneHasRecord: recordPane.visible && recordPane.hasRecord
     readonly property bool dialogOpen: editor.visible || confirm.visible || keys.visible
+    // Single-letter keys act only when no text field or combo box owns the keyboard.
+    readonly property bool typing: activeFocusItem !== null && (activeFocusItem.hasOwnProperty("cursorPosition") || activeFocusItem.hasOwnProperty("popup"))
+    readonly property bool keysActive: backend.ready && !dialogOpen && !backend.writing && !typing
     readonly property var workspaces: [
         { key: "people", label: qsTr("People"), help: qsTr("Find a person and open their relationship dossier.") },
         { key: "organizations", label: qsTr("Organizations"), help: qsTr("Find an organization and its people and work.") },
@@ -113,6 +116,52 @@ ApplicationWindow {
         editor.begin(create, create ? backend.workspace : backend.recordKind, create ? ({}) : backend.record)
     }
 
+    function listMove(delta) {
+        if (recordPane.activeFocus || !indexPane.visible) {
+            recordPane.scrollBy(delta * 56)
+            return
+        }
+        if (backend.rows.length === 0)
+            return
+        recordList.currentIndex = Math.max(0, Math.min(backend.rows.length - 1, Math.max(0, recordList.currentIndex) + delta))
+        recordList.positionViewAtIndex(recordList.currentIndex, ListView.Contain)
+    }
+    function listEdge(last) {
+        if (recordPane.activeFocus || !indexPane.visible) {
+            recordPane.scrollEdge(last)
+            return
+        }
+        if (backend.rows.length === 0)
+            return
+        recordList.currentIndex = last ? backend.rows.length - 1 : 0
+        recordList.positionViewAtIndex(recordList.currentIndex, ListView.Contain)
+    }
+    function openCurrent() {
+        if (!indexPane.visible) {
+            recordPane.requestFocus()
+            return
+        }
+        if (recordList.currentIndex < 0 && backend.rows.length > 0)
+            recordList.currentIndex = 0
+        if (recordList.currentIndex >= 0) {
+            chooseRecord(recordList.currentIndex)
+            recordPane.requestFocus()
+        }
+    }
+    function cycleView(step) {
+        const wrap = (list, key) => list[(list.findIndex(entry => entry.key === key) + step + list.length) % list.length].key
+        if (backend.workspace === "tasks")
+            backend.setTaskView(wrap(taskViews, backend.taskView))
+        else if (backend.workspace === "people" || backend.workspace === "organizations")
+            backend.setSort(wrap(sorts, backend.sort))
+    }
+    function newLinked(kind) {
+        const target = { people: "entity_id", organizations: "entity_id", projects: "project_id" }[backend.recordKind]
+        if (!target || !recordPane.hasRecord)
+            return
+        editor.begin(true, kind, ({}), { key: target, id: backend.recordId, name: recordPane.heading })
+    }
+
     onClosing: event => {
         if (editor.visible || backend.writing) {
             event.accepted = false
@@ -145,6 +194,42 @@ ApplicationWindow {
                  && !searchField.activeFocus && !backend.writing && (backend.inspecting || recordPane.activeFocus)
         onActivated: root.returnToIndex()
     }
+
+    component Key : Shortcut {
+        property var run
+        context: Qt.WindowShortcut
+        enabled: root.keysActive
+        onActivated: run()
+    }
+    // The same movement and record keys as the terminal interface (docs/keybindings.md).
+    Key { sequence: "J"; run: () => root.listMove(1) }
+    Key { sequence: "K"; run: () => root.listMove(-1) }
+    Key { sequence: "G"; run: () => root.listEdge(false) }
+    Key { sequence: "Shift+G"; run: () => root.listEdge(true) }
+    Key { sequence: "Home"; run: () => root.listEdge(false) }
+    Key { sequence: "End"; run: () => root.listEdge(true) }
+    Key { sequence: "PgDown"; run: () => root.listMove(8) }
+    Key { sequence: "PgUp"; run: () => root.listMove(-8) }
+    Key { sequence: "L"; run: () => root.openCurrent() }
+    Key { sequence: "H"; run: () => { if (recordPane.activeFocus) root.returnToIndex() } }
+    Key { sequence: "/"; run: () => root.findRecord() }
+    Key { sequence: "N"; enabled: root.keysActive && addRecord.visible && addRecord.enabled; run: () => root.startEdit(true) }
+    Key { sequence: "E"; enabled: root.keysActive && recordPane.hasRecord && recordPane.editable; run: () => root.startEdit(false) }
+    Key { sequence: "A"; enabled: root.keysActive && recordPane.hasRecord && recordPane.isContact
+          run: () => confirm.begin(backend.record.Archived ? "restore" : "archive", {}) }
+    Key { sequence: "C"; enabled: root.keysActive && recordPane.hasRecord && recordPane.completable; run: () => confirm.begin("complete", {}) }
+    Key { sequence: "["; run: () => root.cycleView(-1) }
+    Key { sequence: "]"; run: () => root.cycleView(1) }
+    Key { sequence: "S"; run: () => { if (backend.workspace === "people" || backend.workspace === "organizations") root.cycleView(1) } }
+    Key { sequence: "Shift+T"; run: () => root.newLinked("tasks") }
+    Key { sequence: "Shift+A"; run: () => root.newLinked("activities") }
+    Key { sequence: "Q"; run: () => root.close() }
+    Key { sequence: "1"; run: () => root.chooseWorkspace("people") }
+    Key { sequence: "2"; run: () => root.chooseWorkspace("organizations") }
+    Key { sequence: "3"; run: () => root.chooseWorkspace("tasks") }
+    Key { sequence: "4"; run: () => root.chooseWorkspace("activities") }
+    Key { sequence: "5"; run: () => root.chooseWorkspace("projects") }
+    Key { sequence: "6"; run: () => root.chooseWorkspace("pipelines") }
 
     component Kicker : Label {
         color: Ink.accent
@@ -532,14 +617,20 @@ ApplicationWindow {
     Dialog {
         id: keys
         anchors.centerIn: parent
-        width: Math.min(root.width - 30, 410)
+        width: Math.min(root.width - 30, 470)
+        height: Math.min(root.height - 30, 520)
         modal: true
         focus: true
         title: qsTr("Keyboard shortcuts")
         standardButtons: Dialog.Close
-        contentItem: Explanation {
-            text: qsTr("Ctrl+K   Find a record in this workspace\nAlt+1   Focus workspace navigation\nAlt+2   Focus the record index\nAlt+3   Focus the dossier\n↑ / ↓   Move inside the index\nEnter   Open the focused record\nEsc   Return to the previous record or index\nCtrl+N   Create a record\nF5   Refresh the workspace\nCtrl+Q   Close the window")
+        contentItem: ScrollView {
+          clip: true
+          contentWidth: availableWidth
+          Explanation {
+            width: parent.width
+            text: qsTr("Ctrl+K   Find a record in this workspace\nAlt+1   Focus workspace navigation\nAlt+2   Focus the record index\nAlt+3   Focus the dossier\n↑ / ↓   Move inside the index\nEnter   Open the focused record\nEsc   Return to the previous record or index\nCtrl+N   Create a record\nF5   Refresh the workspace\nCtrl+Q   Close the window\n\nWhen no text field has focus:\nj / k   Move down / up (scrolls the dossier when it has focus)\ng / G   First / last record; Home, End, PgUp, PgDn also work\nl   Open the record and focus its dossier\nh   Back to the index\n1–6   Switch workspace\n/   Find in this workspace\nn / e   New / edit\nc   Complete a task\na   Archive or restore a contact\n[ / ]   Previous / next view or sort (s also cycles contact sorts)\nT / A   New task / activity linked to the open person, organization or project\nq   Quit")
             lineHeight: 1.6
+          }
         }
     }
 }

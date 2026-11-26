@@ -28,8 +28,10 @@ Dialog {
     title: (creating ? qsTr("New ") : qsTr("Edit ")) + ({ people: qsTr("person"), organizations: qsTr("organization"), tasks: qsTr("task"),
                                                      activities: qsTr("activity"), projects: qsTr("project") }[kind] || qsTr("record"))
 
+    property var link: null
     function textOf(key) { return original[key] ? String(original[key]) : "" }
-    function begin(create, recordKind, record) {
+    function begin(create, recordKind, record, linkTarget) {
+        link = linkTarget || null
         creating = create
         kind = recordKind
         original = record || ({})
@@ -79,12 +81,14 @@ Dialog {
             set("type", activityTypes[choice.currentIndex], textOf("Type"))
             set("date", date.text.trim(), textOf("OccurredAt").slice(0, 10))
         }
+        if (creating && link)
+            out[link.key] = link.id
         return out
     }
     function dirty() {
         const changed = fields()
         if (creating)
-            return primary.text.trim() !== "" || body.text !== "" || Object.keys(changed).some(key => key !== "status" && key !== "type")
+            return primary.text.trim() !== "" || body.text !== "" || Object.keys(changed).some(key => key !== "status" && key !== "type" && key !== "entity_id" && key !== "project_id")
         return Object.keys(changed).length > 0
     }
     function validate() {
@@ -100,7 +104,10 @@ Dialog {
         fieldError = validate()
         if (fieldError !== "")
             return
-        backend.saveRecord(creating, fields())
+        if (link)
+            backend.createLinked(kind, fields())
+        else
+            backend.saveRecord(creating, fields())
     }
     function requestClose() {
         if (backend.writing)
@@ -132,6 +139,7 @@ Dialog {
             width: scroll.availableWidth
             spacing: 8
 
+            Caption { visible: editor.link !== null; text: editor.link ? qsTr("Linked to %1").arg(editor.link.name) : ""; color: Ink.accent }
             Caption { text: editor.contact || editor.kind === "projects" ? qsTr("Name") : qsTr("Title") }
             TextField { id: primary; objectName: "editorName"; Layout.fillWidth: true; enabled: !backend.writing; Accessible.name: qsTr("Name or title"); onAccepted: editor.save() }
 

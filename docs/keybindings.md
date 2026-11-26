@@ -141,3 +141,24 @@ Phase 3 default keys are soft: if your existing `[keybindings]` already gives on
 TideMail: open `:` / Ctrl+K and select **Sync TideMail** to sync the automatically detected cache,
 or **Show TideMail sync status** to see the last successful run. Esc cancels the
 fallback path prompt; Enter starts the background import.
+
+## Desktop app
+
+The Qt desktop client uses the terminal's movement and record keys. They apply only when no text field or combo box has focus, so typing is never captured. Press `?` or F1 in the app for the same list.
+
+| Keys | Action |
+|---|---|
+| j/k, Down/Up | Move in the index; scroll the dossier when it has focus |
+| g/G, Home/End, PageUp/PageDown | First/last record, page |
+| l, Enter | Open the record and focus its dossier |
+| h, Esc | Back to the index (or the previous linked record) |
+| 1–6 | People, Organizations, Tasks, Activities, Projects, Pipelines |
+| / , Ctrl+K | Find in the workspace |
+| n / e | New / edit |
+| c | Complete the open task |
+| a | Archive or restore the open contact |
+| [ / ] , s | Previous/next task view or contact sort |
+| T / A | New task / activity linked to the open person, organization or project |
+| q | Quit |
+
+Not in the desktop app: the command palette (`:`), undo, delete, reopen, snooze, pipeline `>`/`<` moves, Relationships and Insights, and smart collections.

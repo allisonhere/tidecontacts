@@ -32,6 +32,27 @@ FocusScope {
         else
             scroller.forceActiveFocus(Qt.TabFocusReason)
     }
+    property bool wantFocus: false
+    onHasRecordChanged: {
+        if (hasRecord && wantFocus) {
+            wantFocus = false
+            Qt.callLater(focusStart)
+        }
+    }
+    function requestFocus() {
+        if (hasRecord)
+            focusStart()
+        else
+            wantFocus = true
+    }
+    function scrollBy(delta) {
+        const flick = scroller.contentItem
+        flick.contentY = Math.max(0, Math.min(Math.max(0, flick.contentHeight - flick.height), flick.contentY + delta))
+    }
+    function scrollEdge(last) {
+        const flick = scroller.contentItem
+        flick.contentY = last ? Math.max(0, flick.contentHeight - flick.height) : 0
+    }
     function list(value) { return value || [] }
     function day(value) { return value ? String(value).slice(0, 10) : "" }
     function words(value) { return value ? value.charAt(0).toUpperCase() + String(value).slice(1).replace(/-/g, " ") : "" }

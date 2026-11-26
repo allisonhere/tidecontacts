@@ -76,6 +76,7 @@ public:
     Q_INVOKABLE void back();
     Q_INVOKABLE void refresh();
     Q_INVOKABLE void saveRecord(bool create, const QVariantMap &fields);
+    Q_INVOKABLE void createLinked(const QString &kind, const QVariantMap &fields);
     Q_INVOKABLE void archiveContact(bool archived);
     Q_INVOKABLE void completeTask();
     Q_INVOKABLE void moveItem(const QString &id, const QString &stage);
