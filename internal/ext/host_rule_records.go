@@ -123,7 +123,7 @@ func (s *Session) ruleWrite(ctx context.Context, data json.RawMessage) (any, *Pr
 		links = []domain.Ref{{ID: c.ID, Kind: c.Kind}}
 	}
 	if a.Kind == "add_tag" || a.Kind == "remove_tag" {
-		if a.Tag = strings.TrimSpace(a.Tag); a.Tag == "" || len(a.Tag) > 80 || Clean(a.Tag, 80, false) != a.Tag || a.Revision <= 0 {
+		if a.Tag = strings.TrimSpace(a.Tag); a.Tag == "" || Clean(a.Tag, 80, false) != a.Tag || a.Revision <= 0 {
 			return nil, perr(CodeInvalid, "a printable tag and positive revision are required")
 		}
 		if a.Revision != c.Revision {
@@ -141,7 +141,7 @@ func (s *Session) ruleWrite(ctx context.Context, data json.RawMessage) (any, *Pr
 		_, err := s.Repo.SaveContacts(ctx, []domain.Contact{c}, ExtensionSource+s.ID)
 		return map[string]string{"id": c.ID}, mapErr(err)
 	}
-	if a.Title = strings.TrimSpace(a.Title); a.Title == "" || len(a.Title) > 240 || Clean(a.Title, 240, false) != a.Title {
+	if a.Title = strings.TrimSpace(a.Title); a.Title == "" || Clean(a.Title, 240, false) != a.Title {
 		return nil, perr(CodeInvalid, "a printable title is required")
 	}
 	if a.Kind == "task" {

@@ -321,6 +321,27 @@ func sanitizeMap(m map[string]string, n int) map[string]string {
 	return out
 }
 
+// View state is returned to the contributing extension, not displayed. Allow
+// bounded structured state for real editors without increasing text, form, or
+// terminal output limits. Do not truncate a structured value into invalid data.
+func sanitizeViewState(m map[string]string) map[string]string {
+	if len(m) == 0 {
+		return nil
+	}
+	out := make(map[string]string, min(len(m), 16))
+	budget := 128 << 10
+	for k, v := range m {
+		if len(out) == 16 {
+			break
+		}
+		if tokenOr(k) != "" && len(v) <= 64<<10 && len(v) <= budget && Clean(v, 64<<10, false) == v {
+			out[k] = v
+			budget -= len(v)
+		}
+	}
+	return out
+}
+
 // SanitizeView bounds and cleans an untrusted view.
 func SanitizeView(v View) View {
 	o := View{Title: Clean(v.Title, 60, false), Badge: Clean(v.Badge, 24, false), Tab: tokenOr(v.Tab), Heading: Clean(v.Heading, 80, false), Subheading: Clean(v.Subheading, 60, false),
@@ -412,7 +433,7 @@ func SanitizeView(v View) View {
 
 // SanitizeResult bounds and cleans an action result.
 func SanitizeResult(r ActionResult) ActionResult {
-	o := ActionResult{Notice: Clean(r.Notice, 200, false), Tone: tone(r.Tone), Refresh: r.Refresh, State: sanitizeMap(r.State, 16), Close: r.Close, Open: sanitizeTarget(r.Open), Title: Clean(r.Title, 60, false)}
+	o := ActionResult{Notice: Clean(r.Notice, 200, false), Tone: tone(r.Tone), Refresh: r.Refresh, State: sanitizeViewState(r.State), Close: r.Close, Open: sanitizeTarget(r.Open), Title: Clean(r.Title, 60, false)}
 	if len(r.Errors) > 0 {
 		o.Errors = map[string]string{}
 		for k, v := range r.Errors {

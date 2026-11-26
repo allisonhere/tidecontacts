@@ -22,7 +22,7 @@ func TestManifestContributionValidation(t *testing.T) {
 		"publish malformed":    base + "permissions = [\"events.publish\"]\n[[published_events]]\ntype = \"Deal Won\"\nentity_type = \"deal\"\n",
 		"sql w/o perm":         base + "[storage]\nsql = true\n",
 		"timeout too large":    base + "timeout_seconds = 300\n",
-		"three workspaces":     base + "permissions = [\"ui.register\"]\n[[workspaces]]\nid = \"aaa\"\ntitle = \"A\"\n[[workspaces]]\nid = \"bbb\"\ntitle = \"B\"\n[[workspaces]]\nid = \"ccc\"\ntitle = \"C\"\n",
+		"four workspaces":      base + "permissions = [\"ui.register\"]\n[[workspaces]]\nid = \"aaa\"\ntitle = \"A\"\n[[workspaces]]\nid = \"bbb\"\ntitle = \"B\"\n[[workspaces]]\nid = \"ccc\"\ntitle = \"C\"\n[[workspaces]]\nid = \"ddd\"\ntitle = \"D\"\n",
 		"duplicate workspaces": base + "permissions = [\"ui.register\"]\n[[workspaces]]\nid = \"aaa\"\ntitle = \"A\"\n[[workspaces]]\nid = \"aaa\"\ntitle = \"B\"\n",
 	}
 	for name, body := range bad {

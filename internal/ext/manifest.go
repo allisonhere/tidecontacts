@@ -517,8 +517,8 @@ func (m Manifest) validateContributions(granted PermissionSet) error {
 	if len(m.Workspaces) > 0 && !granted.Has("ui.register") {
 		return fmt.Errorf("workspaces require the ui.register permission")
 	}
-	if len(m.Workspaces) > 2 {
-		return fmt.Errorf("at most 2 workspaces")
+	if len(m.Workspaces) > 3 {
+		return fmt.Errorf("at most 3 workspaces")
 	}
 	var ids []string
 	for _, w := range m.Workspaces {

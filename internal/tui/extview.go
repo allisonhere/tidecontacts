@@ -457,6 +457,10 @@ func (m *Model) extRunAction(v *extView, action, target string, args map[string]
 
 // followExtTarget opens another view of the extension, or a core record.
 func (m Model) followExtTarget(v *extView, t ext.Target) (Model, tea.Cmd) {
+	return m.followExtTargetState(v, t, nil)
+}
+
+func (m Model) followExtTargetState(v *extView, t ext.Target, state map[string]string) (Model, tea.Cmd) {
 	switch t.Kind {
 	case "ext":
 		if t.Action != "" {
@@ -478,7 +482,7 @@ func (m Model) followExtTarget(v *extView, t ext.Target) (Model, tea.Cmd) {
 		}
 		v.cur.remember()
 		v.stack = append(v.stack, v.cur)
-		v.cur = extFrame{tab: t.Tab, item: t.ID, state: copyState(v.cur.state)}
+		v.cur = extFrame{tab: t.Tab, item: t.ID, state: mergeExtState(v.cur.state, state)}
 		return m, m.extRender(v)
 	}
 	kind := map[string]string{"contact": "person", "organization": "organization", "task": "task", "activity": "activity", "project": "project"}[t.Kind]
@@ -509,13 +513,10 @@ func (m Model) applyExtResult(v *extView, res ext.ActionResult) (Model, tea.Cmd)
 		if res.Notice != "" {
 			v.notice = res.Notice
 		}
-		return m.followExtTarget(v, *res.Open)
+		return m.followExtTargetState(v, *res.Open, res.State)
 	}
 	if len(res.State) > 0 {
-		v.cur.state = copyState(v.cur.state)
-		for k, val := range res.State {
-			v.cur.state[k] = val
-		}
+		v.cur.state = mergeExtState(v.cur.state, res.State)
 	}
 	v.notice = res.Notice
 	if res.Close {
@@ -989,6 +990,14 @@ func copyState(in map[string]string) map[string]string {
 	return out
 }
 
+func mergeExtState(previous, updates map[string]string) map[string]string {
+	out := copyState(previous)
+	for k, value := range updates {
+		out[k] = value
+	}
+	return out
+}
+
 // hasWorkspace reports whether an enabled extension contributes ws.
 func (m Model) hasWorkspace(extID, ws string) bool {
 	for _, w := range m.extensions.mgr.Workspaces() {
@@ -1027,7 +1036,7 @@ func (m Model) applyExtCommandResult(extID string, res ext.ActionResult) (Model,
 			m2, _ := m.openExtWorkspace(extID, ws)
 			v := m2.extensions.view
 			v.stack = nil
-			v.cur = extFrame{tab: t.Tab, item: t.ID}
+			v.cur = extFrame{tab: t.Tab, item: t.ID, state: res.State}
 			return m2, m2.extRender(v)
 		}
 		v := &extView{ext: extID, ws: ws}

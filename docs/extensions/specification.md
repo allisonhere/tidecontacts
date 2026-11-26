@@ -231,7 +231,7 @@ need an explicit permission, and are invisible unless the extension is enabled.
 
 ### 9.1 Workspaces and declarative views
 
-Manifest: `[[workspaces]] id, title` (needs `ui.register`; ≤ 2). The menu and
+Manifest: `[[workspaces]] id, title` (needs `ui.register`; ≤ 3). The menu and
 palette list a workspace only while its extension is enabled.
 
 The host calls `view.render` `{workspace, tab, item, query, state, width, narrow}`
@@ -456,3 +456,12 @@ they cannot update any other field. All four operations accept bounded causal
 IDs and depth (1–8); the host supplies the source. They have no access to shell,
 communications or SQL. The extension must not silently repeat a write whose
 outcome it cannot determine from the response.
+
+## 13. Workspace edit state
+
+An extension can register up to three workspaces. Action result `state`
+remains session-local and is never rendered. The host accepts up to 16 keys
+per update, 64 KiB per value and 128 KiB total. Invalid or oversized values
+are dropped, not truncated into unusable drafts. When a result also opens a
+target workspace or dossier, updates belong to the destination frame. The
+back stack retains the previous frame's filter and selection.
