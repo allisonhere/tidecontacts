@@ -25,8 +25,10 @@ type Permission struct {
 var permissionTable = []Permission{
 	{"contacts.read", "Read people", EnforcedByHost, true},
 	{"contacts.write", "Create and edit people", EnforcedByHost, true},
+	{"contacts.tags.write", "Add and remove tags on people", EnforcedByHost, true},
 	{"organizations.read", "Read organizations", EnforcedByHost, true},
 	{"organizations.write", "Create and edit organizations", EnforcedByHost, true},
+	{"organizations.tags.write", "Add and remove tags on organizations", EnforcedByHost, true},
 	{"relationships.read", "Read relationships and connections", EnforcedByHost, true},
 	{"relationships.write", "Create and edit relationships", Reserved, true},
 	{"activities.read", "Read the activity timeline", EnforcedByHost, true},

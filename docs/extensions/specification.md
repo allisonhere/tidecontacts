@@ -432,3 +432,27 @@ remain usable but do not produce durable envelopes.
 No exactly-once claim across databases or processes. Pulls are bounded; their
 caller decides when to poll. The host does not run a scheduler. These methods
 do not grant an extension direct database access.
+
+## 12. Scoped record evaluation (host 0.6.0, API v1)
+
+`permissions.check {permissions:[…]}` reports the calling session's effective
+grants, not declarations or the grants of other extensions. It accepts at most
+32 known permission names.
+
+`records.rule-page {kind,after,limit}` returns a stable ID-ordered page of live
+contacts, organizations, tasks, activities, or follow-up schedules (1–500
+rows); pass the last ID as the next cursor. Fields are intentionally limited to
+rule facts: IDs, revision, display name, status, date, activity kind, task
+priority, and contact tags as applicable. It excludes private notes and
+activity bodies. The respective existing `*.read` grant applies. Follow-ups
+require both contact and organization reads; dates are evaluated with the
+existing follow-up calculation, not inferred from journal entries.
+
+`records.rule-write` accepts only `task`, `timeline`, `add_tag`, or `remove_tag`.
+Task and timeline writes need their existing `*.write` grants. Linked records
+must be live people or organizations and require their read grants. Tag
+writes require revision and `contacts.tags.write` or `organizations.tags.write`;
+they cannot update any other field. All four operations accept bounded causal
+IDs and depth (1–8); the host supplies the source. They have no access to shell,
+communications or SQL. The extension must not silently repeat a write whose
+outcome it cannot determine from the response.

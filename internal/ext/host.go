@@ -61,6 +61,8 @@ func decode(data json.RawMessage, v any) *ProtocolError {
 
 func mapErr(err error) *ProtocolError {
 	switch {
+	case err == nil:
+		return nil
 	case errors.Is(err, sqlite.ErrConflict):
 		return perr(CodeConflict, "the record changed; reload and retry")
 	case errors.Is(err, ErrQuota):
@@ -90,7 +92,7 @@ func (s *Session) Call(ctx context.Context, method string, data json.RawMessage)
 			return nil, perr(CodeEntitlement, "capability %s is not entitled", s.Entitlement)
 		}
 	}
-	if s.Repo == nil && !strings.HasPrefix(method, "storage.") && method != "config.get" && method != "entitlement.check" && method != "events.publish" {
+	if s.Repo == nil && !strings.HasPrefix(method, "storage.") && method != "config.get" && method != "entitlement.check" && method != "events.publish" && method != "permissions.check" {
 		return nil, perr(CodeUnknownMethod, "records are not available")
 	}
 	ctx = app.WithEventOrigin(ctx, app.EventOrigin{Source: ExtensionSource + s.ID})
@@ -112,6 +114,12 @@ func (s *Session) Call(ctx context.Context, method string, data json.RawMessage)
 			d = EntitlementDecision{Capability: a.Capability, Reason: "decision unavailable", Source: "error"}
 		}
 		return d, nil
+	case "permissions.check":
+		return s.permissions(data)
+	case "records.rule-page":
+		return s.ruleRecords(ctx, data)
+	case "records.rule-write":
+		return s.ruleWrite(ctx, data)
 	case "attention.list", "attention.act", "tasks.complete", "contacts.engagement":
 		return s.attention(ctx, method, data)
 	case "events.next", "events.settle", "events.dead", "events.replay":
@@ -394,21 +402,23 @@ func (s *Session) publish(data json.RawMessage) (any, *ProtocolError) {
 // Record is a minimal projection of a core record for display and integrity
 // checks. It is deliberately smaller than the record itself.
 type Record struct {
-	ID         string `json:"id"`
-	Kind       string `json:"kind"`
-	Name       string `json:"name,omitempty"`
-	Detail     string `json:"detail,omitempty"` // primary email, organization, status…
-	Status     string `json:"status,omitempty"`
-	Due        string `json:"due,omitempty"`
-	When       string `json:"when,omitempty"`
-	Updated    string `json:"updated,omitempty"`
-	Created    string `json:"created,omitempty"`
-	URL        string `json:"url,omitempty"`
-	Revision   int    `json:"revision,omitempty"`
-	Archived   bool   `json:"archived,omitempty"`
-	Deleted    bool   `json:"deleted,omitempty"`
-	Missing    bool   `json:"missing,omitempty"`
-	MergedInto string `json:"merged_into,omitempty"`
+	ID         string   `json:"id"`
+	Kind       string   `json:"kind"`
+	Name       string   `json:"name,omitempty"`
+	Detail     string   `json:"detail,omitempty"` // primary email, organization, status…
+	Status     string   `json:"status,omitempty"`
+	Due        string   `json:"due,omitempty"`
+	When       string   `json:"when,omitempty"`
+	Updated    string   `json:"updated,omitempty"`
+	Created    string   `json:"created,omitempty"`
+	URL        string   `json:"url,omitempty"`
+	Revision   int      `json:"revision,omitempty"`
+	Priority   int      `json:"priority,omitempty"`
+	Tags       []string `json:"tags,omitzero"`
+	Archived   bool     `json:"archived,omitempty"`
+	Deleted    bool     `json:"deleted,omitempty"`
+	Missing    bool     `json:"missing,omitempty"`
+	MergedInto string   `json:"merged_into,omitempty"`
 }
 
 const maxResolve = 500
@@ -423,12 +433,17 @@ func (s *Session) resolve(ctx context.Context, data json.RawMessage) (any, *Prot
 	if e := decode(data, &a); e != nil {
 		return nil, e
 	}
-	perm := map[string]string{"contact": "contacts.read", "organization": "organizations.read", "task": "tasks.read", "activity": "activities.read", "project": "projects.read"}[a.Kind]
+	perm := map[string]string{"contact": "contacts.read", "organization": "organizations.read", "task": "tasks.read", "activity": "activities.read", "project": "projects.read", "followup": "contacts.read"}[a.Kind]
 	if perm == "" {
-		return nil, perr(CodeInvalid, "kind must be contact, organization, task, activity or project")
+		return nil, perr(CodeInvalid, "unsupported record kind")
 	}
 	if e := s.need(perm); e != nil {
 		return nil, e
+	}
+	if a.Kind == "followup" {
+		if e := s.need("organizations.read"); e != nil {
+			return nil, e
+		}
 	}
 	if len(a.IDs) > maxResolve {
 		return nil, perr(CodeInvalid, "at most %d ids", maxResolve)
@@ -446,6 +461,13 @@ func (s *Session) resolve(ctx context.Context, data json.RawMessage) (any, *Prot
 					break
 				}
 				r.Name, r.Archived, r.Deleted, r.Revision = c.DisplayName, c.Archived, c.Deleted, c.Revision
+				r.Status, r.Tags = "active", c.Tags
+				if r.Tags == nil {
+					r.Tags = []string{}
+				}
+				if c.Archived {
+					r.Status = "archived"
+				}
 				for _, m := range c.Methods {
 					if m.Kind == "email" && (r.Detail == "" || m.Preferred) {
 						r.Detail = m.Value
@@ -466,19 +488,35 @@ func (s *Session) resolve(ctx context.Context, data json.RawMessage) (any, *Prot
 			if t, err = s.Repo.Task(ctx, id); err == nil {
 				r.Name, r.Status, r.Due, r.Archived, r.Deleted, r.Revision = t.Title, t.Status, t.Due, t.Archived, t.Deleted, t.Revision
 				r.Updated, r.Created = t.UpdatedAt, t.CreatedAt
+				r.Priority = t.Priority
 			}
 		case "activity":
 			var ac domain.Activity
 			if ac, err = s.Repo.Activity(ctx, id); err == nil {
 				r.Name, r.Detail, r.Deleted, r.Revision, r.URL = ac.Title, ac.Type, ac.Deleted, ac.Revision, ac.ExternalURL
 				r.When = ac.OccurredAt.Format("2006-01-02")
-				r.Detail = ac.Type
+				r.Status = "recorded"
 			}
 		case "project":
 			var p domain.Project
 			if p, err = s.Repo.Project(ctx, id); err == nil {
 				r.Name, r.Status, r.Deleted, r.Revision = p.Name, p.Status, p.Deleted, p.Revision
 			}
+		case "followup":
+			var c domain.Contact
+			c, err = s.Repo.Contact(ctx, id)
+			if err != nil || c.Archived || c.Deleted {
+				r.Missing = true
+				break
+			}
+			var f domain.FollowUp
+			f, err = s.Repo.FollowUp(ctx, id)
+			r.Name, r.Due, r.Revision = c.DisplayName, f.Due, c.Revision
+			r.Detail = "contact"
+			if c.Kind == "organization" {
+				r.Detail = c.Kind
+			}
+			r.Status = app.FollowUpState(f.Never, f.Due, time.Now().Format(time.DateOnly))
 		}
 		if err != nil {
 			r = Record{ID: id, Kind: a.Kind, Missing: true}
