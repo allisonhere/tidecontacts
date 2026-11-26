@@ -815,6 +815,7 @@ func (m Model) extHelp(u softUI, v *extView, width int) []string {
 	if len(v.doc.Tabs) > 1 {
 		row("[ ]", "previous or next section")
 	}
+	row(m.hint("palette"), "open the command palette")
 	for _, a := range v.doc.Actions {
 		what := a.Label
 		if a.Scope == "item" {

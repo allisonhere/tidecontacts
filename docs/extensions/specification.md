@@ -25,7 +25,7 @@ no arguments, working directory = the extension directory.
 | `api` | int | yes | Extension API major version. This host: `1` |
 | `description`, `author` | string | no | ≤ 400 / 80 chars |
 | `command` | string | yes | Clean relative path inside the directory (no `..`, `\`, absolute) |
-| `min_host` | string | no | Minimum TideContacts extension-host version (this host: `0.3.0`) |
+| `min_host` | string | no | Minimum extension-host version (this host: `0.4.0`) |
 | `requires` | [string] | no | Capability ids that must be available |
 | `optional` | [string] | no | Capability ids used if present |
 | `permissions` | [string] | no | Requested permissions (§4) |
@@ -320,3 +320,58 @@ so. A malformed value grants nothing.
 `contact.deleted` and `organization.deleted` (when a save marks the record
 deleted) and a `related_id` on `contact.merged` naming the merged-away record,
 which is also marked deleted with `merged_into` on the survivor.
+
+## 10. Panel views and shared attention (host 0.4.0, API v1)
+
+An extension using any of these additions should set `min_host = "0.4.0"`.
+Extensions targeting the earlier host still work. No Community schema change.
+
+### 10.1 Panels
+
+Views may supply `panels` (≤ 16) instead of a board or list. Each panel has a
+stable `id`, `title`, optional `short` label, `count`, `empty`, `full` (span the
+grid), optional `open` target and up to 12 `blocks`. The host selects the column
+count and clips each panel to the viewport; the extension supplies no styling.
+
+| Block `kind` | Content |
+|---|---|
+| `lines` | Up to 200 labeled rows, with optional mark, tone and drill-down target |
+| `bars`, `columns`, `stack`, `spark`, `trend` | Up to 120 data points; horizontal, vertical, stacked, sparkline and braille/ASCII line charts |
+| `progress`, `bullet` | First datum compared with an explicit `goal` |
+| `heat` | Bounded rows and column labels; a null cell is unknown |
+| `text` | Wrapped explanatory text |
+
+Chart values are integers for geometry only; supply the user-visible value,
+units and currency in the datum's text. Mark unknown observations as `missing`
+instead of encoding a zero. Lines and data points can carry a distinct `id`
+and `target`. `target.workspace`, when set on an extension target, must name
+another workspace of that same extension. Esc restores selection and filter
+state after following an extension or Community record link.
+
+`Tab`/`Shift+Tab` move panel focus, `[`/`]` move view tabs, arrows or `j/k`
+select, and Enter follows a target. The command palette remains available.
+`form.submit` receives the originating view's optional `state` alongside the
+form's `args`, `values` and `refs`.
+
+### 10.2 Shared attention
+
+* `attention.list {}` returns the existing open People Inbox items (key, kind,
+  reason, due date, urgency and record references). Needs `attention.read`,
+  `contacts.read` and `tasks.read`; organization entries also need
+  `organizations.read`.
+* `attention.act {key, action, until}` uses the same Inbox review, dismissal and
+  snooze state as Community. Needs `attention.write`. It does not edit records.
+* `contacts.engagement {ids}` returns recorded interactions, configured
+  follow-up, dates and task context for up to 200 contacts. Needs
+  `activities.read`, `tasks.read` and the relevant contact/organization read
+  permission. Task detail is a bounded sample, not a complete list.
+* `tasks.complete {id}` completes a Community task using its normal recurrence
+  and event behavior. Needs `tasks.write`.
+
+### 10.3 CLI output
+
+A manifest can register up to 16 CLI resources. Successful extension CLI
+responses use the versioned JSON envelope unless the caller explicitly
+passes `--raw` and the extension returns `output`. That string is written
+without the envelope; terminal control characters are stripped, except LF, CR
+and TAB used by text formats. Errors still use the JSON error envelope.

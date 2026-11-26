@@ -238,6 +238,11 @@ the [API specification](docs/extensions/specification.md) and the
 [security model](docs/extensions/security.md). `make extension-demo` builds the
 read-only *Relationship Digest* example.
 
+Extension host **0.4.0** adds responsive panel documents, terminal-native
+charts, permission-checked Inbox and engagement calls, and explicit raw CLI
+report output. A compatible extension is required to use those surfaces; the
+Community CRM does not depend on one. [Host contract](docs/extensions/specification.md#10-panel-views-and-shared-attention-host-040-api-v1)
+
 ## Development
 
 ```sh

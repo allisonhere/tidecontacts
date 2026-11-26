@@ -318,6 +318,18 @@ func runExtensionResource(ctx context.Context, args []string, in io.Reader, out 
 		action = req.Argv[0]
 	}
 	if resp.Output != "" {
+		raw := false
+		for _, a := range req.Argv {
+			switch a {
+			case "--raw", "--raw=true":
+				raw = true
+			case "--raw=false":
+				raw = false
+			}
+		}
+		if !raw {
+			return true, fail(1, "runtime", "extension returned raw output without --raw")
+		}
 		_, err := io.WriteString(out, resp.Output)
 		return true, err
 	}

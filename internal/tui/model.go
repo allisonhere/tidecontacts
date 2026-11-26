@@ -157,12 +157,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return n, cmd
 	case tea.WindowSizeMsg:
+		wasNarrow := m.width < extNarrowFrom
 		m.width, m.height = max(0, v.Width), max(0, v.Height)
 		if m.mode() == tideui.SidebarOnly && m.focus == 2 {
 			m.focus = 1
 		}
 		m.search.Width = max(1, m.width-10)
 		m.prompt.Width = max(1, min(60, m.width-12))
+		if v := m.extensions.view; v != nil && wasNarrow != (m.width < extNarrowFrom) {
+			return m, m.extRender(v)
+		}
 		return m, nil
 	case tea.KeyMsg:
 		key := v.String()
@@ -340,6 +344,7 @@ func (m Model) dispatch(id string) (tea.Model, tea.Cmd) {
 		return next, cmd
 	}
 	if strings.HasPrefix(id, "workspace-") {
+		m.closeExtView()
 		m.crm.nav, m.crm.itemOpen, m.crm.err = nil, false, ""
 		m.contacts.listSeq++
 		m.contacts.detailSeq++
@@ -468,7 +473,11 @@ func (m Model) View() string {
 	}
 	r := tideui.NewRenderer(m.theme(), tideui.StyleOptions{Density: tideui.Compact})
 	w := domain.Workspaces()[m.state.Active]
-	header := r.Styles.DetailTitle.Render(ansi.Truncate("TideContacts / "+w.Name+"  |  local", m.width, ""))
+	workspace := w.Name
+	if v := m.extensions.view; v != nil {
+		workspace = v.title
+	}
+	header := r.Styles.DetailTitle.Render(ansi.Truncate("TideContacts / "+workspace+"  |  local", m.width, ""))
 	header = ansi.Truncate(header, m.width, "")
 	if m.height == 1 {
 		return header

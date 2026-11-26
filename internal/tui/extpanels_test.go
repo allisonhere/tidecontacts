@@ -71,7 +71,7 @@ func has(t *testing.T, out string, want ...string) {
 func TestPanelsWideLayout(t *testing.T) {
 	m := panelApp(t, 160, 45)
 	out := shot(t, m)
-	has(t, out, "Business Pulse", "PRO", "$86,400", "54.6% weighted", "REVENUE PERFORMANCE", "SALES PIPELINE", "REQUIRES YOUR ATTENTION", "CUSTOMER CONCENTRATION", "Jun", "$28,400", "█", "Proposal awaiting response", "$18,000", "74%", "no data", "tab", "panel", "keys", "│")
+	has(t, out, "Business Pulse", "PRO", "$86,400", "54.6% weighted", "REVENUE PERFORMANCE", "SALES PIPELINE", "REQUIRES YOUR ATTENTION", "CUSTOMER CONCENTRATION", "Jun", "$28,400", "█", "Proposal awaiting response", "$18,000", "74%", "no data", "[ ] view", "panel", "keys", "│")
 	checkBounds(t, m.View(), 160, 45)
 	if v := m.extensions.view; v.cur.panel != "revenue" || len(v.items()) != 6 {
 		t.Fatalf("focus %q items %d", v.cur.panel, len(v.items()))
@@ -92,6 +92,41 @@ func TestPanelsStandardAndCompactLayouts(t *testing.T) {
 	checkBounds(t, c.View(), 80, 24)
 	c = do(c, "tab", "tab")
 	has(t, shot(t, c), "[attention]", "REQUIRES YOUR ATTENTION", "Vertex Labs", "$6,400")
+}
+
+func TestPanelsGoldenFrames(t *testing.T) {
+	for _, size := range [][2]int{{80, 24}, {110, 32}, {160, 45}} {
+		w, h := size[0], size[1]
+		m := panelApp(t, w, h)
+		frame := strings.Split(ansi.Strip(m.View()), "\n")
+		for i, line := range frame {
+			frame[i] = strings.TrimRight(line, " ")
+		}
+		out := strings.Join(frame, "\n") + "\n"
+		name := filepath.Join("testdata", fmt.Sprintf("panels-%dx%d.txt", w, h))
+		if os.Getenv("UPDATE_GOLDEN") == "1" {
+			if err := os.WriteFile(name, []byte(out), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}
+		want, err := os.ReadFile(name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if out != string(want) {
+			t.Fatalf("%s changed:\n%s", name, out)
+		}
+	}
+}
+
+func TestPanelsReducedGlyphsRetainValues(t *testing.T) {
+	m := panelApp(t, 80, 24)
+	m.cfg.Theme = "vt52"
+	frame := ansi.Strip(m.View())
+	has(t, frame, "###", "$8,200", "$28,400")
+	if strings.ContainsRune(frame, '█') {
+		t.Fatal("reduced-glyph chart drew Unicode blocks")
+	}
 }
 
 func TestPanelsFocusSelectionDrillDownAndReturn(t *testing.T) {

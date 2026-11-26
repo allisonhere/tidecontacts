@@ -55,6 +55,7 @@ type crmList struct {
 type navPoint struct {
 	ws, view, focus int
 	id, query, name string
+	extension       *extView
 }
 
 type crmState struct {
@@ -723,6 +724,10 @@ func (m Model) back() (Model, tea.Cmd, bool) {
 	p := m.crm.nav[n-1]
 	m.crm.nav = m.crm.nav[:n-1]
 	next, cmd := m.goTo(p)
+	if v := p.extension; v != nil && next.hasWorkspace(v.ext, v.ws) {
+		next.extensions.view = &extView{ext: v.ext, ws: v.ws, title: v.title, cur: v.cur, stack: append([]extFrame(nil), v.stack...)}
+		cmd = tea.Batch(cmd, next.extRender(next.extensions.view))
+	}
 	return next, cmd, true
 }
 

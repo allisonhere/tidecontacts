@@ -59,6 +59,14 @@ permissions must never be presented as OS-level isolation.
 | `records.resolve` | Read permission per kind; ≤ 500 ids; minimal projection; a wrong-kind id looks like a missing one |
 | Development entitlements | Opt-in by environment variable, labelled in every decision and banner, malformed value grants nothing |
 
+## Added in host 0.4.0
+
+| Surface | Control |
+|---|---|
+| Panel and chart documents | Bounded collections and sanitized labels, values and drill-down IDs; geometry and styling are rendered by the host |
+| Shared Inbox and engagement | Explicit attention permissions and per-kind reads; bounded task samples; writes reuse validated Inbox and task operations |
+| Raw CLI output | Caller opts in with `--raw`; only printable text and LF/CR/TAB are passed through. A response cannot silently replace the JSON envelope |
+
 ## Limitations
 
 * No OS sandbox (see above). A future phase should add an optional sandbox

@@ -1,0 +1,32 @@
+ TideContacts / Business  |  local
+┌╭─ tidecontacts · business ────────────────────────────────────────────────────────────────────────────────╮┐
+││                                                                                                          ││
+││  Business Pulse                                                                                       PRO││
+││  [command]  briefing  revenue  pipeline  customers  renewals  targets  simulator  replay  reports        ││
+││                                                                                                          ││
+││   PIPELINE                 WEIGHTED                 BOOKED                   TARGET                      ││
+││   $86,400                  $47,200                  $18,500                  74%                         ││
+││   14 opportunities         54.6% weighted           ↑ 12.4%                  $6,500 to go                ││
+││                                                                                                          ││
+││  Wednesday, November 25                                                                      This month  ││
+││  ▌REVENUE PERFORMANCE                              │  SALES PIPELINE                               14    ││
+││  ›Jun ██████████▍                           $8,200 │  Discovery   ████████████████████████████       5   ││
+││   Jul ██████████████████▌                  $14,600 │  Proposal    ██████████████████████▍            4   ││
+││   Aug ██████████████▌                      $11,400 │  Negotiation ████████████████▊                  3   ││
+││   Sep ████████████████████████████         $22,100 │  Closing     ███████████▎                       2   ││
+││   Oct ███████████████████████▌             $18,500 │  Unknown     ·                            no data   ││
+││   Nov ████████████████████████████████████ $28,400 │                                                     ││
+││                                                    │  $18,500 / $25,000                                  ││
+││   Trend ▃▅▄▆▆█                                     │  ██████████████████████████████░░░░░░░░░░ 74%       ││
+││   Nov  $28,400                                     │                                                     ││
+││  ──────────────────────────────────────────────────────────────────────────────────────────────────────  ││
+││   REQUIRES YOUR ATTENTION                                                                            4   ││
+││   ! Acme IT                 Proposal awaiting response                                          $18,000  ││
+││   ◷ Meridian                Expected close tomorrow                                             $25,000  ││
+││   ! Vertex Labs             Customer follow-up overdue                                           $6,400  ││
+││   ◇ Northstar 日本株式会社  Contract renewal in 14 days                                         $15,000  ││
+││  2 more panel(s) · tab to reach them                                                                     ││
+││                                                                                                          ││
+││  • Filter: none                                                                                          ││
+└│  ↹ panel   j/k item   ↩️ open   [ ] view   ? keys   f filter   z snooze   r refresh   ␛ close            │┘
+ ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────╯

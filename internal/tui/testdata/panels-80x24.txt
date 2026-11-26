@@ -1,0 +1,24 @@
+ TideContacts / Business  |  local
+>╭─ tidecontacts · business ──────────────────────────────────────────────────╮
+/│                                                                            │
+N│  Business Pulse                                                         PRO│
+A│  [command]  briefing  revenue  pipeline  customers  renewals  targets ›    │
+I│  Pipeline $86,400 · Weighted $47,200 · Booked $18,500 · Target 74%         │
+S│  Wednesday, November 25                                        This month  │
+ │  [revenue]  pipeline  attention  customers  forecast                       │
+ │  ▌REVENUE PERFORMANCE                                                      │
+ │  ›Jun █████████████████                                            $8,200  │
+ │   Jul ██████████████████████████████▍                             $14,600  │
+ │   Aug ███████████████████████▋                                    $11,400  │
+ │   Sep █████████████████████████████████████████████▉              $22,100  │
+ │   Oct ██████████████████████████████████████▍                     $18,500  │
+ │   Nov ███████████████████████████████████████████████████████████ $28,400  │
+ │                                                                            │
+ │   Trend ▃▅▄▆▆█                                                             │
+ │   Nov  $28,400                                                             │
+ │                                                                            │
+ │                                                                            │
+ │                                                                            │
+ │  • Filter: none                                                            │
+ │  ↹ panel   j/k item   ↩️ open   [ ] view   ? keys   f filter   ␛ close     │
+ ╰────────────────────────────────────────────────────────────────────────────╯

@@ -319,7 +319,7 @@ func (s *Store) Dossier(ctx context.Context, id string) (domain.Dossier, error) 
 		if e = tx.QueryRowContext(ctx, "SELECT count(*) FROM activity_entities j JOIN activities a ON a.id=j.activity_id WHERE j.entity_id=? AND a.deleted=0", id).Scan(&d.Activities); e != nil {
 			return e
 		}
-		return tx.QueryRowContext(ctx, "SELECT count(*) FROM task_entities j JOIN tasks t ON t.id=j.task_id WHERE j.entity_id=? AND t.deleted=0 AND t.status NOT IN ('completed','canceled')", id).Scan(&d.OpenTaskCount)
+		return tx.QueryRowContext(ctx, "SELECT count(*) FROM task_entities j JOIN tasks t ON t.id=j.task_id WHERE j.entity_id=? AND t.deleted=0 AND t.archived=0 AND t.status NOT IN ('completed','canceled')", id).Scan(&d.OpenTaskCount)
 	})
 	return d, e
 }

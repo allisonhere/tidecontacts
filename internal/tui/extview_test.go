@@ -17,6 +17,7 @@ reply() { printf '{"api":1,"type":"response","request_id":"%s","ok":true,"data":
 case "$line" in
 *'"method":"view.render"'*)
   case "$line" in
+  *'"workspace":"reports"'*) reply '{"title":"Report workspace","heading":"Saved reports"}';;
   *'"item":"opp1"'*) reply '{"title":"Acme IT","dossier":true,"tabs":[{"id":"overview","title":"Overview"},{"id":"people","title":"People"}],"tab":"overview","sections":[{"title":"Deal","lines":[{"label":"Value","text":"$18,000"},{"label":"Contact","text":"Ada Fictional","target":{"kind":"contact","id":"c-1"}}]}],"actions":[{"key":"q","label":"Quit","id":"bad"}]}';;
   *) reply '{"title":"Sales","badge":"PROFESSIONAL","tabs":[{"id":"overview","title":"Overview"},{"id":"pipeline","title":"Pipeline"}],"tab":"pipeline","tiles":[{"label":"Pipeline","value":"$86,400","note":"14 opportunities"},{"label":"Weighted","value":"$47,200","tone":"ok"},{"label":"Won this month","value":"$18,500"}],"heading":"Consulting pipeline","subheading":"USD · Active","board":{"columns":[{"id":"disc","title":"Discovery","total":"$18,400","tone":"info","cards":[{"id":"opp0","title":"Nexus Systems","amount":"$12,000","progress":20,"left":"20%","right":"4 days"}]},{"id":"prop","title":"Proposal","total":"$28,000","tone":"warn","cards":[{"id":"opp1","title":"Acme IT","amount":"$18,000","progress":60,"left":"60%","right":"12 days","badge":"Follow-up overdue","badge_tone":"warn"},{"id":"opp2","title":"Orbit Digital","amount":"$10,000","progress":50,"left":"50%","right":"3 days"}]},{"id":"neg","title":"Negotiation","total":"$40,000","tone":"ok","cards":[{"id":"opp3","title":"Meridian","amount":"$25,000","progress":80}]}]},"notices":[{"tone":"warn","text":"Acme IT: proposal requires follow-up"}],"open":"open","searchable":true,"actions":[{"key":"n","label":"New","id":"new"},{"key":"e","label":"Edit","id":"edit","scope":"item"},{"key":"x","label":"Delete","id":"del","scope":"item","confirm":"Delete this opportunity?"}]}';;
   esac;;
@@ -43,7 +44,7 @@ func installWS(t *testing.T, root string) {
 	}
 	dir := filepath.Join(root, "extensions", "sales-ext")
 	_ = os.MkdirAll(dir, 0o755)
-	_ = os.WriteFile(filepath.Join(dir, ext.ManifestFile), []byte("id = \"sales-ext\"\nname = \"Sales\"\nversion = \"1.0.0\"\napi = 1\ncommand = \"run.sh\"\npermissions = [\"ui.register\"]\n[[workspaces]]\nid = \"sales\"\ntitle = \"Sales\"\n"), 0o644)
+	_ = os.WriteFile(filepath.Join(dir, ext.ManifestFile), []byte("id = \"sales-ext\"\nname = \"Sales\"\nversion = \"1.0.0\"\napi = 1\ncommand = \"run.sh\"\npermissions = [\"ui.register\"]\n[[workspaces]]\nid = \"sales\"\ntitle = \"Sales\"\n[[workspaces]]\nid = \"reports\"\ntitle = \"Reports\"\n"), 0o644)
 	_ = os.WriteFile(filepath.Join(dir, "run.sh"), []byte("#!/bin/sh\n"+wsScript), 0o755)
 }
 
@@ -69,8 +70,8 @@ func TestWorkspaceAppearsOnlyWhenEnabled(t *testing.T) {
 	}
 	_ = mgr.Enable(ctxBackground(), "sales-ext", true)
 	cmds := m.menuCommands()
-	if len(cmds) != base+1 || cmds[8].ID != "ext-ws:sales-ext:sales" || cmds[8].Label != "Sales" {
-		t.Fatalf("menu entry missing: %+v", cmds[8:10])
+	if len(cmds) != base+2 || cmds[8].ID != "ext-ws:sales-ext:sales" || cmds[8].Label != "Sales" {
+		t.Fatalf("menu entries missing: %+v", cmds)
 	}
 	m.prompt.SetValue("sales")
 	found := false
@@ -152,6 +153,32 @@ func TestWorkspaceFollowsCoreRecordLinks(t *testing.T) {
 	}
 	if len(m.crm.nav) == 0 {
 		t.Fatal("the previous place was not remembered for Esc")
+	}
+	m = do(m, "esc")
+	if m.extensions.view == nil || m.extensions.view.cur.item != "opp1" || !strings.Contains(ansi.Strip(m.View()), "Ada Fictional") {
+		t.Fatalf("Esc did not return to the linked dossier:\n%s", ansi.Strip(m.View()))
+	}
+}
+
+func TestWorkspacePaletteAndCrossWorkspaceReturn(t *testing.T) {
+	m := do(wsApp(t, 140, 40), "l")
+	m = do(m, ":")
+	m = do(m, "open reports")
+	if !strings.Contains(ansi.Strip(m.View()), "Open Reports") {
+		t.Fatalf("workspace did not open the host palette:\n%s", ansi.Strip(m.View()))
+	}
+	m = do(m, "esc")
+	if v := m.extensions.view; v == nil || v.cur.col != 1 || m.overlay != none {
+		t.Fatal("leaving the palette lost the workspace selection")
+	}
+	next, cmd := m.followExtTarget(m.extensions.view, ext.Target{Kind: "ext", Workspace: "reports", ID: "saved"})
+	m = deliver(next, cmd)
+	if !strings.Contains(ansi.Strip(m.View()), "Saved reports") {
+		t.Fatalf("did not reach the sibling workspace:\n%s", ansi.Strip(m.View()))
+	}
+	m = do(m, "esc")
+	if v := m.extensions.view; v == nil || v.ws != "sales" || v.cur.col != 1 || v.doc.Board == nil {
+		t.Fatal("Esc did not restore the workspace and selected column")
 	}
 }
 

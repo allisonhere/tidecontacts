@@ -253,6 +253,7 @@ type FormSubmit struct {
 	Form      string               `json:"form"`
 	Target    string               `json:"target,omitempty"`
 	Args      map[string]string    `json:"args,omitempty"`
+	State     map[string]string    `json:"state,omitempty"`
 	Values    map[string]string    `json:"values"`
 	Refs      map[string][]RefItem `json:"refs,omitempty"`
 }

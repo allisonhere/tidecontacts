@@ -245,3 +245,15 @@ func TestExtensionResourceAfterLeadingHostFlags(t *testing.T) {
 		t.Fatal("TUI flags must not be treated as CLI commands")
 	}
 }
+
+func TestExtensionRawOutputRequiresOptIn(t *testing.T) {
+	h := setup(t)
+	scriptExt(t, respond+`printf '%s\n' '{"api":1,"type":"response","request_id":"'"$id"'","ok":true,"data":{"output":"one\u001b\n二\n"}}'`+"\n")
+	h.run(0, "", "extensions", "enable", "deals-ext", "--yes")
+	h.run(1, "", "deals", "list")
+	var out, errb bytes.Buffer
+	err := Run(context.Background(), []string{"--database", h.db, "deals", "list", "--raw"}, strings.NewReader(""), &out, &errb)
+	if err != nil || out.String() != "one\n二\n" {
+		t.Fatalf("raw output: %q; error: %v %s", out.String(), err, errb.String())
+	}
+}

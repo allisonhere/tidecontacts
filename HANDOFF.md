@@ -1,6 +1,17 @@
 # TideContacts handoff
 
-Current state: November 20, 2026. This replaces the old Phase 3 handoff. Use [STATUS.md](STATUS.md) for the current feature inventory and [README.md](README.md) for setup.
+Use [STATUS.md](STATUS.md) for the current feature inventory and [README.md](README.md) for setup. Earlier handoff entries below are historical.
+
+## Phase 3C: Command Center host
+
+Branch `feat/phase3c-command-center`, stacked on Phase 3B; not merged or published. Extension host **0.4.0**, wire protocol **v1**, Community schema **4**. The Professional implementation, its demo, captures and performance record belong to the separate private checkout.
+
+- `internal/viz`: bounded terminal-cell chart geometry with Unicode and reduced glyphs; `internal/tui/extpanels.go` assigns theme tones, column layouts and keyboard selection.
+- `internal/ext/ui_panels.go`, `internal/tui/extview.go`: panel documents, actions, forms and drill-down. Esc restores context across extension workspaces or Community record links. Resizing across the compact breakpoint cancels and replaces the old render.
+- `internal/ext/host_attention.go`: permission-checked reuse of the People Inbox, contact engagement and task completion. Do not add a competing reminder store.
+- `internal/cli/extensions.go`: versioned extension CLI with explicit opt-in raw output. The host allows 16 CLI resources and a matching manifest must advertise host 0.4.0. See [extension specification §10](docs/extensions/specification.md#10-panel-views-and-shared-attention-host-040-api-v1).
+
+Verify host panels with the `TestPanels`, `TestWorkspace` and extension CLI tests, including three terminal goldens. The private checkout has the paired CLI/PTY smoke script. No license or contributor clearance was changed.
 
 ## Phase 3B: host contributions for a Professional extension (November 25, 2026)
 

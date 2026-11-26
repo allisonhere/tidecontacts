@@ -20,7 +20,10 @@ import (
 // every pixel of styling. Nothing here executes extension code in Update/View:
 // all calls are tea.Cmds.
 
+const extNarrowFrom = 100
+
 type extFrame struct {
+	workspace, title string // set on a back-stack frame that crosses workspaces
 	tab, item, query string
 	state            map[string]string
 	col, row         int
@@ -76,6 +79,7 @@ func (m Model) extWorkspaceEntries() []app.Command {
 
 // openExtWorkspace shows an extension's workspace, resuming where the user left it.
 func (m Model) openExtWorkspace(extID, ws string) (Model, tea.Cmd) {
+	m.closeExtView()
 	title := ws
 	for _, w := range m.extensions.mgr.Workspaces() {
 		if w.Extension == extID && w.ID == ws {
@@ -96,7 +100,7 @@ func (m *Model) extRender(v *extView) tea.Cmd {
 	v.seq++
 	v.busy = true
 	seq, mgr, ctx := v.seq, m.extensions.mgr, m.contacts.ctx
-	req := ext.ViewRequest{Workspace: v.ws, Tab: v.cur.tab, Item: v.cur.item, Query: v.cur.query, State: v.cur.state, Width: m.width, Narrow: m.width < 100}
+	req := ext.ViewRequest{Workspace: v.ws, Tab: v.cur.tab, Item: v.cur.item, Query: v.cur.query, State: v.cur.state, Width: m.width, Narrow: m.width < extNarrowFrom}
 	id := v.ext
 	// A newer request replaces an older one: stop the extension working on it.
 	if v.cancel != nil {
@@ -197,17 +201,20 @@ func (m *Model) closeExtView() {
 	if v == nil {
 		return
 	}
+	if v.cancel != nil {
+		v.cancel()
+	}
 	if m.extensions.resume == nil {
 		m.extensions.resume = map[string]*extView{}
 	}
-	m.extensions.resume[v.ext+"/"+v.ws] = &extView{stack: v.stack, cur: v.cur}
+	m.extensions.resume[v.ext+"/"+v.ws] = &extView{ext: v.ext, ws: v.ws, title: v.title, stack: v.stack, cur: v.cur}
 	m.extensions.view = nil
 }
 
 // extViewHandles reports whether the extension view should receive keys now.
 func (m Model) extViewActive() bool {
 	c := m.crm
-	return m.extensions.view != nil && m.extensions.modal == nil && c.form == nil && c.prompt == nil && c.picker == nil && c.confirm == nil && m.contacts.editor == nil && m.contacts.transfer == nil
+	return m.extensions.view != nil && m.overlay == none && m.extensions.modal == nil && c.form == nil && c.prompt == nil && c.picker == nil && c.confirm == nil && m.contacts.editor == nil && m.contacts.transfer == nil
 }
 
 func (m Model) updateExtView(msg tea.Msg) (Model, tea.Cmd, bool) {
@@ -289,9 +296,16 @@ func (m Model) extViewKey(k tea.KeyMsg) (Model, tea.Cmd) {
 	if key == "ctrl+c" {
 		return m, tea.Quit
 	}
+	if key == "ctrl+z" {
+		return m, tea.Suspend
+	}
 	back := func() (Model, tea.Cmd) {
 		if n := len(v.stack); n > 0 {
 			v.cur, v.stack = v.stack[n-1], v.stack[:n-1]
+			if v.cur.workspace != "" {
+				v.ws, v.title = v.cur.workspace, v.cur.title
+				v.cur.workspace, v.cur.title = "", ""
+			}
 			v.err, v.notice = "", ""
 			return m, m.extRender(v)
 		}
@@ -308,6 +322,10 @@ func (m Model) extViewKey(k tea.KeyMsg) (Model, tea.Cmd) {
 	case "?":
 		v.help = true
 		return m, nil
+	}
+	if m.registry.Key(key) == "palette" {
+		next, cmd := m.dispatch("palette")
+		return next.(Model), cmd
 	}
 	if v.busy && v.doc.Tabs == nil {
 		return m, nil
@@ -444,12 +462,19 @@ func (m Model) followExtTarget(v *extView, t ext.Target) (Model, tea.Cmd) {
 		if t.Action != "" {
 			return m, m.extRunAction(v, t.Action, t.ID, nil)
 		}
-		if t.Workspace != "" && t.Workspace != v.ws && m.hasWorkspace(v.ext, t.Workspace) {
-			m.closeExtView()
-			m2, _ := m.openExtWorkspace(v.ext, t.Workspace)
-			n := m2.extensions.view
-			n.stack, n.cur = nil, extFrame{tab: t.Tab, item: t.ID}
-			return m2, m2.extRender(n)
+		if t.Workspace != "" && t.Workspace != v.ws {
+			workspaceTitle := ""
+			for _, w := range m.extensions.mgr.Workspaces() {
+				if w.Extension == v.ext && w.ID == t.Workspace {
+					workspaceTitle = w.Title
+					break
+				}
+			}
+			if workspaceTitle == "" {
+				return m, nil
+			}
+			v.cur.workspace, v.cur.title = v.ws, v.title
+			v.ws, v.title = t.Workspace, workspaceTitle
 		}
 		v.cur.remember()
 		v.stack = append(v.stack, v.cur)
@@ -457,13 +482,18 @@ func (m Model) followExtTarget(v *extView, t ext.Target) (Model, tea.Cmd) {
 		return m, m.extRender(v)
 	}
 	kind := map[string]string{"contact": "person", "organization": "organization", "task": "task", "activity": "activity", "project": "project"}[t.Kind]
-	if kind == "" {
+	if kind == "" || t.ID == "" || m.crm.repo == nil {
 		return m, nil
 	}
-	// Leave the workspace (remembering exactly where we were) and open the
-	// record; Esc in the main app returns to where the user came from.
-	m.closeExtView()
-	return m.follow(domain.Ref{Kind: kind, ID: t.ID})
+	// Attach the extension position to the same back stack as core records.
+	next, cmd := m.follow(domain.Ref{Kind: kind, ID: t.ID})
+	if active := next.extensions.view; active != nil {
+		next.closeExtView()
+		p := &next.crm.nav[len(next.crm.nav)-1]
+		p.extension = next.extensions.resume[active.ext+"/"+active.ws]
+		p.name = active.title
+	}
+	return next, cmd
 }
 
 // applyExtResult carries out an action result in the documented order.
@@ -532,6 +562,7 @@ func (m *Model) openExtForm(v *extView, f ext.Form) tea.Cmd {
 		}
 	}
 	mgr, ctx, id, formID, target, args, ws := m.extensions.mgr, m.contacts.ctx, v.ext, f.ID, f.Target, f.Args, v.ws
+	state := v.cur.state
 	return m.openForm(f.Title, fields, func(m *Model, values map[string]string) (tea.Cmd, error) {
 		refs := map[string][]ext.RefItem{}
 		for key := range refKeys {
@@ -549,7 +580,7 @@ func (m *Model) openExtForm(v *extView, f ext.Form) tea.Cmd {
 		return func() tea.Msg {
 			c, cancel := extTimeout(ctx)
 			defer cancel()
-			res, err := mgr.SubmitForm(c, id, ext.FormSubmit{Workspace: ws, Form: formID, Target: target, Args: args, Values: values, Refs: refs})
+			res, err := mgr.SubmitForm(c, id, ext.FormSubmit{Workspace: ws, Form: formID, Target: target, Args: args, State: state, Values: values, Refs: refs})
 			return extSubmitMsg{owner: v, ext: id, res: res, err: err}
 		}, nil
 	})
@@ -662,6 +693,10 @@ func (m Model) extViewPanel(u softUI) *tideui.Overlay {
 	pairs := []string{}
 	if panels {
 		pairs = append(pairs, "tab", "panel", "j/k", "item", "enter", "open")
+		if len(d.Tabs) > 1 {
+			pairs = append(pairs, "[ ]", "view")
+		}
+		pairs = append(pairs, "?", "keys")
 	}
 	if d.Board != nil {
 		pairs = append(pairs, "h/l", "stage")
@@ -675,7 +710,7 @@ func (m Model) extViewPanel(u softUI) *tideui.Overlay {
 	if !panels && (d.Open != "" || len(d.Sections) > 0) {
 		pairs = append(pairs, "enter", "open")
 	}
-	if len(d.Tabs) > 1 {
+	if !panels && len(d.Tabs) > 1 {
 		pairs = append(pairs, "[ ]", "tab")
 	}
 	if d.Searchable {
@@ -684,9 +719,6 @@ func (m Model) extViewPanel(u softUI) *tideui.Overlay {
 	closeLabel := "close"
 	if len(v.stack) > 0 {
 		closeLabel = "back"
-	}
-	if panels {
-		pairs = append(pairs, "?", "keys")
 	}
 	pairs = append(pairs, "esc", closeLabel)
 	foot = append(foot, u.hints(width, pairs...))
